@@ -1,0 +1,106 @@
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { BehaviorSubject, Subject, switchMap, debounceTime, distinctUntilChanged, catchError, EMPTY, takeUntil } from 'rxjs';
+import { MembersService, type MembersQuery } from '../../../core/services/members.service';
+import { CITIES_CI } from '@atc/shared';
+import type { UserProfile } from '../../../core/models/user.model';
+
+const LEVEL_LABELS: Record<number, string> = {
+  1: 'Débutant', 2: 'Intermédiaire', 3: 'Confirmé', 4: 'Avancé', 5: 'Expert',
+};
+
+@Component({
+  selector: 'app-members-list',
+  standalone: true,
+  imports: [RouterLink, ReactiveFormsModule],
+  templateUrl: './members-list.component.html',
+  styleUrl: './members-list.component.css',
+})
+export class MembersListComponent implements OnInit, OnDestroy {
+  private readonly membersService = inject(MembersService);
+  private readonly destroy$ = new Subject<void>();
+  private readonly query$ = new BehaviorSubject<MembersQuery>({ page: 1, limit: 18 });
+
+  readonly members   = signal<UserProfile[]>([]);
+  readonly total     = signal(0);
+  readonly pages     = signal(0);
+  readonly loading   = signal(true);
+  readonly error     = signal('');
+
+  readonly levelFilter  = signal<number | null>(null);
+  readonly onlineFilter = signal(false);
+  readonly searchCtrl   = new FormControl('');
+  readonly cityCtrl     = new FormControl('');
+
+  readonly cities       = CITIES_CI;
+  readonly levels       = [1, 2, 3, 4, 5];
+  readonly dots         = [1, 2, 3, 4, 5];
+  readonly levelLabels = LEVEL_LABELS;
+
+  get currentPage(): number { return this.query$.value.page ?? 1; }
+
+  ngOnInit(): void {
+    this.query$.pipe(
+      debounceTime(80),
+      switchMap(q => {
+        this.loading.set(true);
+        this.error.set('');
+        return this.membersService.listMembers(q).pipe(
+          catchError(() => {
+            this.error.set('Impossible de charger les membres.');
+            this.loading.set(false);
+            return EMPTY;
+          }),
+        );
+      }),
+      takeUntil(this.destroy$),
+    ).subscribe(res => {
+      this.members.set(res.data);
+      this.total.set(res.total);
+      this.pages.set(res.pages);
+      this.loading.set(false);
+    });
+
+    this.searchCtrl.valueChanges.pipe(
+      debounceTime(350), distinctUntilChanged(), takeUntil(this.destroy$),
+    ).subscribe(q => this.patch({ q: q || undefined, page: 1 }));
+
+    this.cityCtrl.valueChanges.pipe(
+      debounceTime(100), distinctUntilChanged(), takeUntil(this.destroy$),
+    ).subscribe(city => this.patch({ city: city || undefined, page: 1 }));
+  }
+
+  private patch(partial: Partial<MembersQuery>): void {
+    this.query$.next({ ...this.query$.value, ...partial });
+  }
+
+  setLevel(level: number | null): void {
+    this.levelFilter.set(level);
+    this.patch({ level: level ?? undefined, page: 1 });
+  }
+
+  toggleOnline(): void {
+    const next = !this.onlineFilter();
+    this.onlineFilter.set(next);
+    this.patch({ online: next || undefined, page: 1 });
+  }
+
+  goTo(page: number): void { this.patch({ page }); }
+
+  getLevelLabel(l: number): string { return LEVEL_LABELS[l] ?? ''; }
+
+  paginationItems(): Array<number | null> {
+    const total = this.pages();
+    const cur = this.currentPage;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const items: Array<number | null> = [1];
+    if (cur > 3) items.push(null);
+    for (let p = Math.max(2, cur - 1); p <= Math.min(total - 1, cur + 1); p++) items.push(p);
+    if (cur < total - 2) items.push(null);
+    items.push(total);
+    return items;
+  }
+
+  ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
+}

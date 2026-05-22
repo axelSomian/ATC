@@ -1,0 +1,145 @@
+<div class="members-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1>Membres</h1>
+      @if (!loading()) {
+        <p class="text-muted">{{ total() }} joueur{{ total() !== 1 ? 's' : '' }} trouvé{{ total() !== 1 ? 's' : '' }}</p>
+      }
+    </div>
+    <div class="search-wrap">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Rechercher un membre…"
+        [formControl]="searchCtrl"
+      />
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <button class="filter-pill" [class.active]="levelFilter() === null" (click)="setLevel(null)">Tous</button>
+      @for (l of levels; track l) {
+        <button class="filter-pill" [class.active]="levelFilter() === l" (click)="setLevel(l)">
+          {{ getLevelLabel(l) }}
+        </button>
+      }
+    </div>
+    <div class="filter-right">
+      <button class="filter-online" [class.active]="onlineFilter()" (click)="toggleOnline()">
+        <span class="online-dot"></span>
+        En ligne
+      </button>
+      <select class="filter-select" [formControl]="cityCtrl">
+        <option value="">Toutes les villes</option>
+        @for (c of cities; track c) {
+          <option [value]="c">{{ c }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  }
+
+  <!-- Loading skeleton -->
+  @if (loading()) {
+    <div class="members-list card">
+      @for (i of [1,2,3,4,5,6,7,8]; track i) {
+        <div class="member-row skeleton-row"></div>
+      }
+    </div>
+  }
+
+  <!-- List -->
+  @if (!loading() && members().length) {
+    <div class="members-list card">
+      @for (m of members(); track m.id; let last = $last) {
+        <a [routerLink]="['/members', m.id]" class="member-row">
+          <!-- Avatar -->
+          <div class="row-avatar">
+            <div class="avatar avatar-md">
+              @if (m.avatarUrl) {
+                <img [src]="m.avatarUrl" [alt]="m.name" class="avatar-img" />
+              } @else {
+                {{ m.initials }}
+              }
+            </div>
+            @if (m.online) {
+              <span class="online-badge"></span>
+            }
+          </div>
+
+          <!-- Identity -->
+          <div class="row-identity">
+            <span class="row-name">{{ m.name }}</span>
+            <div class="row-meta">
+              @if (m.city) {
+                <span class="row-city">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {{ m.city }}
+                </span>
+              }
+              @if (m.club) {
+                <span class="row-sep">·</span>
+                <span class="row-club">{{ m.club }}</span>
+              }
+            </div>
+          </div>
+
+          <!-- Level -->
+          <div class="row-level">
+            <span class="level-dots">
+              @for (d of dots; track d) {
+                <span class="level-dot" [class.active]="d <= m.level"></span>
+              }
+            </span>
+            <span class="row-level-label">{{ getLevelLabel(m.level) }}</span>
+          </div>
+
+          <!-- Arrow -->
+          <div class="row-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+
+          @if (!last) { <div class="row-divider"></div> }
+        </a>
+      }
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!loading() && !members().length && !error()) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <p class="empty-title">Aucun membre trouvé</p>
+      <p class="text-muted">Essayez d'ajuster vos filtres.</p>
+    </div>
+  }
+
+  <!-- Pagination -->
+  @if (!loading() && pages() > 1) {
+    <div class="pagination">
+      <button class="page-btn" [disabled]="currentPage === 1" (click)="goTo(currentPage - 1)">← Précédent</button>
+      <div class="page-numbers">
+        @for (item of paginationItems(); track $index) {
+          @if (item === null) {
+            <span class="page-ellipsis">…</span>
+          } @else {
+            <button class="page-num" [class.active]="item === currentPage" (click)="goTo(item)">{{ item }}</button>
+          }
+        }
+      </div>
+      <button class="page-btn" [disabled]="currentPage === pages()" (click)="goTo(currentPage + 1)">Suivant →</button>
+    </div>
+  }
+
+</div>

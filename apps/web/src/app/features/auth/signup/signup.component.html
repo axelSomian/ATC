@@ -1,0 +1,117 @@
+<div class="auth-page">
+  <div class="auth-visual">
+    <div class="visual-content">
+      <div class="visual-badge">ATC</div>
+      <h1 class="visual-title">Rejoignez<br>la<br>Community</h1>
+      <p class="visual-sub">Trouvez des partenaires de jeu, gérez vos disponibilités et suivez vos matchs.</p>
+      <div class="ci-stripe"></div>
+    </div>
+  </div>
+
+  <div class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2>Créer un compte</h2>
+        <p class="text-muted">Bienvenue dans Abidjan Tennis Community.</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form" novalidate>
+        @if (error()) {
+          <div class="form-alert">{{ error() }}</div>
+        }
+
+        <div class="form-group">
+          <label class="form-label" for="name">Nom complet</label>
+          <input
+            id="name"
+            type="text"
+            class="form-control"
+            [class.is-invalid]="form.controls.name.invalid && form.controls.name.touched"
+            formControlName="name"
+            placeholder="Jean Kouadio"
+            autocomplete="name"
+          />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <span class="form-error">Minimum 2 caractères</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            class="form-control"
+            [class.is-invalid]="form.controls.email.invalid && form.controls.email.touched"
+            formControlName="email"
+            placeholder="votre@email.com"
+            autocomplete="email"
+          />
+          @if (form.controls.email.invalid && form.controls.email.touched) {
+            <span class="form-error">Email invalide</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Mot de passe</label>
+          <input
+            id="password"
+            type="password"
+            class="form-control"
+            [class.is-invalid]="form.controls.password.invalid && form.controls.password.touched"
+            formControlName="password"
+            placeholder="Minimum 8 caractères"
+            autocomplete="new-password"
+          />
+          @if (form.controls.password.invalid && form.controls.password.touched) {
+            <span class="form-error">Minimum 8 caractères</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Votre niveau</label>
+          <div class="level-picker">
+            @for (lvl of levels; track lvl) {
+              <button
+                type="button"
+                class="level-btn"
+                [class.selected]="form.controls.level.value === lvl"
+                (click)="setLevel(lvl)"
+              >
+                <div class="level-dots">
+                  @for (dot of levels; track dot) {
+                    <div class="level-dot" [class.active]="dot <= lvl"></div>
+                  }
+                </div>
+                <span>{{ levelLabels[lvl] }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="city">Ville</label>
+          <select id="city" class="form-control" formControlName="city">
+            <option value="">Sélectionner une ville</option>
+            @for (city of cities; track city) {
+              <option [value]="city">{{ city }}</option>
+            }
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary btn-full btn-lg"
+          [disabled]="loading()"
+        >
+          {{ loading() ? 'Création…' : 'Créer mon compte' }}
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        Déjà membre ?
+        <a routerLink="/auth/login" class="link-clay">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</div>

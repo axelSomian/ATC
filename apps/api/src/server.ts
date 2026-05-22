@@ -1,0 +1,96 @@
+import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
+import passport from 'passport';
+import { errorHandler } from './middleware/error.js';
+import './middleware/passport.js';
+import { setIo } from './lib/socket.js';
+import authRoutes from './modules/auth/auth.routes.js';
+import membersRoutes from './modules/members/members.routes.js';
+import disposRoutes from './modules/dispos/dispos.routes.js';
+import availabilityRoutes from './modules/availability/availability.routes.js';
+import matchesRoutes from './modules/matches/matches.routes.js';
+import notificationsRoutes from './modules/notifications/notifications.routes.js';
+import quickMatchesRoutes from './modules/quick-matches/quick-matches.routes.js';
+
+const app = express();
+const httpServer = createServer(app);
+
+export const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:4200',
+    credentials: true,
+  },
+});
+
+setIo(io);
+
+// Auth middleware Socket.IO — vérifie le JWT et joint le room user:{id}
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token as string | undefined;
+  if (!token) return next(new Error('Non autorisé'));
+  try {
+    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as { sub: string };
+    socket.data.userId = payload.sub;
+    next();
+  } catch {
+    next(new Error('Token invalide'));
+  }
+});
+
+io.on('connection', (socket) => {
+  const userId = socket.data.userId as string;
+  socket.join(`user:${userId}`);
+  socket.on('disconnect', () => socket.leave(`user:${userId}`));
+});
+
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:4200',
+    credentials: true,
+  }),
+);
+app.use(express.json());
+app.use(cookieParser());
+app.use(passport.initialize());
+
+const loginLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 5,
+  message: { error: 'Trop de tentatives, réessayez dans une minute' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const signupLimiter = rateLimit({
+  windowMs: 3_600_000,
+  max: 3,
+  message: { error: 'Trop de créations de compte, réessayez plus tard' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+
+app.use('/api/v1/auth/login', loginLimiter);
+app.use('/api/v1/auth/signup', signupLimiter);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/members', membersRoutes);
+app.use('/api/v1/dispos', disposRoutes);
+app.use('/api/v1/availability', availabilityRoutes);
+app.use('/api/v1/matches', matchesRoutes);
+app.use('/api/v1/notifications', notificationsRoutes);
+app.use('/api/v1/quick-matches', quickMatchesRoutes);
+
+app.use(errorHandler);
+
+const PORT = process.env.PORT ?? 3000;
+httpServer.listen(PORT, () => {
+  console.log(`[API] Serveur démarré sur http://localhost:${PORT}`);
+});

@@ -1,0 +1,292 @@
+<div class="profile-page">
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error() && !editing()) {
+    <div class="alert-error">{{ error() }}</div>
+  }
+
+  <!-- View mode -->
+  @if (!loading() && profile() && !editing()) {
+    <!-- Hero card -->
+    <div class="profile-hero card">
+      <div class="hero-body">
+        <div class="avatar avatar-xl">
+          @if (profile()!.avatarUrl) {
+            <img [src]="profile()!.avatarUrl" [alt]="profile()!.name" class="avatar-img" />
+          } @else {
+            {{ profile()!.initials }}
+          }
+        </div>
+        <div class="hero-identity">
+          <h1 class="hero-name">{{ profile()!.name }}</h1>
+          <div class="hero-level">
+            <span class="level-dots">
+              @for (d of dots; track d) {
+                <span class="level-dot" [class.active]="d <= profile()!.level"></span>
+              }
+            </span>
+            <span class="level-text">{{ levelLabel() }}</span>
+          </div>
+          <div class="hero-meta">
+            @if (profile()!.city) {
+              <span class="meta-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {{ profile()!.city }}
+              </span>
+            }
+            <span class="meta-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Membre depuis {{ profile()!.joinedAt | date:'MMMM yyyy' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm edit-btn" (click)="startEdit()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Modifier
+      </button>
+    </div>
+
+    <!-- Info grid -->
+    <div class="profile-grid">
+
+      <!-- Bio -->
+      <div class="card profile-section">
+        <h3 class="section-title">À propos</h3>
+        @if (profile()!.bio) {
+          <p class="bio-text">{{ profile()!.bio }}</p>
+        } @else {
+          <p class="empty-hint">Aucune bio — cliquez sur Modifier pour en ajouter une.</p>
+        }
+      </div>
+
+      <!-- Infos -->
+      <div class="card profile-section">
+        <h3 class="section-title">Informations</h3>
+        <div class="info-list">
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span class="info-value">{{ profile()!.email }}</span>
+          </div>
+          @if (profile()!.phone) {
+            <div class="info-row">
+              <span class="info-label">Téléphone</span>
+              <span class="info-value">{{ profile()!.phone }}</span>
+            </div>
+          }
+          @if (profile()!.age) {
+            <div class="info-row">
+              <span class="info-label">Âge</span>
+              <span class="info-value">{{ profile()!.age }} ans</span>
+            </div>
+          }
+          @if (profile()!.club) {
+            <div class="info-row">
+              <span class="info-label">Club</span>
+              <span class="info-value">{{ profile()!.club }}</span>
+            </div>
+          }
+          @if (profile()!.racquet) {
+            <div class="info-row">
+              <span class="info-label">Raquette</span>
+              <span class="info-value">{{ profile()!.racquet }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Preferences -->
+    @if (profile()!.preferredCourts.length || profile()!.preferredTimes.length) {
+      <div class="card profile-section">
+        <h3 class="section-title">Préférences</h3>
+        @if (profile()!.preferredCourts.length) {
+          <div class="pref-group">
+            <span class="pref-label">Courts habituels</span>
+            <div class="tags">
+              @for (c of profile()!.preferredCourts; track c) {
+                <span class="tag">{{ c }}</span>
+              }
+            </div>
+          </div>
+        }
+        @if (profile()!.preferredTimes.length) {
+          <div class="pref-group">
+            <span class="pref-label">Créneaux</span>
+            <div class="tags">
+              @for (t of profile()!.preferredTimes; track t) {
+                <span class="tag">{{ t }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- Edit mode -->
+  @if (editing()) {
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+
+      <div class="edit-header">
+        <h2 class="edit-title">Modifier le profil</h2>
+        <div class="edit-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelEdit()" [disabled]="saving()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving()">
+            {{ saving() ? 'Sauvegarde…' : 'Enregistrer' }}
+          </button>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="alert-error">{{ error() }}</div>
+      }
+
+      <!-- Avatar upload -->
+      <div class="avatar-upload-row">
+        <div class="avatar-upload-wrap" (click)="triggerFileInput()">
+          <div class="avatar avatar-xl">
+            @if (avatarPreview()) {
+              <img [src]="avatarPreview()!" alt="Aperçu" class="avatar-img" />
+            } @else if (profile()!.avatarUrl) {
+              <img [src]="profile()!.avatarUrl" [alt]="profile()!.name" class="avatar-img" />
+            } @else {
+              {{ profile()!.initials }}
+            }
+          </div>
+          <div class="avatar-overlay">
+            @if (uploadingAvatar()) {
+              <div class="spinner spinner-sm"></div>
+            } @else {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            }
+          </div>
+        </div>
+        <div class="avatar-upload-hint">
+          <span class="avatar-upload-label">Photo de profil</span>
+          <span class="avatar-upload-sub">JPG, PNG ou WebP · max 5 Mo</span>
+        </div>
+        <input #fileInput type="file" accept="image/*" hidden (change)="onFileChange($event)" />
+      </div>
+
+      <div class="edit-grid">
+
+        <!-- Identité -->
+        <div class="card edit-section">
+          <h3 class="section-title">Identité</h3>
+
+          <div class="form-group">
+            <label class="form-label" for="name">Nom complet</label>
+            <input id="name" type="text" class="form-control" formControlName="name"
+              [class.is-invalid]="form.controls.name.invalid && form.controls.name.touched"
+              placeholder="Votre nom" />
+            @if (form.controls.name.invalid && form.controls.name.touched) {
+              <span class="form-error">Nom requis (2–50 caractères)</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Niveau</label>
+            <div class="level-picker">
+              @for (d of dots; track d) {
+                <button type="button" class="level-btn" [class.active]="d <= selectedLevel()"
+                  (click)="setLevel(d)">
+                  <span class="level-dot-lg" [class.active]="d <= selectedLevel()"></span>
+                </button>
+              }
+              <span class="level-picker-label">{{ editLevelLabel() }}</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="city">Ville</label>
+            <select id="city" class="form-control" formControlName="city">
+              <option value="">— Sélectionner —</option>
+              @for (c of cities; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="age">Âge</label>
+            <input id="age" type="number" class="form-control" formControlName="age"
+              placeholder="Votre âge" min="10" max="100" />
+          </div>
+        </div>
+
+        <!-- Contact & équipement -->
+        <div class="card edit-section">
+          <h3 class="section-title">Contact & équipement</h3>
+
+          <div class="form-group">
+            <label class="form-label" for="phone">Téléphone</label>
+            <input id="phone" type="tel" class="form-control" formControlName="phone"
+              placeholder="+2250700000000" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="club">Club</label>
+            <input id="club" type="text" class="form-control" formControlName="club"
+              placeholder="Nom de votre club" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="racquet">Raquette</label>
+            <input id="racquet" type="text" class="form-control" formControlName="racquet"
+              placeholder="Ex: Wilson Pro Staff" />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bio -->
+      <div class="card edit-section">
+        <h3 class="section-title">Bio</h3>
+        <div class="form-group">
+          <textarea class="form-control bio-input" formControlName="bio"
+            placeholder="Décrivez votre style de jeu, vos objectifs…" rows="4"></textarea>
+        </div>
+      </div>
+
+      <!-- Préférences -->
+      <div class="card edit-section">
+        <h3 class="section-title">Préférences</h3>
+
+        <div class="pref-group">
+          <span class="pref-label">Courts habituels</span>
+          <div class="toggle-tags">
+            @for (c of courts; track c) {
+              <button type="button" class="toggle-tag" [class.selected]="hasCourt(c)" (click)="toggleCourt(c)">
+                {{ c }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="pref-group">
+          <span class="pref-label">Créneaux disponibles</span>
+          <div class="toggle-tags">
+            @for (t of times; track t.value) {
+              <button type="button" class="toggle-tag" [class.selected]="hasTime(t.value)" (click)="toggleTime(t.value)">
+                {{ t.label }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+    </form>
+  }
+
+</div>

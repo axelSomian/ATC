@@ -1,0 +1,67 @@
+<div class="auth-page">
+  <div class="auth-visual">
+    <div class="visual-content">
+      <div class="visual-badge">ATC</div>
+      <h1 class="visual-title">Abidjan<br>Tennis<br>Community</h1>
+      <p class="visual-sub">La plateforme de référence pour les joueurs de tennis à Abidjan.</p>
+      <div class="ci-stripe"></div>
+    </div>
+  </div>
+
+  <div class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2>Connexion</h2>
+        <p class="text-muted">Bon retour parmi nous !</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form" novalidate>
+        @if (error()) {
+          <div class="form-alert">{{ error() }}</div>
+        }
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            class="form-control"
+            [class.is-invalid]="form.controls.email.invalid && form.controls.email.touched"
+            formControlName="email"
+            placeholder="votre@email.com"
+            autocomplete="email"
+          />
+          @if (form.controls.email.invalid && form.controls.email.touched) {
+            <span class="form-error">Email invalide</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Mot de passe</label>
+          <input
+            id="password"
+            type="password"
+            class="form-control"
+            [class.is-invalid]="form.controls.password.invalid && form.controls.password.touched"
+            formControlName="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary btn-full btn-lg"
+          [disabled]="loading()"
+        >
+          {{ loading() ? 'Connexion…' : 'Se connecter' }}
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        Pas encore membre ?
+        <a routerLink="/auth/signup" class="link-clay">Créer un compte</a>
+      </p>
+    </div>
+  </div>
+</div>

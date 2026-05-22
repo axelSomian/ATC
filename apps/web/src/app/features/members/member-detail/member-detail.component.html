@@ -1,0 +1,381 @@
+<div class="detail-page">
+
+  <a routerLink="/members" class="back-link">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    Membres
+  </a>
+
+  @if (loading()) {
+    <div class="loading-state"><div class="spinner"></div></div>
+  }
+
+  @if (error()) {
+    <div class="alert-error">{{ error() }}</div>
+  }
+
+  @if (!loading() && member()) {
+
+    <!-- ── Hero dark ── -->
+    <div class="hero-panel">
+      <div class="hero-inner">
+
+        <!-- Identity -->
+        <div class="hero-identity">
+          <div class="hero-avatar-wrap">
+            <div class="avatar avatar-xl hero-avatar">
+              @if (member()!.avatarUrl) {
+                <img [src]="member()!.avatarUrl" [alt]="member()!.name" class="avatar-img" />
+              } @else {
+                {{ member()!.initials }}
+              }
+            </div>
+            @if (member()!.online) {
+              <span class="online-badge hero-online-badge"></span>
+            }
+          </div>
+          <div class="hero-text">
+            <h1 class="hero-name">{{ member()!.name }}</h1>
+            <div class="hero-level-row">
+              <span class="level-dots">
+                @for (d of dots; track d) {
+                  <span class="level-dot" [class.active]="d <= member()!.level"></span>
+                }
+              </span>
+              <span class="hero-level-label">{{ levelLabel() }}</span>
+              @if (member()!.online) {
+                <span class="hero-online-pill">
+                  <span class="online-pulse"></span>
+                  En ligne
+                </span>
+              }
+            </div>
+            <div class="hero-meta-row">
+              @if (member()!.city) {
+                <span class="hero-meta-item">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {{ member()!.city }}
+                </span>
+              }
+              @if (member()!.club) {
+                <span class="hero-meta-sep">·</span>
+                <span class="hero-meta-item">{{ member()!.club }}</span>
+              }
+              @if (member()!.age) {
+                <span class="hero-meta-sep">·</span>
+                <span class="hero-meta-item">{{ member()!.age }} ans</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="stats-bar">
+          <div class="stat-cell">
+            <span class="stat-val">{{ member()!.matchesPlayed ?? 0 }}</span>
+            <span class="stat-lbl">Matchs</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-cell">
+            <span class="stat-val stat-win">{{ member()!.wins ?? 0 }}</span>
+            <span class="stat-lbl">Victoires</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-cell">
+            <span class="stat-val stat-loss">{{ member()!.losses ?? 0 }}</span>
+            <span class="stat-lbl">Défaites</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-cell">
+            <span class="stat-val">{{ winRate() }}</span>
+            <span class="stat-lbl">% Victoire</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-cell">
+            <span class="stat-val">{{ member()!.rating ?? 1000 }}</span>
+            <span class="stat-lbl">Rating</span>
+          </div>
+          @if (rankLabel()) {
+            <div class="stat-divider"></div>
+            <div class="stat-cell">
+              <span class="stat-val stat-rank">{{ rankLabel() }}</span>
+              <span class="stat-lbl">Classement</span>
+            </div>
+          }
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Tab bar ── -->
+    <div class="tab-bar">
+      <button class="tab-btn" [class.active]="tab() === 'info'" (click)="tab.set('info')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Infos générales
+      </button>
+      <button class="tab-btn" [class.active]="tab() === 'history'" (click)="tab.set('history')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Historique
+        @if ((member()!.recentMatches?.length ?? 0) > 0) {
+          <span class="tab-badge">{{ member()!.matchesPlayed }}</span>
+        }
+      </button>
+    </div>
+
+    <!-- ══════════ ONGLET INFOS ══════════ -->
+    @if (tab() === 'info') {
+
+    <!-- ── Bouton Match rapide + formulaire ── -->
+    @if (!isOwnProfile()) {
+      <div class="challenge-section">
+        @if (challengeSent()) {
+          <div class="challenge-sent">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Défi envoyé à {{ member()!.name }} !
+          </div>
+        } @else if (!showChallenge()) {
+          <button class="btn btn-primary" (click)="toggleChallenge()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Proposer un match rapide
+          </button>
+        } @else {
+          <div class="challenge-form card">
+            <div class="challenge-form-header">
+              <span class="challenge-form-title">Proposer un match à {{ member()!.name }}</span>
+              <button class="btn-icon-close" (click)="toggleChallenge()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            @if (challengeError()) {
+              <div class="alert-error">{{ challengeError() }}</div>
+            }
+
+            <form [formGroup]="challengeForm" (ngSubmit)="submitChallenge()" novalidate class="challenge-fields">
+              <div class="challenge-grid">
+                <div class="form-group">
+                  <label class="form-label">Date & heure</label>
+                  <input type="datetime-local" class="form-control" formControlName="when"
+                    [class.is-invalid]="challengeForm.controls.when.invalid && challengeForm.controls.when.touched" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Court</label>
+                  <select class="form-control" formControlName="court"
+                    [class.is-invalid]="challengeForm.controls.court.invalid && challengeForm.controls.court.touched">
+                    <option value="">— Sélectionner —</option>
+                    @for (c of courts; track c) {
+                      <option [value]="c">{{ c }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <div class="type-picker">
+                  @for (t of ['simple','double','mixte']; track t) {
+                    <button type="button" class="type-btn"
+                      [class.active]="challengeForm.controls.type.value === t"
+                      (click)="challengeForm.controls.type.setValue($any(t))">
+                      {{ typeLabel(t) }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Message <span class="optional">(optionnel)</span></label>
+                <input type="text" class="form-control" formControlName="note"
+                  placeholder="Ex : amical, pas de pression !" />
+              </div>
+
+              <div class="challenge-actions">
+                <button type="button" class="btn btn-ghost btn-sm" (click)="toggleChallenge()">Annuler</button>
+                <button type="submit" class="btn btn-primary btn-sm" [disabled]="challengeForm.invalid || challenging()">
+                  {{ challenging() ? 'Envoi…' : 'Envoyer le défi' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── Content ── -->
+    <div class="detail-content">
+
+      <!-- Left column -->
+      <div class="detail-main">
+
+        <!-- Bio -->
+        <div class="card detail-section">
+          <h3 class="section-title">À propos</h3>
+          @if (member()!.bio) {
+            <p class="bio-text">{{ member()!.bio }}</p>
+          } @else {
+            <p class="empty-hint">Ce joueur n'a pas encore ajouté de bio.</p>
+          }
+        </div>
+
+        <!-- Details table -->
+        <div class="card detail-section">
+          <h3 class="section-title">Informations personnelles</h3>
+          <div class="detail-table">
+            @if (member()!.age) {
+              <div class="dt-row">
+                <span class="dt-label">Âge</span>
+                <span class="dt-value">{{ member()!.age }} ans</span>
+              </div>
+            }
+            @if (member()!.city) {
+              <div class="dt-row">
+                <span class="dt-label">Ville</span>
+                <span class="dt-value">{{ member()!.city }}</span>
+              </div>
+            }
+            @if (member()!.club) {
+              <div class="dt-row">
+                <span class="dt-label">Club</span>
+                <span class="dt-value">{{ member()!.club }}</span>
+              </div>
+            }
+            @if (member()!.racquet) {
+              <div class="dt-row">
+                <span class="dt-label">Raquette</span>
+                <span class="dt-value">{{ member()!.racquet }}</span>
+              </div>
+            }
+            <div class="dt-row">
+              <span class="dt-label">Membre depuis</span>
+              <span class="dt-value">{{ member()!.joinedAt | date:'MMMM yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right column — Preferences -->
+      @if (member()!.preferredCourts.length || member()!.preferredTimes.length) {
+        <div class="detail-aside">
+          <div class="card detail-section">
+            <h3 class="section-title">Préférences de jeu</h3>
+            @if (member()!.preferredCourts.length) {
+              <div class="pref-group">
+                <span class="pref-label">Courts habituels</span>
+                <div class="tags">
+                  @for (c of member()!.preferredCourts; track c) {
+                    <span class="tag">{{ c }}</span>
+                  }
+                </div>
+              </div>
+            }
+            @if (member()!.preferredTimes.length) {
+              <div class="pref-group">
+                <span class="pref-label">Créneaux disponibles</span>
+                <div class="tags">
+                  @for (t of member()!.preferredTimes; track t) {
+                    <span class="tag">{{ t }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+    </div>
+
+    } <!-- /onglet info -->
+
+    <!-- ══════════ ONGLET HISTORIQUE ══════════ -->
+    @if (tab() === 'history') {
+
+      <!-- Série en cours -->
+      @if ((member()!.winStreak ?? 0) >= 2) {
+        <div class="streak-banner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          {{ member()!.winStreak }} victoires de suite en cours
+        </div>
+      }
+
+      <!-- Liste des matchs -->
+      @if ((member()!.recentMatches?.length ?? 0) === 0) {
+        <div class="card history-empty">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <p>Aucun match joué pour l'instant.</p>
+        </div>
+      } @else {
+        <div class="history-list">
+          @for (m of member()!.recentMatches!; track m.id) {
+            <div class="history-card card">
+
+              <!-- Scoreboard deux lignes -->
+              <div class="mc-scoreboard">
+
+                <!-- Ligne joueur A (membre du profil) -->
+                <div class="mc-row" [class.mc-row--winner]="isWin(m)">
+                  <div class="mc-player">
+                    <div class="avatar avatar-xs">
+                      @if (member()!.avatarUrl) {
+                        <img [src]="member()!.avatarUrl" [alt]="member()!.name" class="avatar-img" />
+                      } @else { {{ member()!.initials }} }
+                    </div>
+                    <span class="mc-name">{{ member()!.name }}</span>
+                  </div>
+                  <div class="mc-sets">
+                    @for (s of parseScoreSets(m); track $index) {
+                      <span class="mc-set" [class.mc-set--win]="s.me > s.opp" [class.mc-set--loss]="s.me < s.opp">{{ s.me }}</span>
+                    }
+                  </div>
+                  <div class="mc-indicator">
+                    @if (isWin(m)) {
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    }
+                  </div>
+                </div>
+
+                <!-- Séparateur -->
+                <div class="mc-divider"></div>
+
+                <!-- Ligne joueur B (adversaire) -->
+                <div class="mc-row" [class.mc-row--winner]="!isWin(m)">
+                  <div class="mc-player">
+                    <div class="avatar avatar-xs">
+                      @if (opponent(m).avatarUrl) {
+                        <img [src]="opponent(m).avatarUrl" [alt]="opponent(m).name" class="avatar-img" />
+                      } @else { {{ opponent(m).initials }} }
+                    </div>
+                    <a [routerLink]="['/members', opponent(m).id]" class="mc-name mc-name--link">{{ opponent(m).name }}</a>
+                  </div>
+                  <div class="mc-sets">
+                    @for (s of parseScoreSets(m); track $index) {
+                      <span class="mc-set" [class.mc-set--win]="s.opp > s.me" [class.mc-set--loss]="s.opp < s.me">{{ s.opp }}</span>
+                    }
+                  </div>
+                  <div class="mc-indicator">
+                    @if (!isWin(m)) {
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    }
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Méta : date · court · type -->
+              <div class="mc-meta">
+                <span>{{ m.playedAt | date:'d MMM yyyy' }}</span>
+                <span class="mc-meta-dot">·</span>
+                <span>{{ m.court }}</span>
+                <span class="mc-meta-dot">·</span>
+                <span>{{ typeLabel(m.type) }}</span>
+              </div>
+
+            </div>
+          }
+        </div>
+      }
+
+    } <!-- /onglet history -->
+
+  }
+
+</div>

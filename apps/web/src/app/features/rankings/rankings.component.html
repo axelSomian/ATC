@@ -1,0 +1,121 @@
+<div class="rankings-page">
+
+  <!-- Hero -->
+  <div class="rankings-hero">
+    <div>
+      <h1>Classement</h1>
+      <p class="text-muted">Joueurs classés par rating ELO · matchs confirmés uniquement</p>
+    </div>
+  </div>
+
+  <!-- Ma position (si classé) -->
+  @if (!loading() && myRank()) {
+    <div class="my-rank-card card">
+      <span class="my-rank-label">Ma position</span>
+      <div class="my-rank-body">
+        <span class="my-rank-number">#{{ myRank()!.rank }}</span>
+        <div class="my-rank-stats">
+          <span class="my-rank-rating" [class]="ratingColor(myRank()!.rating)">{{ myRank()!.rating }} pts</span>
+          <span class="my-rank-record">{{ myRank()!.wins }}V · {{ myRank()!.losses }}D · {{ myRank()!.winRate }}%</span>
+        </div>
+        @if (myRank()!.ratingDelta !== 0) {
+          <span class="my-rank-delta" [class]="deltaCss(myRank()!.ratingDelta)">
+            {{ deltaArrow(myRank()!.ratingDelta) }} {{ deltaLabel(myRank()!.ratingDelta) }} pts
+          </span>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-state"><div class="spinner"></div></div>
+  }
+
+  <!-- Tableau -->
+  @if (!loading()) {
+    @if (rankings().length === 0) {
+      <div class="card empty-state">
+        <div class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <p class="empty-title">Aucun joueur classé</p>
+        <p class="text-muted" style="font-size:var(--text-sm)">Les joueurs apparaîtront ici après leurs premiers matchs confirmés.</p>
+      </div>
+    } @else {
+
+      <!-- En-tête colonnes -->
+      <div class="rank-header">
+        <span class="col-rank">#</span>
+        <span class="col-player">Joueur</span>
+        <span class="col-played">J</span>
+        <span class="col-wins">V</span>
+        <span class="col-losses">D</span>
+        <span class="col-pct">%V</span>
+        <span class="col-rating">Rating</span>
+        <span class="col-delta">Évol.</span>
+      </div>
+
+      <div class="rank-list">
+        @for (entry of rankings(); track entry.id) {
+          <a [routerLink]="['/members', entry.id]"
+             class="rank-row card"
+             [class.rank-row--me]="entry.id === currentUserId()"
+             [class.rank-row--top3]="entry.rank <= 3">
+
+            <!-- Rang -->
+            <span class="col-rank rank-num"
+                  [class.top1]="entry.rank === 1"
+                  [class.top2]="entry.rank === 2"
+                  [class.top3]="entry.rank === 3">
+              @if (entry.rank <= 3) {
+                {{ rankIcon(entry.rank) }}
+              } @else {
+                {{ entry.rank }}
+              }
+            </span>
+
+            <!-- Joueur -->
+            <div class="col-player player-cell">
+              <div class="avatar avatar-sm">
+                @if (entry.avatarUrl) {
+                  <img [src]="entry.avatarUrl" [alt]="entry.name" class="avatar-img" />
+                } @else { {{ entry.initials }} }
+              </div>
+              <div class="player-info">
+                <span class="player-name">{{ entry.name }}</span>
+                <span class="level-dots">
+                  @for (dot of [1,2,3,4,5]; track dot) {
+                    <span class="level-dot" [class.active]="dot <= entry.level"></span>
+                  }
+                </span>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <span class="col-played stat-cell">{{ entry.matchesPlayed }}</span>
+            <span class="col-wins stat-cell win-cell">{{ entry.wins }}</span>
+            <span class="col-losses stat-cell">{{ entry.losses }}</span>
+            <span class="col-pct stat-cell" [class.pct-good]="entry.winRate >= 50">{{ entry.winRate }}%</span>
+
+            <!-- Rating -->
+            <span class="col-rating rating-badge" [class]="ratingColor(entry.rating)">
+              {{ entry.rating }}
+            </span>
+
+            <!-- Évolution -->
+            <span class="col-delta delta-cell" [class]="deltaCss(entry.ratingDelta)">
+              <span class="delta-arrow">{{ deltaArrow(entry.ratingDelta) }}</span>
+              @if (entry.ratingDelta !== 0) {
+                <span class="delta-val">{{ deltaLabel(entry.ratingDelta) }}</span>
+              }
+            </span>
+
+          </a>
+        }
+      </div>
+
+    }
+  }
+
+</div>

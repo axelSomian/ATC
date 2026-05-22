@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  phone           String?  @unique
+  passwordHash    String
+  name            String
+  initials        String
+  avatarUrl       String?
+  level           Int      // 1..5
+  age             Int?
+  bio             String?
+  city            String?
+  club            String?
+  racquet         String?
+  preferredCourts String[]
+  preferredTimes  String[]
+  joinedAt        DateTime @default(now())
+  online          Boolean  @default(false)
+  rating          Int      @default(1000)
+  ratingGames     Int      @default(0)
+  ratingDelta     Int      @default(0)
+
+  availabilities           Availability[]
+  matchesAsHost            Match[]        @relation("host")
+  matchesAsGuest           Match[]        @relation("guest")
+  dispos                   DispoPost[]
+  notifications            Notification[]
+  quickMatchesAsChallenger QuickMatch[]   @relation("quickMatchChallenger")
+  quickMatchesAsChallenged QuickMatch[]   @relation("quickMatchChallenged")
+}
+
+model Availability {
+  id       String   @id @default(cuid())
+  userId   String
+  startsAt DateTime
+  endsAt   DateTime
+  status   String   // 'free' | 'busy' | 'matched'
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+model DispoPost {
+  id        String         @id @default(cuid())
+  userId    String
+  when      DateTime
+  duration  Int
+  court     String
+  type      String         // 'simple' | 'double' | 'mixte'
+  note      String?
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id])
+  requests  MatchRequest[]
+  match     Match?
+}
+
+model MatchRequest {
+  id          String    @id @default(cuid())
+  dispoPostId String
+  requesterId String
+  status      String    // 'pending' | 'accepted' | 'declined'
+  dispoPost   DispoPost @relation(fields: [dispoPostId], references: [id])
+}
+
+model QuickMatch {
+  id           String   @id @default(cuid())
+  challengerId String
+  challengedId String
+  when         DateTime
+  court        String
+  type         String   // 'simple' | 'double' | 'mixte'
+  note         String?
+  status       String   @default("pending") // 'pending' | 'accepted' | 'declined'
+  createdAt    DateTime @default(now())
+  challenger   User     @relation("quickMatchChallenger", fields: [challengerId], references: [id])
+  challenged   User     @relation("quickMatchChallenged", fields: [challengedId], references: [id])
+  match        Match?
+}
+
+model Match {
+  id           String    @id @default(cuid())
+  hostId       String
+  guestId      String
+  playedAt     DateTime
+  court        String
+  type         String
+  scoreHost    String
+  scoreGuest   String
+  winnerId     String
+  status       String    @default("confirmed") // 'pending' | 'confirmed' | 'disputed'
+  recordedBy   String?   // userId who submitted the score
+  dispoPostId  String?   @unique
+  quickMatchId String?   @unique
+  host         User      @relation("host",  fields: [hostId],  references: [id])
+  guest        User      @relation("guest", fields: [guestId], references: [id])
+  dispoPost    DispoPost? @relation(fields: [dispoPostId], references: [id])
+  quickMatch   QuickMatch? @relation(fields: [quickMatchId], references: [id])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String    // 'match_request' | 'match_confirmed' | 'match_declined' | 'quick_match_request' | 'score_recorded'
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+}

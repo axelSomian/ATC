@@ -1,0 +1,1 @@
+TRUNCATE TABLE "MatchRequest", "DispoPost", "QuickMatch", "Notification", "Match", "Availability", "User" RESTART IDENTITY CASCADE;

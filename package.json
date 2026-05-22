@@ -1,0 +1,22 @@
+{
+  "name": "atc",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev:api": "pnpm --filter @atc/api dev",
+    "dev:web": "pnpm --filter @atc/web dev",
+    "build:api": "pnpm --filter @atc/api build",
+    "build:web": "pnpm --filter @atc/web build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "db:up": "docker-compose up -d db redis",
+    "db:down": "docker-compose stop",
+    "db:reset": "docker-compose down -v && docker-compose up -d db redis",
+    "migrate": "pnpm --filter @atc/api prisma:migrate",
+    "studio": "pnpm --filter @atc/api prisma:studio"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}
