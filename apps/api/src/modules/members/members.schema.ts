@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { phoneField } from '../../lib/phone.js';
 
 export const membersQuerySchema = z.object({
   q: z.string().optional(),
@@ -14,7 +15,7 @@ export const membersQuerySchema = z.object({
 
 export const updateMeSchema = z.object({
   name: z.string().min(2).max(50).optional(),
-  phone: z.string().regex(/^\+225\d{10}$/).optional().nullable(),
+  phone: phoneField.optional().nullable(),
   bio: z.string().max(500).optional().nullable(),
   age: z.number().int().min(10).max(100).optional().nullable(),
   city: z.string().optional().nullable(),

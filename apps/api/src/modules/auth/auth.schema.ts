@@ -1,12 +1,10 @@
 import { z } from 'zod';
+import { phoneField } from '../../lib/phone.js';
 
 export const signupSchema = z.object({
   name: z.string().min(2).max(50),
   email: z.string().email('Email invalide'),
-  phone: z
-    .string()
-    .regex(/^\+225\d{10}$/, 'Format: +225XXXXXXXXXX')
-    .optional(),
+  phone: phoneField.optional(),
   password: z.string().min(8, 'Minimum 8 caractères'),
   level: z.number().int().min(1).max(5),
   city: z.string().optional(),
@@ -20,11 +18,7 @@ export const loginSchema = z.object({
 
 export const updateProfileSchema = z.object({
   name: z.string().min(2).max(50).optional(),
-  phone: z
-    .string()
-    .regex(/^\+225\d{10}$/)
-    .optional()
-    .nullable(),
+  phone: phoneField.optional().nullable(),
   bio: z.string().max(500).optional().nullable(),
   age: z.number().int().min(10).max(100).optional().nullable(),
   city: z.string().optional().nullable(),
