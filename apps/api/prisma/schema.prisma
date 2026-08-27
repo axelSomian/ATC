@@ -29,6 +29,7 @@ model User {
   preferredTimes  String[]
   joinedAt        DateTime @default(now())
   online          Boolean  @default(false)
+  role            String   @default("member") // 'member' | 'admin'
   rating          Int      @default(1000)
   ratingGames     Int      @default(0)
   ratingDelta     Int      @default(0)

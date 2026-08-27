@@ -18,6 +18,7 @@ import matchesRoutes from './modules/matches/matches.routes.js';
 import notificationsRoutes from './modules/notifications/notifications.routes.js';
 import quickMatchesRoutes from './modules/quick-matches/quick-matches.routes.js';
 import referenceRoutes from './modules/reference/reference.routes.js';
+import adminRoutes from './modules/admin/admin.routes.js';
 
 const app = express();
 // Derrière le proxy Render (et Vercel) : faire confiance au 1er hop pour
@@ -92,6 +93,7 @@ app.use('/api/v1/availability', availabilityRoutes);
 app.use('/api/v1/matches', matchesRoutes);
 app.use('/api/v1/notifications', notificationsRoutes);
 app.use('/api/v1/quick-matches', quickMatchesRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 app.use(errorHandler);
 

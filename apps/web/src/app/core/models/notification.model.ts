@@ -1,4 +1,4 @@
-export type NotifType = 'match_request' | 'match_confirmed' | 'match_declined' | 'quick_match_request' | 'score_to_validate' | 'score_confirmed' | 'score_disputed';
+export type NotifType = 'match_request' | 'match_confirmed' | 'match_declined' | 'quick_match_request' | 'score_to_validate' | 'score_confirmed' | 'score_disputed' | 'score_resolved';
 
 export interface AppNotification {
   id: string;

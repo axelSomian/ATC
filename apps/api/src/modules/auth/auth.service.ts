@@ -66,7 +66,7 @@ export async function signup(dto: SignupDto) {
       initials,
       rating: initialRating(dto.level),
     },
-    select: { id: true, name: true, email: true, initials: true, level: true },
+    select: { id: true, name: true, email: true, initials: true, level: true, role: true },
   });
 
   sendWelcome(user.email, user.name);
@@ -84,7 +84,14 @@ export async function login(dto: LoginDto) {
 
   const tokens = generateTokens(user.id);
   return {
-    user: { id: user.id, name: user.name, email: user.email, initials: user.initials, level: user.level },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      initials: user.initials,
+      level: user.level,
+      role: user.role,
+    },
     ...tokens,
   };
 }
@@ -122,6 +129,7 @@ export async function getMe(userId: string) {
       preferredTimes: true,
       joinedAt: true,
       online: true,
+      role: true,
       club: { select: { id: true, slug: true, name: true, zone: true, location: true } },
     },
   });

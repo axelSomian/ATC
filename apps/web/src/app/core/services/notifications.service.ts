@@ -52,6 +52,7 @@ export class NotificationsService {
       case 'score_to_validate':
       case 'score_confirmed':
       case 'score_disputed':
+      case 'score_resolved':
         this.router.navigate(['/my-matches'], { queryParams: { tab: 'history', focus: p.matchId ?? null } });
         break;
       default:
@@ -96,6 +97,8 @@ export class NotificationsService {
         return `Le score de votre match a été confirmé ✓`;
       case 'score_disputed':
         return `Le score de votre match a été contesté`;
+      case 'score_resolved':
+        return `Un administrateur a tranché le litige de votre match`;
       default:
         return 'Nouvelle notification';
     }

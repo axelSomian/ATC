@@ -11,6 +11,7 @@ export class AuthStore {
   readonly accessToken = this._accessToken.asReadonly();
   readonly loading = this._loading.asReadonly();
   readonly isAuthenticated = computed(() => this._accessToken() !== null);
+  readonly isAdmin = computed(() => this._user()?.role === 'admin');
 
   setAuth(user: AuthUser, accessToken: string): void {
     this._user.set(user);

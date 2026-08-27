@@ -98,7 +98,7 @@
 | Affichage score historique — scoreboard ATP | 🟡 Moyenne | ✅ Terminé | 2 rangées (moi / adversaire), colonne par set, set gagné en vert, set perdu en gris |
 | Stats sur le profil membre (W/L, % victoire) | 🟡 Moyenne | 📋 Backlog | Page détail membre — données actuellement statiques |
 | Auto-validation après 48h (score sans réponse) | 🟡 Moyenne | 📋 Backlog | Cron job ou check à la connexion |
-| Interface admin pour gérer les scores contestés | 🟡 Moyenne | 📋 Backlog | Pour l'instant : message "un admin va traiter ce litige" |
+| Interface admin pour gérer les scores contestés | 🟡 Moyenne | ✅ Terminé | Onglet « Litiges » dans /admin — `POST /admin/matches/:id/resolve` (choix vainqueur + correction score → `confirmed` + ELO + notif `score_resolved`) |
 
 ---
 
@@ -179,7 +179,25 @@
 | `User.club` (texte) → `User.clubId` (FK) | ✅ Terminé | Migration `20260827160000_clubs_and_levels` |
 | API `GET /clubs`, `GET /levels` (publics) | ✅ Terminé | module `reference` |
 | Front : `ReferenceService`, `<select>` club groupé par zone, sélecteur de niveau explicatif, panneau « Comprendre les niveaux » | ✅ Terminé | |
-| Interface admin CRUD clubs/niveaux | 📋 Backlog | Pour l'instant : édition directe en base |
+| Interface admin CRUD clubs/niveaux | ✅ Terminé | Onglets « Clubs » et « Niveaux » dans /admin (voir section Espace admin) |
+
+---
+
+## Espace admin (session 6) ✅
+
+| Tâche | Statut | Notes |
+|-------|--------|-------|
+| `User.role` (`member` \| `admin`) | ✅ Terminé | Migration `20260827180000_user_role`. Promotion : `pnpm --filter @atc/api exec tsx prisma/set-role.ts <email> admin` (ou `UPDATE "User" SET role='admin'` sur Neon) |
+| Middleware `requireAdmin` + `adminGuard` Angular | ✅ Terminé | `passport.ts` sélectionne le rôle ; garde front force un `/auth/me` au rechargement |
+| `role` dans les réponses `login` / `signup` / `me` | ✅ Terminé | `AuthStore.isAdmin()` |
+| Module API `admin` (`/api/v1/admin/*`) | ✅ Terminé | Toutes routes derrière `authenticate + requireAdmin` |
+| Onglet **Litiges** — résoudre un score contesté | ✅ Terminé | `GET /admin/matches/disputed`, `POST /admin/matches/:id/resolve` |
+| Onglet **Clubs** — CRUD | ✅ Terminé | create / update / delete (delete bloqué si des membres y sont rattachés → 409, désactiver plutôt) |
+| Onglet **Niveaux** — édition code/nom/profil/jeu | ✅ Terminé | `PATCH /admin/levels/:level` |
+| Onglet **Membres** — promouvoir / rétrograder admin | ✅ Terminé | `PATCH /admin/members/:id/role`, auto-rétrogradation interdite |
+| Lien « Administration » dans la sidebar | ✅ Terminé | Visible uniquement si `isAdmin()` |
+
+**Admin actuel** : `guyaxelsomian@gmail.com` (Axel Somian).
 
 ---
 

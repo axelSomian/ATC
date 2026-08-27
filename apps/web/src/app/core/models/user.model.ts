@@ -55,7 +55,10 @@ export interface UserProfile extends UserPublic {
 export interface UserMe extends UserProfile {
   email: string;
   phone?: string | null;
+  role: UserRole;
 }
+
+export type UserRole = 'member' | 'admin';
 
 export interface AuthUser {
   id: string;
@@ -63,6 +66,7 @@ export interface AuthUser {
   email: string;
   initials: string;
   level: number;
+  role: UserRole;
 }
 
 export interface LoginResponse {

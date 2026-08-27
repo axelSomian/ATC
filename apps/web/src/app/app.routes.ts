@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard, adminGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -53,6 +53,11 @@ export const routes: Routes = [
         path: 'rankings',
         loadComponent: () =>
           import('./features/rankings/rankings.component').then((m) => m.RankingsComponent),
+      },
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
       },
     ],
   },

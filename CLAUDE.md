@@ -230,6 +230,12 @@ Base : `/api/v1`
 - `GET   /notifications`
 - `PATCH /notifications/:id/read`
 
+### Admin (`role = 'admin'` requis — `authenticate` + `requireAdmin`)
+- `GET/POST /admin/clubs`, `PATCH/DELETE /admin/clubs/:id` — CRUD clubs
+- `GET /admin/levels`, `PATCH /admin/levels/:level` — édition libellés de niveau
+- `GET /admin/matches/disputed`, `POST /admin/matches/:id/resolve` — résolution des litiges de score
+- `GET /admin/members`, `PATCH /admin/members/:id/role` — gestion des rôles
+
 ### Temps réel (Socket.IO)
 - `member:online` / `member:offline`
 - `dispo:new` — nouvelle annonce dans le feed

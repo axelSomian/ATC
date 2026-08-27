@@ -173,7 +173,7 @@ export async function recordMatch(userId: string, dto: RecordMatchDto) {
   return match;
 }
 
-async function applyEloUpdate(hostId: string, guestId: string, winnerId: string): Promise<void> {
+export async function applyEloUpdate(hostId: string, guestId: string, winnerId: string): Promise<void> {
   const [host, guest] = await Promise.all([
     prisma.user.findUnique({ where: { id: hostId },  select: { rating: true, ratingGames: true, bestRanking: true } }),
     prisma.user.findUnique({ where: { id: guestId }, select: { rating: true, ratingGames: true, bestRanking: true } }),
