@@ -1,6 +1,6 @@
 const API_KEY       = process.env.MAILEROO_API_KEY;
 const FROM_ADDRESS  = process.env.MAIL_FROM_ADDRESS ?? 'noreply@atc.ci';
-const FROM_NAME     = process.env.MAIL_FROM_NAME    ?? 'ATC Tennis';
+const FROM_NAME     = process.env.MAIL_FROM_NAME    ?? 'Abidjan Tennis Community';
 const BASE          = 'https://smtp.maileroo.com/api/v2';
 
 export interface EmailAddress {

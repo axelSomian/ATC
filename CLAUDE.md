@@ -1,6 +1,6 @@
-# ATC — Association Tennis Côte d'Ivoire
+# ATC — Abidjan Tennis Community
 
-Application web responsive permettant aux membres de l'association de se connecter, consulter le profil et le niveau des autres membres, publier leurs disponibilités et organiser des matchs de tennis.
+Application web responsive permettant aux membres de la communauté de se connecter, consulter le profil et le niveau des autres membres, publier leurs disponibilités et organiser des matchs de tennis.
 
 ---
 

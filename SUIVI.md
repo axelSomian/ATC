@@ -136,7 +136,7 @@
 | Tâche | Priorité | Statut | Notes |
 |-------|----------|--------|-------|
 | Messagerie 1-to-1 | 🟡 Moyenne | 💡 Idée | Socket.IO, pas de modèle Prisma encore |
-| Page association (news, événements) | 🟢 Basse | 💡 Idée | |
+| Page communauté (news, événements) | 🟢 Basse | 💡 Idée | |
 | Carte des courts / joueurs | 🟢 Basse | 💡 Idée | Mapbox prévu dans la stack |
 | Classement & ELO des joueurs | 🟢 Basse | ✅ Terminé | Implémenté Sprint 6 |
 

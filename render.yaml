@@ -55,4 +55,4 @@ services:
       - key: MAIL_FROM_ADDRESS
         sync: false
       - key: MAIL_FROM_NAME
-        value: ATC Tennis
+        value: Abidjan Tennis Community

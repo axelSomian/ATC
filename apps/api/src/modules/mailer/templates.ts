@@ -19,7 +19,7 @@ function base(title: string, content: string): string {
 
       <tr><td style="background:${ACCENT};border-radius:14px 14px 0 0;padding:24px 32px;text-align:center">
         <p style="margin:0;font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.02em">ATC</p>
-        <p style="margin:4px 0 0;font-size:11px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:0.08em">Association Tennis Côte d'Ivoire</p>
+        <p style="margin:4px 0 0;font-size:11px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:0.08em">Abidjan Tennis Community</p>
       </td></tr>
 
       <tr><td style="background:#ffffff;padding:36px 32px;border-radius:0 0 14px 14px">
@@ -28,8 +28,8 @@ function base(title: string, content: string): string {
 
       <tr><td style="padding:24px 0;text-align:center">
         <p style="margin:0;font-size:12px;color:${MUTED}">
-          Vous recevez cet email car vous êtes membre de l'ATC.<br>
-          © 2025 Association Tennis Côte d'Ivoire
+          Vous recevez cet email car vous êtes membre d'Abidjan Tennis Community.<br>
+          © 2026 Abidjan Tennis Community
         </p>
       </td></tr>
 
@@ -87,7 +87,7 @@ export function welcomeTemplate(name: string): { subject: string; html: string }
     subject: `Bienvenue sur ATC, ${name} 🎾`,
     html: base('Bienvenue', `
       ${h1(`Bienvenue, ${name} !`)}
-      ${p(`Votre compte sur la plateforme de l'${strong('Association Tennis Côte d\'Ivoire')} est créé.`)}
+      ${p(`Votre compte sur la plateforme d'${strong('Abidjan Tennis Community')} est créé.`)}
       ${p('Vous pouvez dès maintenant consulter les profils des membres, publier vos disponibilités et organiser des matchs.')}
       ${p('Complétez votre profil pour apparaître dans l\'annuaire et trouver des adversaires à votre niveau.')}
     `),
