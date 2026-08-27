@@ -19,6 +19,9 @@ import notificationsRoutes from './modules/notifications/notifications.routes.js
 import quickMatchesRoutes from './modules/quick-matches/quick-matches.routes.js';
 
 const app = express();
+// Derrière le proxy Render (et Vercel) : faire confiance au 1er hop pour
+// que req.ip / X-Forwarded-For soient corrects (rate-limit, secure cookie).
+app.set('trust proxy', 1);
 const httpServer = createServer(app);
 
 export const io = new Server(httpServer, {
