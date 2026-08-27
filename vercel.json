@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://REMPLACER-PAR-URL-RENDER.onrender.com/api/:path*"
+      "destination": "https://atc-api-ws9f.onrender.com/api/:path*"
     },
     {
       "source": "/:path*",

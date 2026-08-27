@@ -4,6 +4,5 @@ export const environment = {
   // via les "rewrites" de vercel.json (même origine => cookie refresh en first-party).
   //
   // Socket.IO NE PEUT PAS être proxifié par Vercel : il faut l'URL publique de l'API.
-  // ⚠️ À REMPLACER après le 1er déploiement Render (ex: https://atc-api.onrender.com)
-  socketUrl: 'https://REMPLACER-PAR-URL-RENDER.onrender.com',
+  socketUrl: 'https://atc-api-ws9f.onrender.com',
 };
