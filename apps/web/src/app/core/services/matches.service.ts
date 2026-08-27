@@ -9,6 +9,9 @@ export interface MyStats {
   winRate: number;
   upcomingCount: number;
   membersTotal: number;
+  rank:         number | null;
+  rating:       number | null;
+  ratingDelta:  number | null;
 }
 
 const API = '/api/v1';
@@ -29,8 +32,10 @@ export class MatchesService {
     return this.http.get<MyStats>(`${API}/matches/me/stats`);
   }
 
-  getMyMatches() {
-    return this.http.get<Match[]>(`${API}/matches/me`);
+  getMyMatches(page = 1, limit = 20) {
+    return this.http.get<{ data: Match[]; total: number; page: number; limit: number; pages: number }>(
+      `${API}/matches/me`, { params: { page, limit } }
+    );
   }
 
   getUpcoming() {

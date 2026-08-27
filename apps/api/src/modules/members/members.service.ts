@@ -21,6 +21,7 @@ const PROFILE_SELECT = {
   racquet: true,
   preferredCourts: true,
   preferredTimes: true,
+  bestRanking: true,
 } as const;
 
 const ME_SELECT = {
@@ -86,7 +87,7 @@ export async function getMemberById(id: string) {
   if (!member) throw new AppError(404, 'Membre introuvable');
 
   const matchesPlayed = allConfirmed.length;
-  const wins          = allConfirmed.filter(m => m.winnerId === id).length;
+  const wins          = allConfirmed.filter((m: { winnerId: string }) => m.winnerId === id).length;
   const losses        = matchesPlayed - wins;
   const winRate       = matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 100) : 0;
 
@@ -109,39 +110,44 @@ export async function getRankings() {
   const users = await prisma.user.findMany({
     where: { ratingGames: { gte: 5 } },
     select: {
-      id: true,
-      name: true,
-      initials: true,
-      avatarUrl: true,
-      level: true,
-      rating: true,
-      ratingGames: true,
-      ratingDelta: true,
-      matchesAsHost:  { where: { status: 'confirmed' }, select: { winnerId: true } },
-      matchesAsGuest: { where: { status: 'confirmed' }, select: { winnerId: true } },
+      id: true, name: true, initials: true, avatarUrl: true,
+      level: true, rating: true, ratingGames: true, ratingDelta: true,
     },
     orderBy: { rating: 'desc' },
     take: 100,
   });
 
-  return users.map((u, i) => {
-    const all  = [...u.matchesAsHost, ...u.matchesAsGuest];
-    const wins = all.filter(m => m.winnerId === u.id).length;
-    const matchesPlayed = all.length;
-    const winRate = matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 100) : 0;
+  const ids = users.map((u: typeof users[number]) => u.id);
+
+  const winCounts  = await prisma.match.groupBy({
+    by: ['winnerId'],
+    where: { status: 'confirmed', winnerId: { in: ids } },
+    _count: { id: true },
+  });
+  const hostCounts  = await prisma.match.groupBy({
+    by: ['hostId'],
+    where: { status: 'confirmed', hostId: { in: ids } },
+    _count: { id: true },
+  });
+  const guestCounts = await prisma.match.groupBy({
+    by: ['guestId'],
+    where: { status: 'confirmed', guestId: { in: ids } },
+    _count: { id: true },
+  });
+
+  const winsMap  = new Map<string, number>(winCounts.map( (r: { winnerId: string; _count: { id: number } }) => [r.winnerId, r._count.id]));
+  const hostMap  = new Map<string, number>(hostCounts.map( (r: { hostId: string;   _count: { id: number } }) => [r.hostId,  r._count.id]));
+  const guestMap = new Map<string, number>(guestCounts.map((r: { guestId: string;  _count: { id: number } }) => [r.guestId, r._count.id]));
+
+  return users.map((u: typeof users[number], i: number) => {
+    const wins          = winsMap.get(u.id)  ?? 0;
+    const matchesPlayed = (hostMap.get(u.id) ?? 0) + (guestMap.get(u.id) ?? 0);
+    const winRate       = matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 100) : 0;
     return {
       rank: i + 1,
-      id:   u.id,
-      name: u.name,
-      initials:  u.initials,
-      avatarUrl: u.avatarUrl,
-      level:     u.level,
-      rating:    u.rating,
-      ratingDelta: u.ratingDelta,
-      matchesPlayed,
-      wins,
-      losses: matchesPlayed - wins,
-      winRate,
+      id: u.id, name: u.name, initials: u.initials, avatarUrl: u.avatarUrl,
+      level: u.level, rating: u.rating, ratingDelta: u.ratingDelta,
+      matchesPlayed, wins, losses: matchesPlayed - wins, winRate,
     };
   });
 }

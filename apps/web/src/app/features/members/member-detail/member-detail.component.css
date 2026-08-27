@@ -176,9 +176,10 @@
   line-height: 1;
 }
 
-.stat-val.stat-win  { color: #34C759; }
-.stat-val.stat-loss { color: rgba(255,255,255,0.40); }
-.stat-val.stat-rank { color: #FFD60A; }
+.stat-val.stat-win       { color: #34C759; }
+.stat-val.stat-loss      { color: rgba(255,255,255,0.40); }
+.stat-val.stat-rank      { color: #FFD60A; }
+.stat-val.stat-best-rank { color: #FF9F0A; }
 
 .stat-lbl {
   font-size: 10px;

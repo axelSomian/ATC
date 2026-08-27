@@ -98,7 +98,14 @@
             <div class="stat-divider"></div>
             <div class="stat-cell">
               <span class="stat-val stat-rank">{{ rankLabel() }}</span>
-              <span class="stat-lbl">Classement</span>
+              <span class="stat-lbl">Classement actuel</span>
+            </div>
+          }
+          @if (bestRankLabel()) {
+            <div class="stat-divider"></div>
+            <div class="stat-cell">
+              <span class="stat-val stat-best-rank">{{ bestRankLabel() }}</span>
+              <span class="stat-lbl">Meilleur classement</span>
             </div>
           }
         </div>

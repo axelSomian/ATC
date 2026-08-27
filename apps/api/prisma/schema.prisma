@@ -32,6 +32,7 @@ model User {
   rating          Int      @default(1000)
   ratingGames     Int      @default(0)
   ratingDelta     Int      @default(0)
+  bestRanking     Int?
 
   availabilities           Availability[]
   matchesAsHost            Match[]        @relation("host")
@@ -40,6 +41,10 @@ model User {
   notifications            Notification[]
   quickMatchesAsChallenger QuickMatch[]   @relation("quickMatchChallenger")
   quickMatchesAsChallenged QuickMatch[]   @relation("quickMatchChallenged")
+
+  @@index([rating, ratingGames])
+  @@index([level, online])
+  @@index([city])
 }
 
 model Availability {
@@ -49,6 +54,8 @@ model Availability {
   endsAt   DateTime
   status   String   // 'free' | 'busy' | 'matched'
   user     User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, startsAt])
 }
 
 model DispoPost {
@@ -63,6 +70,9 @@ model DispoPost {
   user      User           @relation(fields: [userId], references: [id])
   requests  MatchRequest[]
   match     Match?
+
+  @@index([userId])
+  @@index([when, type])
 }
 
 model MatchRequest {
@@ -71,6 +81,9 @@ model MatchRequest {
   requesterId String
   status      String    // 'pending' | 'accepted' | 'declined'
   dispoPost   DispoPost @relation(fields: [dispoPostId], references: [id])
+
+  @@index([dispoPostId, status])
+  @@index([requesterId])
 }
 
 model QuickMatch {
@@ -86,6 +99,10 @@ model QuickMatch {
   challenger   User     @relation("quickMatchChallenger", fields: [challengerId], references: [id])
   challenged   User     @relation("quickMatchChallenged", fields: [challengedId], references: [id])
   match        Match?
+
+  @@index([challengerId, status])
+  @@index([challengedId, status])
+  @@index([when])
 }
 
 model Match {
@@ -106,6 +123,10 @@ model Match {
   guest        User      @relation("guest", fields: [guestId], references: [id])
   dispoPost    DispoPost? @relation(fields: [dispoPostId], references: [id])
   quickMatch   QuickMatch? @relation(fields: [quickMatchId], references: [id])
+
+  @@index([hostId, status, playedAt])
+  @@index([guestId, status, playedAt])
+  @@index([winnerId])
 }
 
 model Notification {
@@ -116,4 +137,6 @@ model Notification {
   readAt    DateTime?
   createdAt DateTime  @default(now())
   user      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
 }

@@ -32,6 +32,12 @@ export class MyMatchesComponent implements OnInit {
   readonly challenges = signal<QuickMatch[]>([]);
   readonly loading    = signal(true);
 
+  readonly historyPage      = signal(1);
+  readonly historyPages     = signal(1);
+  readonly historyTotal     = signal(0);
+  readonly historyLoading   = signal(false);
+  readonly hasMoreHistory   = computed(() => this.historyPage() < this.historyPages());
+
   readonly currentUserId = computed(() => this.authStore.user()?.id ?? '');
 
   readonly scoringId  = signal<string | null>(null);
@@ -79,7 +85,10 @@ export class MyMatchesComponent implements OnInit {
         this.matchesSvc.getUpcoming().subscribe({ next: d => { this.upcoming.set(d); res(); }, error: () => res() });
       }),
       new Promise<void>(res => {
-        this.matchesSvc.getMyMatches().subscribe({ next: d => { this.history.set(d); res(); }, error: () => res() });
+        this.matchesSvc.getMyMatches(1).subscribe({
+          next: d => { this.history.set(d.data); this.historyPage.set(1); this.historyPages.set(d.pages); this.historyTotal.set(d.total); res(); },
+          error: () => res(),
+        });
       }),
       new Promise<void>(res => {
         this.quickSvc.getMine().subscribe({ next: d => { this.challenges.set(d); res(); }, error: () => res() });
@@ -88,6 +97,21 @@ export class MyMatchesComponent implements OnInit {
   }
 
   setTab(t: 'upcoming' | 'challenges' | 'history'): void { this.tab.set(t); }
+
+  loadMoreHistory(): void {
+    if (!this.hasMoreHistory() || this.historyLoading()) return;
+    const next = this.historyPage() + 1;
+    this.historyLoading.set(true);
+    this.matchesSvc.getMyMatches(next).subscribe({
+      next: d => {
+        this.history.update(list => [...list, ...d.data]);
+        this.historyPage.set(d.page);
+        this.historyPages.set(d.pages);
+        this.historyLoading.set(false);
+      },
+      error: () => this.historyLoading.set(false),
+    });
+  }
 
   // ── Score ──
 

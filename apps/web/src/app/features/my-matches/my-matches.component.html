@@ -497,6 +497,13 @@
           </div>
         }
       </div>
+      @if (hasMoreHistory()) {
+        <div style="display:flex;justify-content:center;padding:var(--space-4) 0">
+          <button class="btn btn-ghost" (click)="loadMoreHistory()" [disabled]="historyLoading()">
+            @if (historyLoading()) { Chargement… } @else { Charger plus }
+          </button>
+        </div>
+      }
     }
   }
 

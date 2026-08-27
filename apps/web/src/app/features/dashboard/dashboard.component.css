@@ -81,7 +81,7 @@
 /* ── Stats ── */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 
@@ -116,6 +116,14 @@
 .stat-hint.positive { color: #1A7A35; }
 .stat-loading { color: var(--color-border); }
 .stat-positive { color: #1A7A35; }
+
+.stat-card-rank { text-decoration: none; color: inherit; transition: box-shadow var(--transition), transform var(--transition-fast); }
+.stat-card-rank:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.stat-rank { color: #FFD60A; }
+
+.delta-up   { color: #34C759; }
+.delta-down { color: #FF3B30; }
 
 /* ── Section header ── */
 .section-header {
@@ -251,7 +259,7 @@
   .greeting              { flex-direction: column; padding: 24px; }
   .greeting-name         { font-size: 24px; }
   .greeting-illustration { display: none; }
-  .stats-grid            { grid-template-columns: repeat(2, 1fr); }
+  .stats-grid            { grid-template-columns: repeat(2, 1fr); }   /* 2×2 pour 4 cards */
   .quick-actions         { grid-template-columns: 1fr 1fr; }
   .next-match-card       { flex-direction: column; align-items: flex-start; }
   .next-match-right      { align-items: flex-start; }

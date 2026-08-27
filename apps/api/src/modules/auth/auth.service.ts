@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { initialRating } from '../matches/elo.js';
+import { sendWelcome } from '../mailer/mailer.service.js';
 import type { SignupDto, LoginDto } from './auth.schema.js';
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
@@ -63,6 +64,8 @@ export async function signup(dto: SignupDto) {
     },
     select: { id: true, name: true, email: true, initials: true, level: true },
   });
+
+  sendWelcome(user.email, user.name);
 
   const tokens = generateTokens(user.id);
   return { user, ...tokens };

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, input, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DatePipe, NgClass } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MembersService } from '../../../core/services/members.service';
 import { QuickMatchesService } from '../../../core/services/quick-matches.service';
@@ -19,7 +19,7 @@ const COURTS = [
 @Component({
   selector: 'app-member-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, NgClass, ReactiveFormsModule],
+  imports: [RouterLink, DatePipe, ReactiveFormsModule],
   templateUrl: './member-detail.component.html',
   styleUrl: './member-detail.component.css',
 })
@@ -56,6 +56,12 @@ export class MemberDetailComponent implements OnInit {
     const m = this.member();
     if (!m?.rank) return null;
     return `#${m.rank}`;
+  });
+
+  readonly bestRankLabel = computed(() => {
+    const m = this.member();
+    if (!m?.bestRanking) return null;
+    return `#${m.bestRanking}`;
   });
 
   readonly challengeForm = this.fb.group({

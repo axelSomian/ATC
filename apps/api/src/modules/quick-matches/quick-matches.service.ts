@@ -1,19 +1,21 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
+import { sendChallengeReceived, sendChallengeAccepted, sendChallengeDeclined } from '../mailer/mailer.service.js';
 import type { CreateQuickMatchDto } from './quick-matches.schema.js';
 
-const USER_SEL = { id: true, name: true, initials: true, avatarUrl: true, level: true } as const;
+const USER_SEL      = { id: true, name: true, initials: true, avatarUrl: true, level: true } as const;
+const USER_SEL_MAIL = { ...USER_SEL, email: true } as const;
 
 export async function challenge(challengerId: string, dto: CreateQuickMatchDto) {
   if (challengerId === dto.challengedId) {
     throw new AppError(400, 'Vous ne pouvez pas vous défier vous-même');
   }
 
-  const challenged = await prisma.user.findUnique({ where: { id: dto.challengedId }, select: USER_SEL });
+  const challenged = await prisma.user.findUnique({ where: { id: dto.challengedId }, select: USER_SEL_MAIL });
   if (!challenged) throw new AppError(404, 'Membre introuvable');
 
-  const challenger = await prisma.user.findUnique({ where: { id: challengerId }, select: USER_SEL });
+  const challenger = await prisma.user.findUnique({ where: { id: challengerId }, select: USER_SEL_MAIL });
 
   const qm = await prisma.quickMatch.create({
     data: {
@@ -35,6 +37,18 @@ export async function challenge(challengerId: string, dto: CreateQuickMatchDto) 
     type:  qm.type,
   }).catch(() => {});
 
+  if (challenged.email) {
+    sendChallengeReceived({
+      to:             challenged.email,
+      challengedName: challenged.name,
+      challengerName: challenger?.name ?? 'Un joueur',
+      when:  qm.when,
+      court: qm.court,
+      type:  qm.type,
+      note:  qm.note,
+    });
+  }
+
   return qm;
 }
 
@@ -53,6 +67,25 @@ export async function respond(quickMatchId: string, userId: string, action: 'acc
     quickMatchId,
     when:  qm.when.toISOString(),
     court: qm.court,
+  }).catch(() => {});
+
+  // Envoyer email au challenger (fire-and-forget)
+  prisma.user.findMany({
+    where: { id: { in: [qm.challengerId, qm.challengedId] } },
+    select: { id: true, name: true, email: true },
+  }).then(users => {
+    const challenger = users.find(u => u.id === qm.challengerId);
+    const challenged = users.find(u => u.id === qm.challengedId);
+    if (!challenger?.email || !challenged) return;
+    if (action === 'accept') {
+      sendChallengeAccepted({
+        to: challenger.email, challengerName: challenger.name,
+        challengedName: challenged.name, when: qm.when,
+        court: qm.court, type: qm.type,
+      });
+    } else {
+      sendChallengeDeclined({ to: challenger.email, challengerName: challenger.name, challengedName: challenged.name });
+    }
   }).catch(() => {});
 
   return updated;

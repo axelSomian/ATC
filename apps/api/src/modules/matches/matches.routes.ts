@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../../middleware/passport.js';
-import { recordMatchSchema, validateMatchSchema } from './matches.schema.js';
+import { recordMatchSchema, validateMatchSchema, myMatchesQuerySchema } from './matches.schema.js';
 import { getMyStats, getMyMatches, recordMatch, validateMatch } from './matches.service.js';
 
 const router = Router();
@@ -15,7 +15,8 @@ router.get('/me/stats', authenticate, async (req, res, next) => {
 router.get('/me', authenticate, async (req, res, next) => {
   try {
     const userId = (req.user as { id: string }).id;
-    res.json(await getMyMatches(userId));
+    const dto    = myMatchesQuerySchema.parse(req.query);
+    res.json(await getMyMatches(userId, dto));
   } catch (err) { next(err); }
 });
 

@@ -27,7 +27,18 @@ export class DashboardComponent implements OnInit {
   readonly upcoming = signal<UpcomingMatch[]>([]);
   readonly loading  = signal(true);
 
-  readonly nextMatch = computed(() => this.upcoming()[0] ?? null);
+  readonly nextMatch   = computed(() => this.upcoming()[0] ?? null);
+  readonly rankLabel   = computed(() => {
+    const r = this.stats()?.rank;
+    return r != null ? `#${r}` : '—';
+  });
+  readonly deltaLabel  = computed(() => {
+    const d = this.stats()?.ratingDelta;
+    if (!d) return null;
+    return d > 0 ? `+${d}` : `${d}`;
+  });
+  readonly deltaUp     = computed(() => (this.stats()?.ratingDelta ?? 0) > 0);
+  readonly deltaDown   = computed(() => (this.stats()?.ratingDelta ?? 0) < 0);
 
   ngOnInit(): void {
     Promise.all([

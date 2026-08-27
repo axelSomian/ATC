@@ -1,8 +1,9 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
+import { sendScoreToValidate, sendScoreConfirmed, sendScoreDisputed } from '../mailer/mailer.service.js';
 import { computeElo } from './elo.js';
-import type { RecordMatchDto, ValidateMatchDto } from './matches.schema.js';
+import type { RecordMatchDto, ValidateMatchDto, MyMatchesQueryDto } from './matches.schema.js';
 
 const PLAYER_SELECT = {
   id: true, name: true, initials: true, avatarUrl: true, level: true,
@@ -16,7 +17,7 @@ const MATCH_INCLUDE = {
 export async function getMyStats(userId: string) {
   const windowStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const [matchesPlayed, wins, upcomingDispos, upcomingQuick, membersTotal] = await Promise.all([
+  const [matchesPlayed, wins, upcomingDispos, upcomingQuick, membersTotal, me] = await Promise.all([
     prisma.match.count({
       where: { OR: [{ hostId: userId }, { guestId: userId }], status: 'confirmed' },
     }),
@@ -40,20 +41,46 @@ export async function getMyStats(userId: string) {
       },
     }),
     prisma.user.count(),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { rating: true, ratingGames: true, ratingDelta: true },
+    }),
   ]);
 
   const losses  = matchesPlayed - wins;
   const winRate = matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 100) : 0;
 
-  return { matchesPlayed, wins, losses, winRate, upcomingCount: upcomingDispos + upcomingQuick, membersTotal };
+  const rank = (me && me.ratingGames >= 5)
+    ? await prisma.user.count({ where: { rating: { gt: me.rating }, ratingGames: { gte: 5 } } }) + 1
+    : null;
+
+  return {
+    matchesPlayed, wins, losses, winRate,
+    upcomingCount: upcomingDispos + upcomingQuick,
+    membersTotal,
+    rank,
+    rating:      me?.rating      ?? null,
+    ratingDelta: me?.ratingDelta ?? null,
+  };
 }
 
-export async function getMyMatches(userId: string) {
-  return prisma.match.findMany({
-    where: { OR: [{ hostId: userId }, { guestId: userId }] },
-    orderBy: { playedAt: 'desc' },
-    include: MATCH_INCLUDE,
-  });
+export async function getMyMatches(userId: string, dto: MyMatchesQueryDto) {
+  const { page, limit } = dto;
+  const skip = (page - 1) * limit;
+  const where = { OR: [{ hostId: userId }, { guestId: userId }] };
+
+  const [total, data] = await Promise.all([
+    prisma.match.count({ where }),
+    prisma.match.findMany({
+      where,
+      orderBy: { playedAt: 'desc' },
+      include: MATCH_INCLUDE,
+      skip,
+      take: limit,
+    }),
+  ]);
+
+  return { data, total, page, limit, pages: Math.ceil(total / limit) };
 }
 
 export async function recordMatch(userId: string, dto: RecordMatchDto) {
@@ -123,13 +150,33 @@ export async function recordMatch(userId: string, dto: RecordMatchDto) {
     scoreGuest: dto.scoreGuest,
   }).catch(() => {});
 
+  // Email à l'adversaire (fire-and-forget)
+  prisma.user.findMany({
+    where: { id: { in: [opponentId, userId] } },
+    select: { id: true, name: true, email: true },
+  }).then((users: { id: string; name: string; email: string }[]) => {
+    const opponent  = users.find((u: { id: string }) => u.id === opponentId);
+    const submitter = users.find((u: { id: string }) => u.id === userId);
+    if (!opponent?.email || !submitter) return;
+    sendScoreToValidate({
+      to:              opponent.email,
+      recipientName:   opponent.name,
+      submitterName:   submitter.name,
+      court,
+      playedAt,
+      scoreHost:       dto.scoreHost,
+      scoreGuest:      dto.scoreGuest,
+      isRecipientHost: opponentId === hostId,
+    });
+  }).catch(() => {});
+
   return match;
 }
 
 async function applyEloUpdate(hostId: string, guestId: string, winnerId: string): Promise<void> {
   const [host, guest] = await Promise.all([
-    prisma.user.findUnique({ where: { id: hostId },  select: { rating: true, ratingGames: true } }),
-    prisma.user.findUnique({ where: { id: guestId }, select: { rating: true, ratingGames: true } }),
+    prisma.user.findUnique({ where: { id: hostId },  select: { rating: true, ratingGames: true, bestRanking: true } }),
+    prisma.user.findUnique({ where: { id: guestId }, select: { rating: true, ratingGames: true, bestRanking: true } }),
   ]);
   if (!host || !guest) return;
 
@@ -146,6 +193,23 @@ async function applyEloUpdate(hostId: string, guestId: string, winnerId: string)
       data:  { rating: guestResult.newRating, level: guestResult.newLevel, ratingGames: { increment: 1 }, ratingDelta: guestResult.delta },
     }),
   ]);
+
+  // Mettre à jour bestRanking si le nouveau rang est meilleur (plus petit)
+  const newHostGames  = host.ratingGames + 1;
+  const newGuestGames = guest.ratingGames + 1;
+  await Promise.all([
+    newHostGames >= 5  ? updateBestRanking(hostId,  hostResult.newRating,  host.bestRanking)  : Promise.resolve(),
+    newGuestGames >= 5 ? updateBestRanking(guestId, guestResult.newRating, guest.bestRanking) : Promise.resolve(),
+  ]);
+}
+
+async function updateBestRanking(userId: string, newRating: number, currentBest: number | null): Promise<void> {
+  const rank = await prisma.user.count({
+    where: { rating: { gt: newRating }, ratingGames: { gte: 5 } },
+  }) + 1;
+  if (currentBest === null || rank < currentBest) {
+    await prisma.user.update({ where: { id: userId }, data: { bestRanking: rank } });
+  }
 }
 
 export async function validateMatch(matchId: string, userId: string, dto: ValidateMatchDto) {
@@ -178,6 +242,34 @@ export async function validateMatch(matchId: string, userId: string, dto: Valida
       matchId:    match.id,
       court:      match.court,
       playedAt:   match.playedAt.toISOString(),
+    }).catch(() => {});
+
+    // Email au soumetteur du score (fire-and-forget)
+    prisma.user.findUnique({
+      where: { id: match.recordedBy },
+      select: { email: true, name: true },
+    }).then((submitter: { email: string; name: string } | null) => {
+      if (!submitter?.email) return;
+      const opponent = match.hostId === match.recordedBy ? match.guest : match.host;
+      const won      = match.winnerId === match.recordedBy;
+      if (dto.action === 'confirm') {
+        sendScoreConfirmed({
+          to:           submitter.email,
+          submitterName: submitter.name,
+          opponentName:  opponent.name,
+          court:         match.court,
+          playedAt:      match.playedAt,
+          won,
+        });
+      } else {
+        sendScoreDisputed({
+          to:           submitter.email,
+          submitterName: submitter.name,
+          opponentName:  opponent.name,
+          court:         match.court,
+          playedAt:      match.playedAt,
+        });
+      }
     }).catch(() => {});
   }
 
