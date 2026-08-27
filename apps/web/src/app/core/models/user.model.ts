@@ -20,6 +20,8 @@ export interface RecentMatch {
   guest: MatchPlayer;
 }
 
+import type { ClubRef } from './reference.model';
+
 export interface UserPublic {
   id: string;
   name: string;
@@ -27,7 +29,7 @@ export interface UserPublic {
   avatarUrl?: string;
   level: number;
   city?: string;
-  club?: string;
+  club?: ClubRef | null;
   online: boolean;
   joinedAt: string;
 }

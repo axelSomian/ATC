@@ -3,22 +3,21 @@ import { RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { BehaviorSubject, Subject, switchMap, debounceTime, distinctUntilChanged, catchError, EMPTY, takeUntil } from 'rxjs';
 import { MembersService, type MembersQuery } from '../../../core/services/members.service';
+import { ReferenceService } from '../../../core/services/reference.service';
+import { LevelLegendComponent } from '../../../shared/level-legend/level-legend.component';
 import { CITIES_CI } from '@atc/shared';
 import type { UserProfile } from '../../../core/models/user.model';
-
-const LEVEL_LABELS: Record<number, string> = {
-  1: 'Débutant', 2: 'Intermédiaire', 3: 'Confirmé', 4: 'Avancé', 5: 'Expert',
-};
 
 @Component({
   selector: 'app-members-list',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, LevelLegendComponent],
   templateUrl: './members-list.component.html',
   styleUrl: './members-list.component.css',
 })
 export class MembersListComponent implements OnInit, OnDestroy {
   private readonly membersService = inject(MembersService);
+  private readonly reference = inject(ReferenceService);
   private readonly destroy$ = new Subject<void>();
   private readonly query$ = new BehaviorSubject<MembersQuery>({ page: 1, limit: 18 });
 
@@ -36,7 +35,6 @@ export class MembersListComponent implements OnInit, OnDestroy {
   readonly cities       = CITIES_CI;
   readonly levels       = [1, 2, 3, 4, 5];
   readonly dots         = [1, 2, 3, 4, 5];
-  readonly levelLabels = LEVEL_LABELS;
 
   get currentPage(): number { return this.query$.value.page ?? 1; }
 
@@ -88,7 +86,7 @@ export class MembersListComponent implements OnInit, OnDestroy {
 
   goTo(page: number): void { this.patch({ page }); }
 
-  getLevelLabel(l: number): string { return LEVEL_LABELS[l] ?? ''; }
+  getLevelLabel(l: number): string { return this.reference.levelLabel(l); }
 
   paginationItems(): Array<number | null> {
     const total = this.pages();

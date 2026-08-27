@@ -4,9 +4,13 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { ReferenceService } from './core/services/reference.service';
 
-function initApp(authService: AuthService) {
-  return () => authService.tryRestoreSession();
+function initApp(authService: AuthService, referenceService: ReferenceService) {
+  return () => {
+    referenceService.load();
+    authService.tryRestoreSession();
+  };
 }
 
 export const appConfig: ApplicationConfig = {
@@ -16,7 +20,7 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: initApp,
-      deps: [AuthService],
+      deps: [AuthService, ReferenceService],
       multi: true,
     },
   ],

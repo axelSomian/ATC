@@ -10,7 +10,7 @@ export interface UpdateProfilePayload {
   age?: number | null;
   phone?: string | null;
   city?: string | null;
-  club?: string | null;
+  clubId?: string | null;
   racquet?: string | null;
   level?: number;
   preferredCourts?: string[];

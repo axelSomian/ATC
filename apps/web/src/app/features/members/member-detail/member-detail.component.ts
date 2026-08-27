@@ -5,11 +5,8 @@ import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MembersService } from '../../../core/services/members.service';
 import { QuickMatchesService } from '../../../core/services/quick-matches.service';
 import { AuthStore } from '../../../core/stores/auth.store';
+import { ReferenceService } from '../../../core/services/reference.service';
 import type { UserProfile, RecentMatch } from '../../../core/models/user.model';
-
-const LEVEL_LABELS: Record<number, string> = {
-  1: 'Débutant', 2: 'Intermédiaire', 3: 'Confirmé', 4: 'Avancé', 5: 'Expert',
-};
 
 const COURTS = [
   'Club Ivoire', 'INSEP', 'Plateau Tennis Club', 'Cocody', 'Marcory',
@@ -27,6 +24,7 @@ export class MemberDetailComponent implements OnInit {
   private readonly membersService    = inject(MembersService);
   private readonly quickMatchService = inject(QuickMatchesService);
   private readonly authStore         = inject(AuthStore);
+  private readonly reference         = inject(ReferenceService);
   private readonly fb                = inject(FormBuilder);
 
   readonly id = input.required<string>();
@@ -44,7 +42,7 @@ export class MemberDetailComponent implements OnInit {
   readonly isOwnProfile = computed(() => this.authStore.user()?.id === this.id());
   readonly dots      = [1, 2, 3, 4, 5];
   readonly courts    = COURTS;
-  readonly levelLabel = computed(() => LEVEL_LABELS[this.member()?.level ?? 1]);
+  readonly levelLabel = computed(() => this.reference.levelLabel(this.member()?.level ?? 1));
 
   readonly winRate = computed(() => {
     const m = this.member();

@@ -102,7 +102,7 @@ Voir le prototype interactif (`ATC.html`) — direction visuelle validée :
 - **Typo**
   - Display : `Instrument Serif` (italique pour les titres)
   - Body : `Geist` (sans-serif moderne)
-- **Système de niveau** : 5 dots (Débutant → Intermédiaire → Confirmé → Avancé → Expert)
+- **Système de niveau** : 5 dots — N1 Débutant·e → N2 Initié·e → N3 Intermédiaire → N4 Avancé·e → N5 Compétition. Libellés + descriptions (profil / jeu) stockés en base (table `Level`, éditables par un admin) et exposés via `GET /api/v1/levels`. Les bornes de rating ELO restent dans `apps/api/src/modules/matches/elo.ts`.
 - **Layout** : sidebar fixe sur desktop, bottom nav sur mobile, breakpoint ~768px
 - **Ton** : convivial / communautaire, touches CI discrètes (mini-stripes drapeau, palette terracotta)
 
@@ -123,7 +123,7 @@ model User {
   age             Int?
   bio             String?
   city            String?
-  club            String?
+  clubId          String?  // FK -> Club (table éditable par admin, GET /api/v1/clubs)
   racquet         String?
   preferredCourts String[]
   preferredTimes  String[]

@@ -14,6 +14,7 @@ export interface SignupPayload {
   level: number;
   phone?: string;
   city?: string;
+  clubId?: string;
 }
 
 export interface LoginPayload {

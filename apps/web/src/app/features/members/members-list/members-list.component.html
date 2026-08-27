@@ -19,6 +19,8 @@
     </div>
   </div>
 
+  <app-level-legend />
+
   <!-- Filters -->
   <div class="filters-bar">
     <div class="filter-group">
@@ -86,9 +88,9 @@
                   {{ m.city }}
                 </span>
               }
-              @if (m.club) {
+              @if (m.club?.name) {
                 <span class="row-sep">·</span>
-                <span class="row-club">{{ m.club }}</span>
+                <span class="row-club">{{ m.club!.name }}</span>
               }
             </div>
           </div>

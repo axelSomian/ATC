@@ -135,6 +135,47 @@
   background: rgba(0, 113, 227, 0.04);
 }
 
+/* ── Level picker (cartes explicatives) ── */
+.level-picker-cards { gap: 7px; }
+
+.level-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 13px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  transition: border-color var(--transition), background var(--transition);
+  text-align: left;
+}
+.level-card:hover { border-color: var(--color-accent); }
+.level-card.selected {
+  border-color: var(--color-accent);
+  background: rgba(0, 113, 227, 0.04);
+}
+.level-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.level-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.level-card-profil {
+  font-size: 12px;
+  color: var(--color-ink-light, var(--color-muted));
+}
+.level-card-jeu {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
 .auth-footer {
   margin-top: 20px;
   text-align: center;

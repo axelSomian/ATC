@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { initialRating } from '../matches/elo.js';
+import { assertValidClub } from '../reference/reference.service.js';
 import { sendWelcome } from '../mailer/mailer.service.js';
 import type { SignupDto, LoginDto } from './auth.schema.js';
 
@@ -48,6 +49,8 @@ export async function signup(dto: SignupDto) {
   const existing = await prisma.user.findUnique({ where: { email: dto.email } });
   if (existing) throw new AppError(409, 'Cet email est déjà utilisé');
 
+  await assertValidClub(dto.clubId);
+
   const passwordHash = await bcrypt.hash(dto.password, 12);
   const initials = buildInitials(dto.name);
 
@@ -59,6 +62,7 @@ export async function signup(dto: SignupDto) {
       passwordHash,
       level: dto.level,
       city: dto.city,
+      clubId: dto.clubId,
       initials,
       rating: initialRating(dto.level),
     },
@@ -113,12 +117,12 @@ export async function getMe(userId: string) {
       age: true,
       bio: true,
       city: true,
-      club: true,
       racquet: true,
       preferredCourts: true,
       preferredTimes: true,
       joinedAt: true,
       online: true,
+      club: { select: { id: true, slug: true, name: true, zone: true, location: true } },
     },
   });
   if (!user) throw new AppError(404, 'Utilisateur introuvable');

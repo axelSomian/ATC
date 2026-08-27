@@ -56,9 +56,9 @@
                   {{ member()!.city }}
                 </span>
               }
-              @if (member()!.club) {
+              @if (member()!.club?.name) {
                 <span class="hero-meta-sep">·</span>
-                <span class="hero-meta-item">{{ member()!.club }}</span>
+                <span class="hero-meta-item">{{ member()!.club!.name }}</span>
               }
               @if (member()!.age) {
                 <span class="hero-meta-sep">·</span>
@@ -239,10 +239,10 @@
                 <span class="dt-value">{{ member()!.city }}</span>
               </div>
             }
-            @if (member()!.club) {
+            @if (member()!.club?.name) {
               <div class="dt-row">
                 <span class="dt-label">Club</span>
-                <span class="dt-value">{{ member()!.club }}</span>
+                <span class="dt-value">{{ member()!.club!.name }}</span>
               </div>
             }
             @if (member()!.racquet) {

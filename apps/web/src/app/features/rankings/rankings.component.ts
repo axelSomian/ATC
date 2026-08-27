@@ -2,17 +2,20 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MembersService, type RankingEntry } from '../../core/services/members.service';
 import { AuthStore } from '../../core/stores/auth.store';
+import { ReferenceService } from '../../core/services/reference.service';
+import { LevelLegendComponent } from '../../shared/level-legend/level-legend.component';
 
 @Component({
   selector: 'app-rankings',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, LevelLegendComponent],
   templateUrl: './rankings.component.html',
   styleUrl: './rankings.component.css',
 })
 export class RankingsComponent implements OnInit {
   private readonly membersSvc = inject(MembersService);
   private readonly authStore  = inject(AuthStore);
+  private readonly reference  = inject(ReferenceService);
 
   readonly rankings = signal<RankingEntry[]>([]);
   readonly loading  = signal(true);
@@ -31,7 +34,7 @@ export class RankingsComponent implements OnInit {
   }
 
   levelLabel(level: number): string {
-    return ['', 'Débutant', 'Intermédiaire', 'Confirmé', 'Avancé', 'Expert'][level] ?? '';
+    return this.reference.levelLabel(level);
   }
 
   ratingColor(rating: number): string {

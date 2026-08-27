@@ -19,11 +19,11 @@ model User {
   name            String
   initials        String
   avatarUrl       String?
-  level           Int      // 1..5
+  level           Int // 1..5 — voir model Level
   age             Int?
   bio             String?
   city            String?
-  club            String?
+  clubId          String?
   racquet         String?
   preferredCourts String[]
   preferredTimes  String[]
@@ -34,6 +34,7 @@ model User {
   ratingDelta     Int      @default(0)
   bestRanking     Int?
 
+  club                     Club?          @relation(fields: [clubId], references: [id])
   availabilities           Availability[]
   matchesAsHost            Match[]        @relation("host")
   matchesAsGuest           Match[]        @relation("guest")
@@ -45,6 +46,34 @@ model User {
   @@index([rating, ratingGames])
   @@index([level, online])
   @@index([city])
+  @@index([clubId])
+}
+
+// Clubs / structures de tennis — éditables par un admin (pas de redéploiement).
+model Club {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  zone      String   @default("")
+  location  String   @default("")
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  users User[]
+
+  @@index([active, sortOrder])
+}
+
+// Les 5 niveaux : contenu affiché (nom, profil, jeu) éditable par un admin.
+// Les bornes de rating ELO restent dans le code (src/modules/matches/elo.ts).
+model Level {
+  level     Int      @id // 1..5
+  code      String // 'N1'..'N5'
+  nom       String
+  profil    String
+  jeu       String
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Availability {
@@ -52,7 +81,7 @@ model Availability {
   userId   String
   startsAt DateTime
   endsAt   DateTime
-  status   String   // 'free' | 'busy' | 'matched'
+  status   String // 'free' | 'busy' | 'matched'
   user     User     @relation(fields: [userId], references: [id])
 
   @@index([userId, startsAt])
@@ -64,7 +93,7 @@ model DispoPost {
   when      DateTime
   duration  Int
   court     String
-  type      String         // 'simple' | 'double' | 'mixte'
+  type      String // 'simple' | 'double' | 'mixte'
   note      String?
   createdAt DateTime       @default(now())
   user      User           @relation(fields: [userId], references: [id])
@@ -79,7 +108,7 @@ model MatchRequest {
   id          String    @id @default(cuid())
   dispoPostId String
   requesterId String
-  status      String    // 'pending' | 'accepted' | 'declined'
+  status      String // 'pending' | 'accepted' | 'declined'
   dispoPost   DispoPost @relation(fields: [dispoPostId], references: [id])
 
   @@index([dispoPostId, status])
@@ -92,7 +121,7 @@ model QuickMatch {
   challengedId String
   when         DateTime
   court        String
-  type         String   // 'simple' | 'double' | 'mixte'
+  type         String // 'simple' | 'double' | 'mixte'
   note         String?
   status       String   @default("pending") // 'pending' | 'accepted' | 'declined'
   createdAt    DateTime @default(now())
@@ -106,7 +135,7 @@ model QuickMatch {
 }
 
 model Match {
-  id           String    @id @default(cuid())
+  id           String      @id @default(cuid())
   hostId       String
   guestId      String
   playedAt     DateTime
@@ -115,13 +144,13 @@ model Match {
   scoreHost    String
   scoreGuest   String
   winnerId     String
-  status       String    @default("confirmed") // 'pending' | 'confirmed' | 'disputed'
-  recordedBy   String?   // userId who submitted the score
-  dispoPostId  String?   @unique
-  quickMatchId String?   @unique
-  host         User      @relation("host",  fields: [hostId],  references: [id])
-  guest        User      @relation("guest", fields: [guestId], references: [id])
-  dispoPost    DispoPost? @relation(fields: [dispoPostId], references: [id])
+  status       String      @default("confirmed") // 'pending' | 'confirmed' | 'disputed'
+  recordedBy   String? // userId who submitted the score
+  dispoPostId  String?     @unique
+  quickMatchId String?     @unique
+  host         User        @relation("host", fields: [hostId], references: [id])
+  guest        User        @relation("guest", fields: [guestId], references: [id])
+  dispoPost    DispoPost?  @relation(fields: [dispoPostId], references: [id])
   quickMatch   QuickMatch? @relation(fields: [quickMatchId], references: [id])
 
   @@index([hostId, status, playedAt])
@@ -132,7 +161,7 @@ model Match {
 model Notification {
   id        String    @id @default(cuid())
   userId    String
-  type      String    // 'match_request' | 'match_confirmed' | 'match_declined' | 'quick_match_request' | 'score_recorded'
+  type      String // 'match_request' | 'match_confirmed' | 'match_declined' | 'quick_match_request' | 'score_recorded'
   payload   Json
   readAt    DateTime?
   createdAt DateTime  @default(now())

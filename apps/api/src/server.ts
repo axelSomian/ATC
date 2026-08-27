@@ -17,6 +17,7 @@ import availabilityRoutes from './modules/availability/availability.routes.js';
 import matchesRoutes from './modules/matches/matches.routes.js';
 import notificationsRoutes from './modules/notifications/notifications.routes.js';
 import quickMatchesRoutes from './modules/quick-matches/quick-matches.routes.js';
+import referenceRoutes from './modules/reference/reference.routes.js';
 
 const app = express();
 // Derrière le proxy Render (et Vercel) : faire confiance au 1er hop pour
@@ -84,6 +85,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api/v1/auth/login', loginLimiter);
 app.use('/api/v1/auth/signup', signupLimiter);
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1', referenceRoutes);
 app.use('/api/v1/members', membersRoutes);
 app.use('/api/v1/dispos', disposRoutes);
 app.use('/api/v1/availability', availabilityRoutes);

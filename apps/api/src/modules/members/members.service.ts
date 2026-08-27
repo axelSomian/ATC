@@ -1,6 +1,11 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
+import { assertValidClub } from '../reference/reference.service.js';
 import type { MembersQueryDto, UpdateMeDto } from './members.schema.js';
+
+const CLUB_SELECT = {
+  select: { id: true, slug: true, name: true, zone: true, location: true },
+} as const;
 
 const PUBLIC_SELECT = {
   id: true,
@@ -9,7 +14,7 @@ const PUBLIC_SELECT = {
   avatarUrl: true,
   level: true,
   city: true,
-  club: true,
+  club: CLUB_SELECT,
   online: true,
   joinedAt: true,
 } as const;
@@ -167,6 +172,8 @@ export async function updateMe(userId: string, dto: UpdateMeDto) {
     });
     if (existing) throw new AppError(409, 'Ce numéro est déjà utilisé');
   }
+
+  if (dto.clubId !== undefined) await assertValidClub(dto.clubId);
 
   return prisma.user.update({
     where: { id: userId },

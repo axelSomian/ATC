@@ -87,10 +87,10 @@
               <span class="info-value">{{ profile()!.age }} ans</span>
             </div>
           }
-          @if (profile()!.club) {
+          @if (profile()!.club?.name) {
             <div class="info-row">
               <span class="info-label">Club</span>
-              <span class="info-value">{{ profile()!.club }}</span>
+              <span class="info-value">{{ profile()!.club!.name }}</span>
             </div>
           }
           @if (profile()!.racquet) {
@@ -206,6 +206,9 @@
               }
               <span class="level-picker-label">{{ editLevelLabel() }}</span>
             </div>
+            @if (editLevelDef(); as def) {
+              <p class="level-picker-desc">{{ def.profil }} · {{ def.jeu }}</p>
+            }
           </div>
 
           <div class="form-group">
@@ -236,9 +239,20 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="club">Club</label>
-            <input id="club" type="text" class="form-control" formControlName="club"
-              placeholder="Nom de votre club" />
+            <label class="form-label" for="clubId">Club</label>
+            <select id="clubId" class="form-control" formControlName="clubId">
+              <option value="">— Aucun —</option>
+              @for (group of clubsByZone(); track group.zone) {
+                <optgroup [label]="group.zone">
+                  @for (club of group.clubs; track club.id) {
+                    <option [value]="club.id">{{ club.name }}</option>
+                  }
+                </optgroup>
+              }
+              @if (otherClub(); as other) {
+                <option [value]="other.id">{{ other.name }}</option>
+              }
+            </select>
           </div>
 
           <div class="form-group">

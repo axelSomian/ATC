@@ -10,6 +10,7 @@ export const signupSchema = z.object({
   password: z.string().min(8, 'Minimum 8 caractères'),
   level: z.number().int().min(1).max(5),
   city: z.string().optional(),
+  clubId: z.string().optional(),
 });
 
 export const loginSchema = z.object({
@@ -27,7 +28,7 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(500).optional().nullable(),
   age: z.number().int().min(10).max(100).optional().nullable(),
   city: z.string().optional().nullable(),
-  club: z.string().optional().nullable(),
+  clubId: z.string().optional().nullable(),
   racquet: z.string().optional().nullable(),
   preferredCourts: z.array(z.string()).optional(),
   preferredTimes: z.array(z.string()).optional(),

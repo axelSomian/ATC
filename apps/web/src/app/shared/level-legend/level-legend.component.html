@@ -1,0 +1,30 @@
+@if (levels().length) {
+  <div class="legend" [class.is-open]="open()">
+    <button type="button" class="legend-head" (click)="toggle()" [attr.aria-expanded]="open()">
+      <span class="legend-title">Comprendre les niveaux</span>
+      <svg class="legend-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+
+    @if (open()) {
+      <ul class="legend-list">
+        @for (l of levels(); track l.level) {
+          <li class="legend-row">
+            <div class="legend-dots" aria-hidden="true">
+              @for (d of [1, 2, 3, 4, 5]; track d) {
+                <span class="legend-dot" [class.active]="d <= l.level"></span>
+              }
+            </div>
+            <div class="legend-body">
+              <span class="legend-name"><strong>{{ l.code }}</strong> · {{ l.nom }}</span>
+              <span class="legend-profil">{{ l.profil }}</span>
+              <span class="legend-jeu">{{ l.jeu }}</span>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}

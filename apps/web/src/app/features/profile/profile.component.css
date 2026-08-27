@@ -227,6 +227,12 @@
   margin-left: var(--space-2);
 }
 
+.level-picker-desc {
+  margin: var(--space-2) 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
 /* ── Toggle tags ── */
 .toggle-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 

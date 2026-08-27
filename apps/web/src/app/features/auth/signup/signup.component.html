@@ -70,20 +70,26 @@
 
         <div class="form-group">
           <label class="form-label">Votre niveau</label>
-          <div class="level-picker">
+          <div class="level-picker level-picker-cards">
             @for (lvl of levels; track lvl) {
               <button
                 type="button"
-                class="level-btn"
+                class="level-card"
                 [class.selected]="form.controls.level.value === lvl"
                 (click)="setLevel(lvl)"
               >
-                <div class="level-dots">
-                  @for (dot of levels; track dot) {
-                    <div class="level-dot" [class.active]="dot <= lvl"></div>
-                  }
+                <div class="level-card-head">
+                  <div class="level-dots">
+                    @for (dot of levels; track dot) {
+                      <div class="level-dot" [class.active]="dot <= lvl"></div>
+                    }
+                  </div>
+                  <span class="level-card-name">{{ levelName(lvl) }}</span>
                 </div>
-                <span>{{ levelLabels[lvl] }}</span>
+                @if (levelDef(lvl); as def) {
+                  <span class="level-card-profil">{{ def.profil }}</span>
+                  <span class="level-card-jeu">{{ def.jeu }}</span>
+                }
               </button>
             }
           </div>
@@ -95,6 +101,23 @@
             <option value="">Sélectionner une ville</option>
             @for (city of cities; track city) {
               <option [value]="city">{{ city }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="clubId">Club</label>
+          <select id="clubId" class="form-control" formControlName="clubId">
+            <option value="">Sélectionner un club (optionnel)</option>
+            @for (group of clubsByZone(); track group.zone) {
+              <optgroup [label]="group.zone">
+                @for (club of group.clubs; track club.id) {
+                  <option [value]="club.id">{{ club.name }}</option>
+                }
+              </optgroup>
+            }
+            @if (otherClub(); as other) {
+              <option [value]="other.id">{{ other.name }}</option>
             }
           </select>
         </div>

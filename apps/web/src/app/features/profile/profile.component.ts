@@ -3,12 +3,10 @@ import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { MembersService, type UpdateProfilePayload } from '../../core/services/members.service';
+import { ReferenceService } from '../../core/services/reference.service';
 import { CITIES_CI } from '@atc/shared';
 import type { UserMe } from '../../core/models/user.model';
-
-const LEVEL_LABELS: Record<number, string> = {
-  1: 'Débutant', 2: 'Intermédiaire', 3: 'Confirmé', 4: 'Avancé', 5: 'Expert',
-};
+import type { LevelRef } from '../../core/models/reference.model';
 
 const TIMES = [
   { value: 'matin', label: 'Matin (7h–12h)' },
@@ -32,6 +30,7 @@ const COURTS = [
 })
 export class ProfileComponent implements OnInit {
   private readonly membersService = inject(MembersService);
+  private readonly reference = inject(ReferenceService);
   private readonly fb = inject(FormBuilder);
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -52,9 +51,12 @@ export class ProfileComponent implements OnInit {
   readonly cities = CITIES_CI;
   readonly times  = TIMES;
   readonly courts = COURTS;
+  readonly clubsByZone = this.reference.clubsByZone;
+  readonly otherClub   = this.reference.otherClub;
 
-  readonly levelLabel     = computed(() => LEVEL_LABELS[this.profile()?.level ?? 1]);
-  readonly editLevelLabel = computed(() => LEVEL_LABELS[this.selectedLevel()]);
+  readonly levelLabel     = computed(() => this.reference.levelLabel(this.profile()?.level ?? 1));
+  readonly editLevelLabel = computed(() => this.reference.levelLabel(this.selectedLevel()));
+  readonly editLevelDef   = computed<LevelRef | undefined>(() => this.reference.levelDef(this.selectedLevel()));
 
   readonly form = this.fb.group({
     name:    ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
@@ -62,7 +64,7 @@ export class ProfileComponent implements OnInit {
     age:     this.fb.control<number | null>(null),
     phone:   [''],
     city:    [''],
-    club:    [''],
+    clubId:  [''],
     racquet: [''],
   });
 
@@ -78,7 +80,7 @@ export class ProfileComponent implements OnInit {
     if (!p) return;
     this.form.patchValue({
       name: p.name, bio: p.bio ?? '', age: p.age ?? null,
-      phone: p.phone ?? '', city: p.city ?? '', club: p.club ?? '', racquet: p.racquet ?? '',
+      phone: p.phone ?? '', city: p.city ?? '', clubId: p.club?.id ?? '', racquet: p.racquet ?? '',
     });
     this.selectedLevel.set(p.level);
     this.selectedCourts.set([...p.preferredCourts]);
@@ -139,7 +141,7 @@ export class ProfileComponent implements OnInit {
       age:     raw.age     || null,
       phone:   raw.phone   || null,
       city:    raw.city    || null,
-      club:    raw.club    || null,
+      clubId:  raw.clubId  || null,
       racquet: raw.racquet || null,
       level:   this.selectedLevel(),
       preferredCourts: this.selectedCourts(),

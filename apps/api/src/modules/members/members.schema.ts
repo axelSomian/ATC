@@ -18,7 +18,7 @@ export const updateMeSchema = z.object({
   bio: z.string().max(500).optional().nullable(),
   age: z.number().int().min(10).max(100).optional().nullable(),
   city: z.string().optional().nullable(),
-  club: z.string().optional().nullable(),
+  clubId: z.string().optional().nullable(),
   racquet: z.string().optional().nullable(),
   preferredCourts: z.array(z.string()).optional(),
   preferredTimes: z.array(z.string()).optional(),

@@ -3,9 +3,8 @@ import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { AuthStore } from '../../core/stores/auth.store';
 import { MatchesService, type MyStats } from '../../core/services/matches.service';
+import { ReferenceService } from '../../core/services/reference.service';
 import type { UpcomingMatch } from '../../core/models/match.model';
-
-const LEVEL_LABELS = ['', 'Débutant', 'Intermédiaire', 'Confirmé', 'Avancé', 'Expert'];
 
 @Component({
   selector: 'app-dashboard',
@@ -17,10 +16,11 @@ const LEVEL_LABELS = ['', 'Débutant', 'Intermédiaire', 'Confirmé', 'Avancé',
 export class DashboardComponent implements OnInit {
   private readonly store       = inject(AuthStore);
   private readonly matchesSvc  = inject(MatchesService);
+  private readonly reference   = inject(ReferenceService);
 
   readonly user        = this.store.user;
   readonly firstName   = computed(() => this.user()?.name?.split(' ')[0] ?? '');
-  readonly levelLabel  = computed(() => LEVEL_LABELS[this.user()?.level ?? 1]);
+  readonly levelLabel  = computed(() => this.reference.levelLabel(this.user()?.level ?? 1));
   readonly dots        = [1, 2, 3, 4, 5];
 
   readonly stats    = signal<MyStats | null>(null);

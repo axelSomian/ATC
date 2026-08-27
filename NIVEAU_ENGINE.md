@@ -81,13 +81,17 @@ R_A_new = R_A + K × (S - E_A)
 
 Le niveau affiché (1–5) est calculé à partir du rating :
 
-| Rating       | Niveau | Label         |
-|--------------|--------|---------------|
-| < 900        | 1      | Débutant      |
-| 900 – 1099   | 2      | Intermédiaire |
-| 1100 – 1299  | 3      | Confirmé      |
-| 1300 – 1499  | 4      | Avancé        |
-| ≥ 1500       | 5      | Expert        |
+| Rating       | Niveau | Code | Label         |
+|--------------|--------|------|---------------|
+| < 900        | 1      | N1   | Débutant·e    |
+| 900 – 1099   | 2      | N2   | Initié·e      |
+| 1100 – 1299  | 3      | N3   | Intermédiaire |
+| 1300 – 1499  | 4      | N4   | Avancé·e      |
+| ≥ 1500       | 5      | N5   | Compétition   |
+
+> Les libellés et descriptions (profil / jeu) sont en base (table `Level`, éditables par un admin),
+> exposés via `GET /api/v1/levels`. Seules les **bornes de rating** ci-dessus vivent dans le code
+> (`elo.ts`) car elles font partie de la logique du moteur.
 
 ```typescript
 function ratingToLevel(rating: number): number {
