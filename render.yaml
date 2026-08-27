@@ -1,0 +1,56 @@
+# Blueprint Render — API Express + Socket.IO (plan gratuit)
+# Doc : https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: atc-api
+    runtime: node
+    plan: free
+    region: frankfurt            # choisir la même région que la base Neon
+    branch: master
+    autoDeploy: true
+    healthCheckPath: /health
+    buildCommand: >-
+      corepack enable &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter @atc/api exec prisma generate &&
+      pnpm --filter @atc/api build
+    # migre la base à chaque déploiement puis démarre le serveur.
+    # `migrate deploy` est idempotent (no-op si la base est à jour).
+    startCommand: >-
+      pnpm --filter @atc/api exec prisma migrate deploy &&
+      node apps/api/dist/server.js
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production
+      # DATABASE_URL : chaîne Neon "pooled"  (host ...-pooler..., + &pgbouncer=true)
+      - key: DATABASE_URL
+        sync: false
+      # DIRECT_URL : chaîne Neon "directe" (sans -pooler) — pour les migrations
+      - key: DIRECT_URL
+        sync: false
+      # Secrets JWT générés automatiquement par Render
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      # URL exacte du front Vercel, ex: https://atc.vercel.app (sans slash final)
+      - key: CORS_ORIGIN
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: MAILEROO_API_KEY
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: ATC Tennis

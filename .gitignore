@@ -7,4 +7,5 @@ dist/
 Thumbs.db
 
 # Prisma
-apps/api/prisma/migrations/
+# NOTE: les migrations DOIVENT être versionnées (nécessaires à `prisma migrate deploy` en prod).
+# Ne pas ré-ignorer apps/api/prisma/migrations/

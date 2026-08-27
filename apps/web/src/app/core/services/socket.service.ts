@@ -1,6 +1,7 @@
 import { Injectable, inject, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { AuthStore } from '../stores/auth.store';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SocketService implements OnDestroy {
@@ -12,7 +13,7 @@ export class SocketService implements OnDestroy {
     const token = this.authStore.accessToken();
     if (!token) return;
 
-    this.socket = io('http://localhost:3000', {
+    this.socket = io(environment.socketUrl, {
       auth: { token },
       transports: ['websocket'],
       reconnectionAttempts: 5,

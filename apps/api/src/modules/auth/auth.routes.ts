@@ -56,10 +56,13 @@ router.get('/me', authenticate, async (req, res, next) => {
 });
 
 function cookieOptions() {
+  const isProd = process.env.NODE_ENV === 'production';
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
+    secure: isProd,
+    // En prod le front (Vercel) appelle l'API via un "rewrite" same-origin :
+    // 'lax' suffit et évite les rejets de cookie sur navigation.
+    sameSite: 'lax' as const,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   };

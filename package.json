@@ -2,6 +2,10 @@
   "name": "atc",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev:api": "pnpm --filter @atc/api dev",
     "dev:web": "pnpm --filter @atc/web dev",
