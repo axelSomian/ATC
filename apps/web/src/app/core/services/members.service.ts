@@ -66,7 +66,11 @@ export class MembersService {
   }
 
   listMembers(params?: MembersQuery) {
-    return this.http.get<MembersPage>(`${API}/members`, { params: params as Record<string, string | number | boolean> });
+    const clean: Record<string, string | number | boolean> = {};
+    for (const [k, v] of Object.entries(params ?? {})) {
+      if (v !== undefined && v !== null && v !== '') clean[k] = v as string | number | boolean;
+    }
+    return this.http.get<MembersPage>(`${API}/members`, { params: clean });
   }
 
   getRankings() {

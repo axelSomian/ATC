@@ -1,14 +1,19 @@
 import { z } from 'zod';
 import { phoneField } from '../../lib/phone.js';
 
+// Un query param absent peut arriver en '', 'undefined' ou 'null' (sérialisation
+// côté client) — on le ramène à undefined avant toute coercition.
+const blankToUndefined = (v: unknown) =>
+  v === '' || v === 'undefined' || v === 'null' || v == null ? undefined : v;
+
 export const membersQuerySchema = z.object({
-  q: z.string().optional(),
-  level: z.coerce.number().int().min(1).max(5).optional(),
-  online: z
-    .string()
-    .optional()
-    .transform((v) => v === 'true'),
-  city: z.string().optional(),
+  q: z.preprocess(blankToUndefined, z.string().optional()),
+  level: z.preprocess((v) => {
+    const n = Number(v);
+    return v == null || v === '' || Number.isNaN(n) ? undefined : n;
+  }, z.number().int().min(1).max(5).optional()),
+  online: z.preprocess(blankToUndefined, z.string().optional()).transform((v) => v === 'true'),
+  city: z.preprocess(blankToUndefined, z.string().optional()),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });

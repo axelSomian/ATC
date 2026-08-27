@@ -70,7 +70,11 @@ export class MembersListComponent implements OnInit, OnDestroy {
   }
 
   private patch(partial: Partial<MembersQuery>): void {
-    this.query$.next({ ...this.query$.value, ...partial });
+    const next = { ...this.query$.value, ...partial } as Record<string, unknown>;
+    for (const k of Object.keys(next)) {
+      if (next[k] === undefined || next[k] === null || next[k] === '') delete next[k];
+    }
+    this.query$.next(next as MembersQuery);
   }
 
   setLevel(level: number | null): void {
