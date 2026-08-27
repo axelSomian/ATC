@@ -9,9 +9,11 @@ services:
     branch: master
     autoDeploy: true
     healthCheckPath: /health
+    # NODE_ENV=production => pnpm saute les devDependencies : --prod=false force
+    # l'install de prisma / typescript, nécessaires au build (et à `migrate deploy`).
     buildCommand: >-
       corepack enable &&
-      pnpm install --frozen-lockfile &&
+      pnpm install --frozen-lockfile --prod=false &&
       pnpm --filter @atc/api exec prisma generate &&
       pnpm --filter @atc/api build
     # migre la base à chaque déploiement puis démarre le serveur.
