@@ -102,6 +102,14 @@
 
 /* ── Match card ── */
 .match-card { padding: var(--space-5); position: relative; overflow: hidden; }
+.match-card.is-focused {
+  box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-md);
+  animation: focus-pulse 1s ease-out;
+}
+@keyframes focus-pulse {
+  0% { box-shadow: 0 0 0 6px var(--color-accent-alpha, rgba(0,113,227,0.12)), var(--shadow-md); }
+  100% { box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-md); }
+}
 
 /* Past match: subtle dimming */
 .match-card.is-past { opacity: 0.8; }

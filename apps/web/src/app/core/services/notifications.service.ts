@@ -1,11 +1,13 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { SocketService } from './socket.service';
 import type { AppNotification } from '../models/notification.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
   private readonly http   = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly socket = inject(SocketService);
 
   readonly all         = signal<AppNotification[]>([]);
@@ -28,6 +30,33 @@ export class NotificationsService {
     this.http.get<AppNotification[]>('/api/v1/notifications/me').subscribe({
       next: list => this.all.set(list),
     });
+  }
+
+  /** Marque la notif lue puis navigue vers l'événement concerné. */
+  open(n: AppNotification): void {
+    this.markRead(n.id);
+    const p = n.payload;
+    switch (n.type) {
+      case 'match_request':
+        this.router.navigate(['/matchmaking'], { queryParams: { tab: 'mine', focus: p.dispoId ?? null } });
+        break;
+      case 'match_declined':
+        this.router.navigate(['/matchmaking'], { queryParams: { tab: 'mine' } });
+        break;
+      case 'match_confirmed':
+        this.router.navigate(['/my-matches'], { queryParams: { tab: 'upcoming', focus: p.dispoId ?? p.quickMatchId ?? null } });
+        break;
+      case 'quick_match_request':
+        this.router.navigate(['/my-matches'], { queryParams: { tab: 'challenges', focus: p.quickMatchId ?? null } });
+        break;
+      case 'score_to_validate':
+      case 'score_confirmed':
+      case 'score_disputed':
+        this.router.navigate(['/my-matches'], { queryParams: { tab: 'history', focus: p.matchId ?? null } });
+        break;
+      default:
+        this.router.navigate(['/notifications']);
+    }
   }
 
   markRead(id: string): void {

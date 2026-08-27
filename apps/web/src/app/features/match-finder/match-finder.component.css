@@ -349,6 +349,9 @@
 .status-declined { background: rgba(255, 59, 48, 0.07);  color: #B91C1C; border: 1px solid rgba(255, 59, 48, 0.18); }
 
 /* ── My dispo card ── */
+.my-dispo-card.is-focused {
+  box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-md);
+}
 .my-dispo-card {
   padding: var(--space-5);
   display: flex;

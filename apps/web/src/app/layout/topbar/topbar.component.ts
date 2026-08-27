@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { AuthStore } from '../../core/stores/auth.store';
 import { NotificationsService } from '../../core/services/notifications.service';
+import type { AppNotification } from '../../core/models/notification.model';
 
 @Component({
   selector: 'app-topbar',
@@ -25,9 +26,9 @@ export class TopbarComponent {
     if (!target.closest('.notif-bell-wrap')) this.open.set(false);
   }
 
-  markRead(id: string, e: MouseEvent): void {
-    e.stopPropagation();
-    this.notifService.markRead(id);
+  openNotif(n: AppNotification): void {
+    this.open.set(false);
+    this.notifService.open(n);
   }
 
   markAll(e: MouseEvent): void {

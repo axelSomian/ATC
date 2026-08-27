@@ -211,7 +211,7 @@
     @if (!loadingMine() && myDispos().length) {
       <div class="dispo-list">
         @for (d of myDispos(); track d.id) {
-          <div class="my-dispo-card card">
+          <div class="my-dispo-card card" [id]="'d-' + d.id" [class.is-focused]="focusId() === d.id">
             <div class="my-dispo-header">
               <div class="dispo-meta">
                 <span class="meta-chip chip-time">

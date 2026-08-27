@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatchesService, type RecordMatchDto } from '../../core/services/matches.service';
@@ -25,8 +26,10 @@ export class MyMatchesComponent implements OnInit {
   private readonly quickSvc      = inject(QuickMatchesService);
   private readonly authStore     = inject(AuthStore);
   private readonly route         = inject(ActivatedRoute);
+  private readonly destroyRef    = inject(DestroyRef);
 
   readonly tab        = signal<'upcoming' | 'challenges' | 'history'>('upcoming');
+  readonly focusId    = signal<string | null>(null);
   readonly upcoming   = signal<UpcomingMatch[]>([]);
   readonly history    = signal<Match[]>([]);
   readonly challenges = signal<QuickMatch[]>([]);
@@ -75,10 +78,13 @@ export class MyMatchesComponent implements OnInit {
   readonly today = new Date().toISOString();
 
   ngOnInit(): void {
-    const tabParam = this.route.snapshot.queryParamMap.get('tab');
-    if (tabParam === 'challenges' || tabParam === 'history') {
-      this.tab.set(tabParam);
-    }
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
+      const t = pm.get('tab');
+      if (t === 'upcoming' || t === 'challenges' || t === 'history') this.tab.set(t);
+      const focus = pm.get('focus');
+      this.focusId.set(focus);
+      if (focus) this.scrollToFocus();
+    });
 
     Promise.all([
       new Promise<void>(res => {
@@ -97,6 +103,16 @@ export class MyMatchesComponent implements OnInit {
   }
 
   setTab(t: 'upcoming' | 'challenges' | 'history'): void { this.tab.set(t); }
+
+  /** Après une arrivée via notification : défile jusqu'à la carte concernée. */
+  private scrollToFocus(): void {
+    const id = this.focusId();
+    if (!id) return;
+    setTimeout(() => {
+      document.getElementById('m-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
+    setTimeout(() => this.focusId.set(null), 3200);
+  }
 
   loadMoreHistory(): void {
     if (!this.hasMoreHistory() || this.historyLoading()) return;

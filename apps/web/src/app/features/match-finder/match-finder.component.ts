@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -30,9 +31,11 @@ export class MatchFinderComponent implements OnInit {
   private readonly authStore     = inject(AuthStore);
   private readonly fb            = inject(FormBuilder);
   private readonly route         = inject(ActivatedRoute);
+  private readonly destroyRef    = inject(DestroyRef);
   readonly notifService          = inject(NotificationsService);
 
   readonly tab          = signal<'feed' | 'mine'>('feed');
+  readonly focusId      = signal<string | null>(null);
   readonly showCreate   = signal(false);
   readonly loadingFeed  = signal(true);
   readonly loadingMine  = signal(false);
@@ -72,8 +75,19 @@ export class MatchFinderComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const tab = this.route.snapshot.queryParamMap.get('tab');
-    if (tab === 'mine') { this.setTab('mine'); } else { this.loadFeed(); }
+    this.loadFeed();
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
+      if (pm.get('tab') === 'mine') this.setTab('mine');
+      const focus = pm.get('focus');
+      this.focusId.set(focus);
+      if (focus) {
+        this.setTab('mine');
+        setTimeout(() => {
+          document.getElementById('d-' + focus)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 500);
+        setTimeout(() => this.focusId.set(null), 3200);
+      }
+    });
   }
 
   loadFeed(): void {

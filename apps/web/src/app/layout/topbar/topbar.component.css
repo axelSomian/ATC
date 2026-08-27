@@ -133,6 +133,18 @@
 }
 .notif-mark-all:hover { text-decoration: underline; }
 
+.notif-panel-footer {
+  display: block;
+  padding: 11px 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.notif-panel-footer:hover { background: rgba(255,255,255,0.04); }
+
 /* ── Liste ── */
 .notif-list {
   max-height: 360px;

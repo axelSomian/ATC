@@ -54,7 +54,7 @@
     } @else {
       <div class="match-list">
         @for (m of upcoming(); track m.id) {
-          <div class="match-card card" [class.is-past]="m.when < today">
+          <div class="match-card card" [id]="'m-' + m.id" [class.is-focused]="focusId() === m.id" [class.is-past]="m.when < today">
 
             <!-- Badges -->
             <div class="match-badges">
@@ -186,7 +186,7 @@
       <div class="section-label">Défis reçus</div>
       <div class="match-list">
         @for (q of receivedChallenges(); track q.id) {
-          <div class="match-card card challenge-card">
+          <div class="match-card card challenge-card" [id]="'m-' + q.id" [class.is-focused]="focusId() === q.id">
             <div class="match-body">
               <div class="match-opponent">
                 <div class="opponent-link" style="display:flex;align-items:center;gap:var(--space-3)">
@@ -228,7 +228,7 @@
       <div class="section-label">Défis envoyés</div>
       <div class="match-list">
         @for (q of sentChallenges(); track q.id) {
-          <div class="match-card card">
+          <div class="match-card card" [id]="'m-' + q.id" [class.is-focused]="focusId() === q.id">
             <div class="match-body">
               <div class="match-opponent">
                 <div style="display:flex;align-items:center;gap:var(--space-3)">
@@ -276,7 +276,7 @@
       <div class="section-label">En attente de confirmation</div>
       <div class="match-list">
         @for (m of pendingByMe(); track m.id) {
-          <div class="match-card card pending-mine-card">
+          <div class="match-card card pending-mine-card" [id]="'m-' + m.id" [class.is-focused]="focusId() === m.id">
             <div class="validate-banner" style="background:rgba(0,113,227,0.05);color:var(--color-accent)">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               Score soumis — en attente de validation par votre adversaire.
@@ -326,7 +326,7 @@
       <div class="section-label">Score à valider</div>
       <div class="match-list">
         @for (m of pendingValidation(); track m.id) {
-          <div class="match-card card validate-card">
+          <div class="match-card card validate-card" [id]="'m-' + m.id" [class.is-focused]="focusId() === m.id">
             <div class="validate-banner">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               Votre adversaire a soumis un score — confirmez-le ou contestez-le.
@@ -386,7 +386,7 @@
       <div class="section-label">Contestés</div>
       <div class="match-list">
         @for (m of disputedMatches(); track m.id) {
-          <div class="match-card card" style="border:1.5px solid rgba(229,90,0,0.2)">
+          <div class="match-card card" [id]="'m-' + m.id" [class.is-focused]="focusId() === m.id" style="border:1.5px solid rgba(229,90,0,0.2)">
             <div class="validate-banner" style="background:rgba(229,90,0,0.05);color:#E55A00">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
               Score contesté — un administrateur va traiter ce litige.
@@ -448,7 +448,7 @@
       }
       <div class="match-list">
         @for (m of confirmedHistory(); track m.id) {
-          <div class="match-card card" [class.match-win]="isWin(m)" [class.match-loss]="!isWin(m)">
+          <div class="match-card card" [id]="'m-' + m.id" [class.is-focused]="focusId() === m.id" [class.match-win]="isWin(m)" [class.match-loss]="!isWin(m)">
             <div class="result-stripe" [class.win]="isWin(m)" [class.loss]="!isWin(m)"></div>
 
             <div class="match-body">
