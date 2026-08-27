@@ -1,6 +1,6 @@
 # ATC — Suivi Produit
 
-> Dernière mise à jour : 2026-05-22 (session 4)
+> Dernière mise à jour : 2026-08-27 (session 5 — déploiement, clubs/niveaux en base, temps réel)
 
 ---
 
@@ -120,14 +120,18 @@
 
 ---
 
-## Sprint 7 — Temps réel 📋
+## Sprint 7 — Temps réel ✅
 
 | Tâche | Priorité | Statut | Notes |
 |-------|----------|--------|-------|
-| Socket.IO côté frontend (connexion auth) | 🔴 Haute | 📋 Backlog | Socket.IO installé côté API, non branché côté Angular |
-| Notifications push en temps réel (remplace polling) | 🟡 Moyenne | 📋 Backlog | Dépend Socket.IO front — polling 30s suffit pour le MVP |
-| Online status temps réel (member:online / offline) | 🟡 Moyenne | 📋 Backlog | Dépend Socket.IO front |
-| Mise à jour du feed matchmaking en live (dispo:new) | 🟡 Moyenne | 📋 Backlog | Dépend Socket.IO front |
+| Socket.IO côté frontend (connexion auth) | 🔴 Haute | ✅ Terminé | `SocketService` (token JWT dans le handshake), reconnexion infinie, handlers ré-appliqués à chaque reconnexion |
+| Notifications push en temps réel (remplace polling) | 🟡 Moyenne | ✅ Terminé | `notification:new` → ajout live ; `NotificationsService.open()` marque lu + navigue vers l'événement (payload dispoId/quickMatchId/matchId) |
+| Online status temps réel (member:online / offline) | 🟡 Moyenne | ✅ Terminé | `PresenceService` : `presence:sync` au connect, `member:online`/`offline` en broadcast, compteur de sockets par user (multi-onglets). `resetPresence()` au boot. Le flag `User.online` reste un fallback best-effort. Affiché sur annuaire + fiche membre |
+| Mise à jour du feed matchmaking en live (dispo:new) | 🟡 Moyenne | ✅ Terminé | `emitToAll('dispo:new')` à la création ; le feed insère la carte si elle passe les filtres actifs, avec animation d'apparition |
+
+> Testé en intégration (2 clients socket) : sync présence, online/offline broadcast, résilience si le write DB `online` échoue.
+
+**Reste hors périmètre temps réel (backlog)** : messagerie 1-to-1 (Sprint 8), présence « en train d'écrire », accusés de lecture.
 
 ---
 
@@ -153,15 +157,29 @@
 
 ---
 
-## Sprint 10 — Mobile & DevOps 💡
+## Sprint 10 — Mobile & DevOps 🟡
 
 | Tâche | Priorité | Statut | Notes |
 |-------|----------|--------|-------|
+| Déploiement prod | 🔴 Haute | ✅ Terminé | Neon (DB) + Render (API, `render.yaml`) + Vercel (front, `apps/web/vercel.json`, rewrite `/api/*`). Voir `DEPLOY.md`. Tous en tier gratuit |
 | App mobile Ionic/Capacitor | 🟢 Basse | 💡 Idée | Réutiliser le code Angular |
 | Docker Compose en dev | 🟢 Basse | 💡 Idée | postgres + redis + api + web |
-| CI/CD GitHub Actions | 🟢 Basse | 💡 Idée | lint + test + deploy |
-| Sentry monitoring | 🟢 Basse | 💡 Idée | |
-| Tests E2E Playwright (signup → match) | 🟢 Basse | 💡 Idée | Flows critiques |
+| CI/CD GitHub Actions | 🟡 Moyenne | 📋 Backlog | lint + test + build sur PR — **pas encore fait**, les 2 builds ont déjà cassé une fois |
+| Sentry monitoring | 🟡 Moyenne | 📋 Backlog | DSN prod à câbler ; logs Render perdus au redémarrage |
+| Tests E2E Playwright (signup → match) | 🟡 Moyenne | 📋 Backlog | Couverture tests quasi nulle (seul `elo.test.ts`) |
+
+---
+
+## Clubs & Niveaux en base (session 5, hors roadmap initiale) ✅
+
+| Tâche | Statut | Notes |
+|-------|--------|-------|
+| Table `Club` (11 clubs d'Abidjan seedés + "autre") | ✅ Terminé | `active`, `sortOrder` — éditable par un admin |
+| Table `Level` (5 lignes : code, nom, profil, jeu) | ✅ Terminé | Libellés inclusifs : Débutant·e / Initié·e / Intermédiaire / Avancé·e / Compétition. Bornes ELO restent dans `elo.ts` |
+| `User.club` (texte) → `User.clubId` (FK) | ✅ Terminé | Migration `20260827160000_clubs_and_levels` |
+| API `GET /clubs`, `GET /levels` (publics) | ✅ Terminé | module `reference` |
+| Front : `ReferenceService`, `<select>` club groupé par zone, sélecteur de niveau explicatif, panneau « Comprendre les niveaux » | ✅ Terminé | |
+| Interface admin CRUD clubs/niveaux | 📋 Backlog | Pour l'instant : édition directe en base |
 
 ---
 
@@ -169,18 +187,24 @@
 
 | Problème | Sévérité | Statut |
 |----------|----------|--------|
-| Online status statique (pas mis à jour en temps réel) | 🟡 Moyenne | 📋 À corriger au Sprint 6 |
-| Stats dashboard (victoires, matchs) toujours à 0 | 🟡 Moyenne | 📋 À corriger Sprint 5 backlog |
+| Online status statique | 🟡 Moyenne | ✅ Corrigé (Sprint 7 — `PresenceService`) |
+| Stats dashboard (victoires, matchs) toujours à 0 | 🟡 Moyenne | ✅ Corrigé (Sprint 5 — `GET /matches/me/stats`) |
 | Matchs passés sans score (>7 jours) restent dans "À venir" | 🟡 Moyenne | 📋 À décider : auto-annulation ou fenêtre élargie |
-| Pas d'auto-validation des scores après 48h | 🟡 Moyenne | 📋 Backlog Sprint 5 |
+| Pas d'auto-validation des scores après 48h | 🟡 Moyenne | 📋 Backlog |
+| Aucun test métier, aucune CI | 🔴 Haute | 📋 À faire — les 2 builds ont déjà cassé |
+| Rate-limiting seulement sur auth ; contournable derrière Cloudflare/CGNAT | 🟠 Moyenne | 📋 Backlog (déplacer au niveau Cloudflare) |
+| Pas de sanitization HTML sur `bio` / `note` | 🟠 Moyenne | 📋 Backlog |
+| Perf : endpoints DB plafonnent ~15 req/s (Render↔Neon sur 2 continents) | 🟡 Moyenne | 📋 Co-localiser + cacher `/clubs` `/levels` |
 
 ---
 
 ## Prochaine action recommandée
 
-> **Stats profil membre + angles morts critiques**
-> Le moteur ELO et le classement sont opérationnels. Les priorités suivantes :
-> 1. **Stats profil membre** — brancher W/L/% victoire + rating sur la page `/members/:id` (endpoint `GET /members/rankings` contient déjà les données)
-> 2. **Matchs limbes >7 jours** — les matchs passés sans score disparaissent de "À venir" et ne peuvent plus être scorés ; décider : fenêtre élargie ou onglet "À scorer"
-> 3. **Auto-validation 48h** — score soumis sans réponse après 48h → confirmé automatiquement (cron ou check à la connexion)
-> 4. **Score contesté sans résolution** — définir le flow admin ou permettre une re-soumission
+> **Consolider avant d'ajouter des features** — le produit est déployé et le temps réel
+> est en place, mais il n'y a aucun filet.
+> 1. **CI GitHub Actions** (lint + test + build sur PR) — priorité n°1, les builds ont déjà cassé
+> 2. **Perf** : co-localiser Render et Neon (même région) + cache mémoire/CDN sur `/clubs` et `/levels`
+> 3. **Sanitization** de `bio` / `note` à l'entrée (Zod + strip HTML)
+> 4. **Auto-validation 48h** des scores (cron ou check à la connexion) — sinon l'ELO se fige
+> 5. **Matchs limbes >7 jours** — décider : fenêtre élargie ou onglet "À scorer"
+> 6. **Stats profil membre** — brancher W/L/% + rating sur `/members/:id` (données déjà dispo)

@@ -29,7 +29,7 @@
                 {{ member()!.initials }}
               }
             </div>
-            @if (member()!.online) {
+            @if (isOnline()) {
               <span class="online-badge hero-online-badge"></span>
             }
           </div>
@@ -42,7 +42,7 @@
                 }
               </span>
               <span class="hero-level-label">{{ levelLabel() }}</span>
-              @if (member()!.online) {
+              @if (isOnline()) {
                 <span class="hero-online-pill">
                   <span class="online-pulse"></span>
                   En ligne

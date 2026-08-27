@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -7,6 +7,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DisposService, type DispoPost, type DisposQuery } from '../../core/services/dispos.service';
 import { AuthStore } from '../../core/stores/auth.store';
 import { NotificationsService } from '../../core/services/notifications.service';
+import { SocketService } from '../../core/services/socket.service';
 
 const COURTS = [
   'Club Ivoire', 'INSEP', 'Plateau Tennis Club', 'Cocody', 'Marcory',
@@ -26,8 +27,9 @@ const DURATIONS = [
   templateUrl: './match-finder.component.html',
   styleUrl: './match-finder.component.css',
 })
-export class MatchFinderComponent implements OnInit {
+export class MatchFinderComponent implements OnInit, OnDestroy {
   private readonly disposService = inject(DisposService);
+  private readonly socket        = inject(SocketService);
   private readonly authStore     = inject(AuthStore);
   private readonly fb            = inject(FormBuilder);
   private readonly route         = inject(ActivatedRoute);
@@ -49,6 +51,7 @@ export class MatchFinderComponent implements OnInit {
 
   readonly typeFilter = signal<'simple' | 'double' | 'mixte' | null>(null);
   readonly dateFilter = signal('');
+  readonly newIds     = signal<ReadonlySet<string>>(new Set());
 
   readonly currentUserId = computed(() => this.authStore.user()?.id ?? '');
 
@@ -76,6 +79,10 @@ export class MatchFinderComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFeed();
+
+    // Feed en temps réel : nouvelle annonce publiée par un autre membre.
+    this.socket.on<DispoPost>('dispo:new', (dispo) => this.onDispoNew(dispo));
+
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
       if (pm.get('tab') === 'mine') this.setTab('mine');
       const focus = pm.get('focus');
@@ -114,6 +121,27 @@ export class MatchFinderComponent implements OnInit {
   setTab(t: 'feed' | 'mine'): void {
     this.tab.set(t);
     if (t === 'mine' && !this.myDispos().length) this.loadMine();
+  }
+
+  /** Insère une annonce reçue en live si elle correspond aux filtres actifs. */
+  private onDispoNew(dispo: DispoPost): void {
+    if (this.dispos().some((d) => d.id === dispo.id)) return;
+    if (this.typeFilter() && dispo.type !== this.typeFilter()) return;
+    if (this.dateFilter() && !dispo.when.startsWith(this.dateFilter())) return;
+    this.dispos.update((list) => [dispo, ...list]);
+    this.total.update((n) => n + 1);
+    this.newIds.update((s) => new Set(s).add(dispo.id));
+    setTimeout(() => this.newIds.update((s) => {
+      const next = new Set(s);
+      next.delete(dispo.id);
+      return next;
+    }), 4000);
+  }
+
+  isNew(id: string): boolean { return this.newIds().has(id); }
+
+  ngOnDestroy(): void {
+    this.socket.off('dispo:new');
   }
 
   setType(t: 'simple' | 'double' | 'mixte' | null): void {

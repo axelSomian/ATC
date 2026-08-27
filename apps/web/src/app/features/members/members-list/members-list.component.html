@@ -73,7 +73,7 @@
                 {{ m.initials }}
               }
             </div>
-            @if (m.online) {
+            @if (isOnline(m)) {
               <span class="online-badge"></span>
             }
           </div>

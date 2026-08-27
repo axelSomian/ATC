@@ -6,6 +6,7 @@ import { MembersService } from '../../../core/services/members.service';
 import { QuickMatchesService } from '../../../core/services/quick-matches.service';
 import { AuthStore } from '../../../core/stores/auth.store';
 import { ReferenceService } from '../../../core/services/reference.service';
+import { PresenceService } from '../../../core/services/presence.service';
 import type { UserProfile, RecentMatch } from '../../../core/models/user.model';
 
 const COURTS = [
@@ -25,6 +26,7 @@ export class MemberDetailComponent implements OnInit {
   private readonly quickMatchService = inject(QuickMatchesService);
   private readonly authStore         = inject(AuthStore);
   private readonly reference         = inject(ReferenceService);
+  private readonly presence          = inject(PresenceService);
   private readonly fb                = inject(FormBuilder);
 
   readonly id = input.required<string>();
@@ -43,6 +45,7 @@ export class MemberDetailComponent implements OnInit {
   readonly dots      = [1, 2, 3, 4, 5];
   readonly courts    = COURTS;
   readonly levelLabel = computed(() => this.reference.levelLabel(this.member()?.level ?? 1));
+  readonly isOnline = computed(() => this.presence.isOnline(this.member()?.id, this.member()?.online ?? false));
 
   readonly winRate = computed(() => {
     const m = this.member();

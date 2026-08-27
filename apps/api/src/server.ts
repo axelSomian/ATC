@@ -9,7 +9,7 @@ import rateLimit from 'express-rate-limit';
 import passport from 'passport';
 import { errorHandler } from './middleware/error.js';
 import './middleware/passport.js';
-import { setIo } from './lib/socket.js';
+import { setIo, handlePresence, resetPresence } from './lib/socket.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import membersRoutes from './modules/members/members.routes.js';
 import disposRoutes from './modules/dispos/dispos.routes.js';
@@ -50,7 +50,7 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   const userId = socket.data.userId as string;
   socket.join(`user:${userId}`);
-  socket.on('disconnect', () => socket.leave(`user:${userId}`));
+  handlePresence(io, socket);
 });
 
 app.use(helmet());
@@ -98,4 +98,5 @@ app.use(errorHandler);
 const PORT = process.env.PORT ?? 3000;
 httpServer.listen(PORT, () => {
   console.log(`[API] Serveur démarré sur http://localhost:${PORT}`);
+  resetPresence();
 });

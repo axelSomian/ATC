@@ -141,7 +141,7 @@
       <p class="feed-count">{{ total() }} annonce{{ total() !== 1 ? 's' : '' }} disponible{{ total() !== 1 ? 's' : '' }}</p>
       <div class="dispo-list">
         @for (d of dispos(); track d.id) {
-          <div class="dispo-card card">
+          <div class="dispo-card card" [class.is-new]="isNew(d.id)">
             <div class="dispo-left">
               <a [routerLink]="['/members', d.user.id]" class="dispo-avatar-link">
                 <div class="avatar avatar-md">{{ d.user.initials }}</div>

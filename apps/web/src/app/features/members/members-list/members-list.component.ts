@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { BehaviorSubject, Subject, switchMap, debounceTime, distinctUntilChanged, catchError, EMPTY, takeUntil } from 'rxjs';
 import { MembersService, type MembersQuery } from '../../../core/services/members.service';
 import { ReferenceService } from '../../../core/services/reference.service';
+import { PresenceService } from '../../../core/services/presence.service';
 import { LevelLegendComponent } from '../../../shared/level-legend/level-legend.component';
 import { CITIES_CI } from '@atc/shared';
 import type { UserProfile } from '../../../core/models/user.model';
@@ -18,6 +19,7 @@ import type { UserProfile } from '../../../core/models/user.model';
 export class MembersListComponent implements OnInit, OnDestroy {
   private readonly membersService = inject(MembersService);
   private readonly reference = inject(ReferenceService);
+  private readonly presence = inject(PresenceService);
   private readonly destroy$ = new Subject<void>();
   private readonly query$ = new BehaviorSubject<MembersQuery>({ page: 1, limit: 18 });
 
@@ -91,6 +93,10 @@ export class MembersListComponent implements OnInit, OnDestroy {
   goTo(page: number): void { this.patch({ page }); }
 
   getLevelLabel(l: number): string { return this.reference.levelLabel(l); }
+
+  isOnline(m: { id: string; online: boolean }): boolean {
+    return this.presence.isOnline(m.id, m.online);
+  }
 
   paginationItems(): Array<number | null> {
     const total = this.pages();

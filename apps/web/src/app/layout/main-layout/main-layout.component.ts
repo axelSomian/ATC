@@ -4,6 +4,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { TopbarComponent } from '../topbar/topbar.component';
 import { MobileNavComponent } from '../mobile-nav/mobile-nav.component';
 import { NotificationsService } from '../../core/services/notifications.service';
+import { PresenceService } from '../../core/services/presence.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -25,7 +26,14 @@ import { NotificationsService } from '../../core/services/notifications.service'
 })
 export class MainLayoutComponent implements OnDestroy {
   private readonly notifService = inject(NotificationsService);
+  private readonly presence = inject(PresenceService);
 
-  constructor() { this.notifService.start(); }
-  ngOnDestroy(): void { this.notifService.stop(); }
+  constructor() {
+    this.notifService.start();
+    this.presence.start();
+  }
+  ngOnDestroy(): void {
+    this.notifService.stop();
+    this.presence.stop();
+  }
 }

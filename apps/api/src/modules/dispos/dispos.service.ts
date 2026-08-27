@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import type { CreateDispoDto, DisposQueryDto } from './dispos.schema.js';
 import { createNotification } from '../notifications/notifications.service.js';
+import { emitToAll } from '../../lib/socket.js';
 
 const USER_SELECT = {
   id: true, name: true, initials: true,
@@ -71,10 +72,12 @@ export async function getMyDispos(userId: string) {
 }
 
 export async function createDispo(userId: string, dto: CreateDispoDto) {
-  return prisma.dispoPost.create({
+  const dispo = await prisma.dispoPost.create({
     data: { ...dto, userId, when: new Date(dto.when) },
     select: DISPO_SELECT,
   });
+  emitToAll('dispo:new', dispo);
+  return dispo;
 }
 
 export async function deleteDispo(userId: string, dispoId: string) {
