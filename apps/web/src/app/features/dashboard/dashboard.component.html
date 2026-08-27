@@ -51,7 +51,7 @@
         </span>
       }
     </div>
-    <div class="stat-card card">
+    <a routerLink="/members" class="stat-card card">
       <span class="stat-label">Membres</span>
       @if (loading()) {
         <span class="stat-value stat-loading">—</span>
@@ -59,7 +59,7 @@
         <span class="stat-value">{{ stats()?.membersTotal ?? '—' }}</span>
         <span class="stat-hint positive">Voir l'annuaire →</span>
       }
-    </div>
+    </a>
     <a routerLink="/rankings" class="stat-card card stat-card-rank">
       <span class="stat-label">Classement</span>
       @if (loading()) {

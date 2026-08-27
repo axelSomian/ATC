@@ -92,6 +92,13 @@
   gap: 3px;
 }
 
+a.stat-card {
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow var(--transition), transform var(--transition-fast);
+}
+a.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
 .stat-label {
   font-size: 11px;
   font-weight: 600;
