@@ -1,39 +1,55 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
 
 /* ═══════════════════════════════════════
-   DESIGN TOKENS — Apple-inspired
+   DESIGN TOKENS — ATC premium tennis lifestyle
+   Palette: ATC Green signature, warm off-white base,
+   deep-forest + soft-black typography, sand/sage accents.
    ═══════════════════════════════════════ */
 :root {
-  /* ── Accent ── */
-  --color-accent:       #0071E3;
-  --color-accent-hover: #0077ED;
-  --color-accent-dark:  #0055AB;
-  --color-accent-alpha: rgba(0, 113, 227, 0.09);
+  /* ── Brand palette (source of truth) ── */
+  --color-atc-green:   #1F5A45;
+  --color-deep-forest: #163F32;
+  --color-soft-white:  #F8F6F1;
+  --color-warm-ivory:  #EDE5D8;
+  --color-sand-beige:  #CDBDA7;
+  --color-sage:        #8FAE9B;
+  --color-soft-black:  #1C1C1A;
+
+  /* ── Accent = ATC Green (primary actions, active states, brand) ── */
+  --color-accent:       #1F5A45;
+  --color-accent-hover: #256B52;
+  --color-accent-dark:  #163F32;
+  --color-accent-alpha: rgba(31, 90, 69, 0.08);
 
   /* ── Compatibility aliases (kept for existing component refs) ── */
-  --color-clay:         #0071E3;
-  --color-clay-light:   #0077ED;
-  --color-clay-dark:    #0055AB;
-  --color-clay-alpha:   rgba(0, 113, 227, 0.09);
-  --color-green:        #1D1D1F;
-  --color-yellow:       #F5F5F7;
+  --color-clay:         #1F5A45;
+  --color-clay-light:   #256B52;
+  --color-clay-dark:    #163F32;
+  --color-clay-alpha:   rgba(31, 90, 69, 0.08);
+  --color-green:        #1F5A45;
+  --color-yellow:       #EDE5D8;
 
-  /* ── Neutrals ── */
-  --color-ink:          #1D1D1F;
-  --color-ink-light:    #3D3D3F;
-  --color-muted:        #6E6E73;
-  --color-border:       #D2D2D7;
-  --color-border-light: #E8E8ED;
-  --color-bg:           #F5F5F7;
-  --color-surface:      #FFFFFF;
-  --color-white:        #FFFFFF;
-  --color-cream:        #F5F5F7;
-  --color-cream-dark:   #E8E8ED;
+  /* ── Neutrals / surfaces ── */
+  --color-ink:          #1C1C1A;
+  --color-ink-light:    #3B3A35;
+  --color-muted:        #6B6559;
+  --color-border:       #DBD3C4;
+  --color-border-light: #E7E0D2;
+  --color-bg:           #F1EBDF;
+  --color-surface:      #F8F6F1;
+  --color-white:        #F8F6F1;
+  --color-cream:        #EDE5D8;
+  --color-cream-dark:   #E4DACA;
 
-  /* ── Success / Error / Warning ── */
-  --color-success: #34C759;
-  --color-error:   #FF3B30;
-  --color-warning: #FF9500;
+  /* ── Positive (wins, confirmed scores) — palette-compatible green ── */
+  --color-positive:        #2F6B4F;
+  --color-positive-bg:     rgba(47, 107, 79, 0.10);
+  --color-positive-border: rgba(47, 107, 79, 0.24);
+
+  /* ── Success / Error / Warning (used only when semantically needed) ── */
+  --color-success: #4E8C6A;
+  --color-error:   #B23B2E;
+  --color-warning: #B07D3C;
 
   /* ── Typography ── */
   --font-display: 'Inter', system-ui, -apple-system, sans-serif;
@@ -132,7 +148,7 @@ a { color: inherit; }
 .text-accent { color: var(--color-accent); }
 .text-sm     { font-size: var(--text-sm); }
 .text-clay   { color: var(--color-accent); }
-.text-green  { color: var(--color-success); }
+.text-green  { color: var(--color-positive); }
 
 .label-caps {
   font-size: var(--text-xs);
@@ -170,12 +186,12 @@ a { color: inherit; }
 
 .btn-primary {
   background: var(--color-accent);
-  color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 113, 227, 0.30);
+  color: var(--color-soft-white);
+  box-shadow: 0 1px 3px rgba(22, 63, 50, 0.28);
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--color-accent-hover);
-  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.28);
+  box-shadow: 0 2px 10px rgba(22, 63, 50, 0.26);
 }
 
 .btn-secondary {
@@ -201,11 +217,11 @@ a { color: inherit; }
 .btn-ghost:hover:not(:disabled) { background: var(--color-cream-dark); color: var(--color-ink); }
 
 .btn-danger {
-  background: rgba(255, 59, 48, 0.08);
+  background: rgba(178, 59, 46, 0.09);
   color: var(--color-error);
-  border: 1px solid rgba(255, 59, 48, 0.20);
+  border: 1px solid rgba(178, 59, 46, 0.22);
 }
-.btn-danger:hover:not(:disabled) { background: rgba(255, 59, 48, 0.13); }
+.btn-danger:hover:not(:disabled) { background: rgba(178, 59, 46, 0.15); }
 
 .btn-lg   { height: 40px; padding: 0 22px; font-size: var(--text-base); border-radius: var(--radius-xl); }
 .btn-sm   { height: 28px; padding: 0 12px; font-size: var(--text-xs); border-radius: var(--radius-md); }
@@ -243,11 +259,11 @@ select.form-control   { cursor: pointer; }
 .form-control::placeholder { color: var(--color-muted); }
 .form-control:focus {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+  box-shadow: 0 0 0 3px rgba(31, 90, 69, 0.14);
 }
 .form-control.is-invalid {
   border-color: var(--color-error);
-  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.10);
+  box-shadow: 0 0 0 3px rgba(178, 59, 46, 0.12);
 }
 .form-error { font-size: var(--text-xs); color: var(--color-error); font-weight: 500; }
 .form-hint { display: block; margin-top: 4px; font-size: var(--text-xs); color: var(--color-muted); }
@@ -319,7 +335,7 @@ select.form-control   { cursor: pointer; }
 }
 .badge-accent { background: var(--color-accent-alpha); color: var(--color-accent-dark); }
 .badge-clay   { background: var(--color-accent-alpha); color: var(--color-accent-dark); }
-.badge-green  { background: rgba(52, 199, 89, 0.10); color: #1A7A35; }
+.badge-green  { background: var(--color-positive-bg); color: var(--color-positive); }
 .badge-muted  { background: var(--color-cream-dark); color: var(--color-muted); }
 
 /* ── Online dot ── */
@@ -336,8 +352,8 @@ select.form-control   { cursor: pointer; }
    ═══════════════════════════════════════ */
 .alert-error {
   padding: 11px 14px;
-  background: rgba(255, 59, 48, 0.07);
-  border: 1px solid rgba(255, 59, 48, 0.20);
+  background: rgba(178, 59, 46, 0.08);
+  border: 1px solid rgba(178, 59, 46, 0.22);
   color: var(--color-error);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
@@ -345,9 +361,9 @@ select.form-control   { cursor: pointer; }
 }
 .alert-success {
   padding: 11px 14px;
-  background: rgba(52, 199, 89, 0.08);
-  border: 1px solid rgba(52, 199, 89, 0.25);
-  color: #1A7A35;
+  background: var(--color-positive-bg);
+  border: 1px solid var(--color-positive-border);
+  color: var(--color-positive);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: 500;

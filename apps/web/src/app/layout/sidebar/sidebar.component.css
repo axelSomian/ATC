@@ -1,7 +1,7 @@
 .sidebar {
   width: var(--sidebar-width);
   height: 100vh;
-  background: #111111;
+  background: var(--color-deep-forest);
   display: flex;
   flex-direction: column;
   padding: 16px 10px;
@@ -61,7 +61,7 @@
   gap: 9px;
   padding: 8px 10px;
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.40);
+  color: rgba(255, 255, 255, 0.55);
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
@@ -70,13 +70,14 @@
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .nav-item.active {
-  background: rgba(0, 113, 227, 0.18);
+  background: var(--color-accent);
   color: #fff;
+  box-shadow: inset 3px 0 0 var(--color-sage);
 }
 
 .nav-icon {
@@ -146,6 +147,6 @@
 }
 
 .btn-logout:hover {
-  color: #FF453A;
-  background: rgba(255, 69, 58, 0.08);
+  color: #B23B2E;
+  background: rgba(178, 59, 46, 0.08);
 }

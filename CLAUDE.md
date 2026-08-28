@@ -92,19 +92,30 @@ atc/
 
 ## 🎨 Design system
 
-Voir le prototype interactif (`ATC.html`) — direction visuelle validée :
+Palette **ATC — premium tennis lifestyle** (validée client, sept. 2026). Tokens
+centralisés dans `apps/web/src/styles.css` (`:root`). Ne pas introduire de couleur
+hors palette sans raison UX forte.
 
-- **Couleurs primaires**
-  - Clay terracotta `#C25D2E` (terre battue, accent CI subtil)
-  - Court green `#2D5A3E`
-  - Ball yellow `#D8E84F`
-- **Neutres** : cream chaud `#F3EEE4`, ink `#1A1814`, muted `#6B6357`
-- **Typo**
-  - Display : `Instrument Serif` (italique pour les titres)
-  - Body : `Geist` (sans-serif moderne)
+- **Signature** : ATC Green `#1F5A45` (`--color-accent`) — boutons primaires, CTA,
+  états actifs, onglets sélectionnés, éléments de marque. Utilisée stratégiquement,
+  jamais en aplat partout.
+- **Contraste sombre** : Deep Forest `#163F32` (`--color-deep-forest`) — sidebar,
+  topbar/bottom-nav mobile, panneaux sombres, héros. Sur fond sombre, les accents
+  passent en **Sage `#8FAE9B`** (l'ATC Green n'y est pas lisible).
+- **Bases claires** (dominantes) : Soft White `#F8F6F1` (`--color-surface`, cartes),
+  canvas légèrement plus chaud `--color-bg` `#F1EBDF`, Warm Ivory `#EDE5D8`
+  (`--color-cream` — surfaces secondaires, inputs, empty states).
+- **Accents lifestyle secondaires** : Sand Beige `#CDBDA7` (`--color-sand-beige`),
+  Sage `#8FAE9B` (`--color-sage`). Discrets, ne concurrencent jamais l'ATC Green.
+- **Typo / contraste** : Soft Black `#1C1C1A` (`--color-ink`) pour le texte ; jamais
+  de `#000` ni de `#fff` en surface.
+- **Sémantique** (uniquement quand nécessaire, compatible palette) :
+  `--color-positive` `#2F6B4F` (victoires, scores confirmés),
+  `--color-error` `#B23B2E`, `--color-warning` `#B07D3C`.
+- **Fontes** : Inter (corps + titres), Plus Jakarta Sans (logo).
 - **Système de niveau** : 5 dots — N1 Débutant·e → N2 Initié·e → N3 Intermédiaire → N4 Avancé·e → N5 Compétition. Libellés + descriptions (profil / jeu) stockés en base (table `Level`, éditables par un admin) et exposés via `GET /api/v1/levels`. Les bornes de rating ELO restent dans `apps/api/src/modules/matches/elo.ts`.
 - **Layout** : sidebar fixe sur desktop, bottom nav sur mobile, breakpoint ~768px
-- **Ton** : convivial / communautaire, touches CI discrètes (mini-stripes drapeau, palette terracotta)
+- **Ton** : premium, féminin, contemporain, épuré — jamais « appli sport générique ».
 
 ---
 

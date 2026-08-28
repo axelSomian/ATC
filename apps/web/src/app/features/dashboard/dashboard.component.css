@@ -14,7 +14,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 32px 36px;
-  background: #111111;
+  background: var(--color-deep-forest);
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.06);
   position: relative;
@@ -25,7 +25,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 75% 50%, rgba(0, 113, 227, 0.14) 0%, transparent 60%);
+  background: radial-gradient(ellipse at 75% 50%, rgba(143, 174, 155, 0.12) 0%, transparent 62%);
   pointer-events: none;
 }
 
@@ -61,7 +61,7 @@
   background: rgba(255, 255, 255, 0.12);
 }
 .greeting-level .level-dot.active {
-  background: var(--color-accent);
+  background: var(--color-sage);
 }
 
 .greeting-level-label {
@@ -120,17 +120,17 @@ a.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
   font-size: 12px;
   color: var(--color-muted);
 }
-.stat-hint.positive { color: #1A7A35; }
+.stat-hint.positive { color: var(--color-positive); }
 .stat-loading { color: var(--color-border); }
-.stat-positive { color: #1A7A35; }
+.stat-positive { color: var(--color-positive); }
 
 .stat-card-rank { text-decoration: none; color: inherit; transition: box-shadow var(--transition), transform var(--transition-fast); }
 .stat-card-rank:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
 
-.stat-rank { color: #FFD60A; }
+.stat-rank { color: #836841; }
 
-.delta-up   { color: #34C759; }
-.delta-down { color: #FF3B30; }
+.delta-up   { color: #4E8C6A; }
+.delta-down { color: #B23B2E; }
 
 /* ── Section header ── */
 .section-header {
@@ -179,16 +179,16 @@ a.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
 }
 
 .action-icon-blue {
-  background: rgba(0, 113, 227, 0.08);
+  background: rgba(31, 90, 69, 0.08);
   color: var(--color-accent);
 }
 .action-icon-green {
-  background: rgba(52, 199, 89, 0.10);
-  color: #1A7A35;
+  background: rgba(47, 107, 79, 0.10);
+  color: var(--color-positive);
 }
 .action-icon-orange {
-  background: rgba(255, 149, 0, 0.10);
-  color: #B45309;
+  background: rgba(176, 125, 60, 0.10);
+  color: #8A5A22;
 }
 .action-icon-dark {
   background: rgba(29, 29, 31, 0.07);

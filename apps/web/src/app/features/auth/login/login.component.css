@@ -6,7 +6,7 @@
 /* ── Visual panel ── */
 .auth-visual {
   flex: 1;
-  background: #111111;
+  background: var(--color-deep-forest);
   display: flex;
   align-items: flex-end;
   padding: 52px;
@@ -18,7 +18,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 25% 65%, rgba(0, 113, 227, 0.18) 0%, transparent 60%);
+  background: radial-gradient(ellipse at 25% 65%, rgba(143, 174, 155, 0.14) 0%, transparent 62%);
 }
 
 .visual-content {
@@ -71,7 +71,7 @@
   flex: 1;
   border-radius: 2px;
 }
-.ci-stripe::before { background: var(--color-accent); }
+.ci-stripe::before { background: var(--color-sage); }
 .ci-stripe::after  { background: rgba(255,255,255,0.15); }
 
 /* ── Form panel ── */
@@ -103,8 +103,8 @@
 }
 
 .form-alert {
-  background: rgba(255, 59, 48, 0.07);
-  border: 1px solid rgba(255, 59, 48, 0.20);
+  background: rgba(178, 59, 46, 0.07);
+  border: 1px solid rgba(178, 59, 46, 0.20);
   color: var(--color-error);
   padding: 10px 14px;
   border-radius: var(--radius-md);

@@ -44,7 +44,7 @@
 }
 .search-input:focus {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.10);
+  box-shadow: 0 0 0 3px rgba(31, 90, 69, 0.10);
 }
 .search-input::placeholder { color: var(--color-muted); }
 
@@ -94,8 +94,8 @@
   transition: all var(--transition);
   font-family: var(--font-body);
 }
-.filter-online:hover { border-color: var(--color-success); color: #1A7A35; }
-.filter-online.active { background: rgba(52,199,89,.07); border-color: var(--color-success); color: #1A7A35; }
+.filter-online:hover { border-color: var(--color-success); color: var(--color-positive); }
+.filter-online.active { background: rgba(47, 107, 79,.07); border-color: var(--color-success); color: var(--color-positive); }
 
 .online-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-success); }
 

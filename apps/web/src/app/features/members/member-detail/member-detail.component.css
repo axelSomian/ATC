@@ -28,7 +28,7 @@
    HERO PANEL
    ═══════════════════════════════════════ */
 .hero-panel {
-  background: #111111;
+  background: var(--color-deep-forest);
   border-radius: var(--radius-xl);
   border: 1px solid rgba(255,255,255,0.06);
   overflow: hidden;
@@ -67,7 +67,7 @@
   width: 14px;
   height: 14px;
   border-width: 2.5px;
-  border-color: #111111;
+  border-color: var(--color-deep-forest);
 }
 
 .hero-text {
@@ -107,9 +107,9 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(52, 199, 89, 0.12);
-  border: 1px solid rgba(52, 199, 89, 0.25);
-  color: #34C759;
+  background: rgba(47, 107, 79, 0.12);
+  border: 1px solid rgba(47, 107, 79, 0.25);
+  color: #4E8C6A;
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
@@ -120,7 +120,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #34C759;
+  background: #4E8C6A;
   animation: pulse 2s ease infinite;
 }
 
@@ -176,10 +176,10 @@
   line-height: 1;
 }
 
-.stat-val.stat-win       { color: #34C759; }
+.stat-val.stat-win       { color: #4E8C6A; }
 .stat-val.stat-loss      { color: rgba(255,255,255,0.40); }
-.stat-val.stat-rank      { color: #FFD60A; }
-.stat-val.stat-best-rank { color: #FF9F0A; }
+.stat-val.stat-rank      { color: #836841; }
+.stat-val.stat-best-rank { color: #836841; }
 
 .stat-lbl {
   font-size: 10px;
@@ -294,10 +294,10 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: rgba(52, 199, 89, 0.09);
-  border: 1px solid rgba(52, 199, 89, 0.25);
+  background: rgba(47, 107, 79, 0.09);
+  border: 1px solid rgba(47, 107, 79, 0.25);
   border-radius: var(--radius-lg);
-  color: #1A7A35;
+  color: var(--color-positive);
   font-size: var(--text-sm);
   font-weight: 500;
   width: fit-content;
@@ -412,12 +412,12 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: rgba(255, 149, 0, 0.07);
-  border: 1px solid rgba(255, 149, 0, 0.2);
+  background: rgba(176, 125, 60, 0.07);
+  border: 1px solid rgba(176, 125, 60, 0.2);
   border-radius: var(--radius-lg);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: #B45309;
+  color: #8A5A22;
 }
 
 /* ── History list ── */
@@ -514,7 +514,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #34C759;
+  color: #4E8C6A;
 }
 
 /* Séparateur entre les deux lignes */

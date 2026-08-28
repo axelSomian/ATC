@@ -88,7 +88,7 @@
 
 .form-msg { font-size: var(--text-xs); }
 .form-msg.err { color: var(--color-error); }
-.form-msg.ok { color: #1A7A35; }
+.form-msg.ok { color: var(--color-positive); }
 
 .pill-tag {
   display: inline-flex;
@@ -100,7 +100,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-.pill-admin { background: rgba(194, 93, 46, 0.12); color: var(--color-accent); }
+.pill-admin { background: rgba(31, 90, 69, 0.12); color: var(--color-accent); }
 .pill-inactive { background: rgba(29, 29, 31, 0.07); color: var(--color-muted); }
 
 @media (max-width: 560px) {

@@ -74,8 +74,8 @@
   border: 1px solid var(--color-border);
 }
 .legend-dot.free {
-  background: rgba(52, 199, 89, 0.15);
-  border-color: rgba(52, 199, 89, 0.4);
+  background: rgba(47, 107, 79, 0.15);
+  border-color: rgba(47, 107, 79, 0.4);
 }
 
 /* ── Calendar card ── */
@@ -166,10 +166,10 @@
 .cal-cell:hover { background: var(--color-bg); }
 
 .cal-cell.free {
-  background: rgba(52, 199, 89, 0.12);
-  color: #22a84c;
+  background: rgba(47, 107, 79, 0.12);
+  color: var(--color-positive);
 }
-.cal-cell.free:hover { background: rgba(52, 199, 89, 0.20); }
+.cal-cell.free:hover { background: rgba(47, 107, 79, 0.20); }
 
 .cal-cell.busy { opacity: 0.5; cursor: wait; }
 
