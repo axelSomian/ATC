@@ -92,9 +92,10 @@
 | Section "Contestés" | 🟡 Moyenne | ✅ Terminé | Matchs `disputed` visibles par les deux joueurs avec message admin |
 | Notifs `score_to_validate` / `score_confirmed` / `score_disputed` | 🔴 Haute | ✅ Terminé | Labels, icônes et navigation corrects |
 | Historique filtré sur matchs `confirmed` uniquement | 🔴 Haute | ✅ Terminé | `confirmedHistory()` computed signal |
-| Dashboard stats réelles (victoires, matchs joués) | 🟡 Moyenne | ✅ Terminé | `GET /matches/me/stats` → matchesPlayed, wins, losses, winRate, upcomingCount, membersTotal |
-| Dashboard — prochain match affiché | 🟡 Moyenne | ✅ Terminé | Card cliquable vers /my-matches avec adversaire, date, court |
+| Dashboard stats réelles (victoires, matchs joués) | 🟡 Moyenne | ✅ Terminé | `GET /matches/me/stats` → matchesPlayed, wins, losses, winRate, upcomingCount, rank |
+| Dashboard — prochain match affiché | 🟡 Moyenne | ✅ Terminé | Remonté en tête (avant les stats). Card cliquable ou état vide « Aucun match prévu → Trouver un match » |
 | Dashboard — 4 accès rapides | 🟡 Moyenne | ✅ Terminé | Trouver un match, Mes matchs (avec compteur à venir), Annuaire, Mes dispos |
+| Dashboard — tuile Classement conditionnelle | 🟢 Basse | ✅ Terminé | Affichée seulement si le joueur est classé (≥ 5 matchs) ; grille 2 ou 3 tuiles. Tuile « Membres » retirée (doublon avec accès rapides) |
 | Affichage score historique — scoreboard ATP | 🟡 Moyenne | ✅ Terminé | 2 rangées (moi / adversaire), colonne par set, set gagné en vert, set perdu en gris |
 | Stats sur le profil membre (W/L, % victoire) | 🟡 Moyenne | 📋 Backlog | Page détail membre — données actuellement statiques |
 | Auto-validation après 48h (score sans réponse) | 🟡 Moyenne | 📋 Backlog | Cron job ou check à la connexion |

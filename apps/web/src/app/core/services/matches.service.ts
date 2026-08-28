@@ -8,7 +8,6 @@ export interface MyStats {
   losses: number;
   winRate: number;
   upcomingCount: number;
-  membersTotal: number;
   rank:         number | null;
   rating:       number | null;
   ratingDelta:  number | null;
