@@ -22,14 +22,72 @@
     </div>
   </div>
 
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card card">
+      <span class="stat-label">Matchs joués</span>
+      @if (loading()) {
+        <span class="stat-value stat-loading">—</span>
+      } @else {
+        <span class="stat-value">{{ stats()?.matchesPlayed ?? 0 }}</span>
+        <span class="stat-hint">
+          @if ((stats()?.matchesPlayed ?? 0) === 0) { Commencez à jouer }
+          @else { {{ stats()!.wins }}V · {{ stats()!.losses }}D }
+        </span>
+      }
+    </div>
+    <div class="stat-card card">
+      <span class="stat-label">% Victoire</span>
+      @if (loading()) {
+        <span class="stat-value stat-loading">—</span>
+      } @else {
+        <span class="stat-value" [class.stat-positive]="(stats()?.winRate ?? 0) >= 50">
+          {{ (stats()?.matchesPlayed ?? 0) === 0 ? '—' : (stats()!.winRate + '%') }}
+        </span>
+        <span class="stat-hint">
+          @if ((stats()?.matchesPlayed ?? 0) === 0) { Aucun match encore }
+          @else if (stats()!.winRate >= 50) { Bonne forme ! }
+          @else { Continuez à jouer }
+        </span>
+      }
+    </div>
+    <a routerLink="/members" class="stat-card card">
+      <span class="stat-label">Membres</span>
+      @if (loading()) {
+        <span class="stat-value stat-loading">—</span>
+      } @else {
+        <span class="stat-value">{{ stats()?.membersTotal ?? '—' }}</span>
+        <span class="stat-hint positive">Voir l'annuaire →</span>
+      }
+    </a>
+    <a routerLink="/rankings" class="stat-card card stat-card-rank">
+      <span class="stat-label">Classement</span>
+      @if (loading()) {
+        <span class="stat-value stat-loading">—</span>
+      } @else {
+        <span class="stat-value stat-rank">{{ rankLabel() }}</span>
+        <span class="stat-hint">
+          @if (stats()?.rank == null) {
+            5 matchs requis
+          } @else if (deltaLabel()) {
+            <span [class.delta-up]="deltaUp()" [class.delta-down]="deltaDown()">
+              {{ deltaLabel() }} dernier match
+            </span>
+          } @else {
+            {{ stats()!.rating }} pts
+          }
+        </span>
+      }
+    </a>
+  </div>
+
   <!-- Prochain match -->
-  @if (!loading()) {
+  @if (!loading() && nextMatch()) {
     <div>
       <div class="section-header" style="margin-bottom:10px">
         <span class="section-title">Prochain match</span>
         <a routerLink="/my-matches" class="section-link">Voir tous →</a>
       </div>
-      @if (nextMatch()) {
       <a routerLink="/my-matches" class="next-match-card card">
         <div class="next-match-left">
           <div class="next-match-vs">
@@ -70,65 +128,8 @@
           }
         </div>
       </a>
-      } @else {
-        <a routerLink="/matchmaking" class="next-match-empty card">
-          <div class="next-match-empty-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/><path d="M12 2c-2.76 4-2.76 16 0 20"/></svg>
-          </div>
-          <div>
-            <div class="next-match-name">Aucun match prévu</div>
-            <div class="action-sub">Trouver un match &rarr;</div>
-          </div>
-        </a>
-      }
     </div>
   }
-
-  <!-- Stats -->
-  <div class="stats-grid" [class.cols-2]="loading() || stats()?.rank == null">
-    <div class="stat-card card">
-      <span class="stat-label">Matchs joués</span>
-      @if (loading()) {
-        <span class="stat-value stat-loading">—</span>
-      } @else {
-        <span class="stat-value">{{ stats()?.matchesPlayed ?? 0 }}</span>
-        <span class="stat-hint">
-          @if ((stats()?.matchesPlayed ?? 0) === 0) { Commencez à jouer }
-          @else { {{ stats()!.wins }}V · {{ stats()!.losses }}D }
-        </span>
-      }
-    </div>
-    <div class="stat-card card">
-      <span class="stat-label">% Victoire</span>
-      @if (loading()) {
-        <span class="stat-value stat-loading">—</span>
-      } @else {
-        <span class="stat-value" [class.stat-positive]="(stats()?.winRate ?? 0) >= 50">
-          {{ (stats()?.matchesPlayed ?? 0) === 0 ? '—' : (stats()!.winRate + '%') }}
-        </span>
-        <span class="stat-hint">
-          @if ((stats()?.matchesPlayed ?? 0) === 0) { Aucun match encore }
-          @else if (stats()!.winRate >= 50) { Bonne forme ! }
-          @else { Continuez à jouer }
-        </span>
-      }
-    </div>
-    @if (!loading() && stats()?.rank != null) {
-      <a routerLink="/rankings" class="stat-card card stat-card-rank">
-        <span class="stat-label">Classement</span>
-        <span class="stat-value stat-rank">{{ rankLabel() }}</span>
-        <span class="stat-hint">
-          @if (deltaLabel()) {
-            <span [class.delta-up]="deltaUp()" [class.delta-down]="deltaDown()">
-              {{ deltaLabel() }} dernier match
-            </span>
-          } @else {
-            {{ stats()!.rating }} pts
-          }
-        </span>
-      </a>
-    }
-  </div>
 
   <!-- Quick actions -->
   <div>

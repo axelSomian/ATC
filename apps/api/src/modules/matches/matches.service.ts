@@ -17,7 +17,7 @@ const MATCH_INCLUDE = {
 export async function getMyStats(userId: string) {
   const windowStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const [matchesPlayed, wins, upcomingDispos, upcomingQuick, me] = await Promise.all([
+  const [matchesPlayed, wins, upcomingDispos, upcomingQuick, membersTotal, me] = await Promise.all([
     prisma.match.count({
       where: { OR: [{ hostId: userId }, { guestId: userId }], status: 'confirmed' },
     }),
@@ -40,6 +40,7 @@ export async function getMyStats(userId: string) {
         match: null,
       },
     }),
+    prisma.user.count(),
     prisma.user.findUnique({
       where: { id: userId },
       select: { rating: true, ratingGames: true, ratingDelta: true },
@@ -56,6 +57,7 @@ export async function getMyStats(userId: string) {
   return {
     matchesPlayed, wins, losses, winRate,
     upcomingCount: upcomingDispos + upcomingQuick,
+    membersTotal,
     rank,
     rating:      me?.rating      ?? null,
     ratingDelta: me?.ratingDelta ?? null,
