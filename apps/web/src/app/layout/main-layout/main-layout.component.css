@@ -15,7 +15,10 @@
   flex: 1;
   overflow-y: auto;
   padding: 32px 36px;
-  background: var(--color-bg);
+  /* Filigrane « blueprint » — lignes de court sur tout le site connecté */
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='300'%20height='460'%20viewBox='0%200%20300%20460'%20fill='none'%20stroke='%238FAE9B'%20stroke-opacity='0.13'%20stroke-width='2'%3E%3Crect%20x='20'%20y='10'%20width='260'%20height='440'/%3E%3Cline%20x1='52'%20y1='10'%20x2='52'%20y2='450'/%3E%3Cline%20x1='248'%20y1='10'%20x2='248'%20y2='450'/%3E%3Cline%20x1='20'%20y1='230'%20x2='280'%20y2='230'/%3E%3Cline%20x1='52'%20y1='120'%20x2='248'%20y2='120'/%3E%3Cline%20x1='52'%20y1='340'%20x2='248'%20y2='340'/%3E%3Cline%20x1='150'%20y1='120'%20x2='150'%20y2='340'/%3E%3C/svg%3E") repeat center top / 300px 460px fixed,
+    var(--color-bg);
   min-width: 0;
 }
 
@@ -29,5 +32,6 @@
   .layout-content {
     padding: 20px 16px;
     padding-bottom: calc(var(--bottom-nav-height) + 20px);
+    background-size: 240px 368px;
   }
 }
