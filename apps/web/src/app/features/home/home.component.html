@@ -3,13 +3,21 @@
   <header class="home-greeting">
     <p class="home-hello">Bonjour</p>
     <h1 class="home-name">{{ firstName() }}</h1>
-    <div class="home-level">
-      <span class="level-dots">
-        @for (d of dots; track d) {
-          <span class="level-dot" [class.active]="d <= (user()?.level ?? 1)"></span>
-        }
+    <div class="home-sub">
+      <span class="home-level">
+        <span class="level-dots">
+          @for (d of dots; track d) {
+            <span class="level-dot" [class.active]="d <= (user()?.level ?? 1)"></span>
+          }
+        </span>
+        <span class="home-level-label">{{ levelLabel() }}</span>
       </span>
-      <span class="home-level-label">{{ levelLabel() }}</span>
+      @if (onlineCount() > 0) {
+        <span class="home-online">
+          <span class="online-dot"></span>
+          {{ onlineCount() }} {{ onlineCount() > 1 ? 'membres en ligne' : 'membre en ligne' }}
+        </span>
+      }
     </div>
   </header>
 
