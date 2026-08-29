@@ -25,6 +25,7 @@
     @for (w of widgets; track w.route) {
       <a
         [routerLink]="w.route"
+        [queryParams]="w.query ?? null"
         class="widget"
         [attr.data-tone]="w.tone"
         [style.background-image]="'url(/assets/img/w/' + w.img + '.webp)'"
@@ -33,7 +34,7 @@
         <span class="widget-text">
           <span class="widget-title">{{ w.title }}</span>
           <span class="widget-sub">{{ w.sub }}</span>
-          @if (meta(w.route); as m) {
+          @if (meta(w.id); as m) {
             <span class="widget-meta">{{ m }}</span>
           }
         </span>

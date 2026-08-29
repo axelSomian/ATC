@@ -49,7 +49,7 @@
         </div>
         <p class="empty-title">Aucun match à venir</p>
         <p class="text-muted" style="font-size:var(--text-sm)">Publiez une annonce ou défiez un membre directement.</p>
-        <a routerLink="/matchmaking" class="btn btn-primary btn-sm">Trouver un match</a>
+        <a routerLink="/matchs" [queryParams]="{ vue: 'trouver' }" class="btn btn-primary btn-sm">Trouver un match</a>
       </div>
     } @else {
       <div class="match-list">

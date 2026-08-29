@@ -30,19 +30,16 @@ export const routes: Routes = [
           import('./features/profile/profile.component').then((m) => m.ProfileComponent),
       },
       {
-        path: 'matchmaking',
+        path: 'matchs',
         loadComponent: () =>
-          import('./features/match-finder/match-finder.component').then((m) => m.MatchFinderComponent),
+          import('./features/matches-hub/matches-hub.component').then((m) => m.MatchesHubComponent),
       },
+      { path: 'matchmaking', redirectTo: 'matchs', pathMatch: 'full' },
+      { path: 'my-matches', redirectTo: 'matchs', pathMatch: 'full' },
       {
         path: 'availability',
         loadComponent: () =>
           import('./features/availability/availability.component').then((m) => m.AvailabilityComponent),
-      },
-      {
-        path: 'my-matches',
-        loadComponent: () =>
-          import('./features/my-matches/my-matches.component').then((m) => m.MyMatchesComponent),
       },
       {
         path: 'notifications',

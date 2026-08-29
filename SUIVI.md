@@ -68,7 +68,8 @@
 | Tâche | Priorité | Statut | Notes |
 |-------|----------|--------|-------|
 | Calendrier de disponibilités (`/availability`) | 🔴 Haute | ✅ Terminé | Grille CSS hebdomadaire, optimistic toggle, API upsert |
-| Page Mes matchs (`/my-matches`) | 🔴 Haute | ✅ Terminé | Onglets À venir / Défis / Historique |
+| Page Mes matchs | 🔴 Haute | ✅ Terminé | Onglets À venir / Défis / Historique |
+| Fusion Matchmaking + Mes matchs → `/matchs` | 🟢 Basse | ✅ Terminé | `MatchesHubComponent` : segment « Trouver un adversaire » / « Mes matchs » (query `vue`). `/matchmaking` et `/my-matches` redirigent. 1 seule entrée nav |
 | Notifications backend (service + routes + hooks) | 🔴 Haute | ✅ Terminé | Polling 30s, types : match_request / confirmed / declined / score_to_validate / score_confirmed / score_disputed |
 | Cloche flottante (fab fixe sur toute l'app) | 🔴 Haute | ✅ Terminé | Badge non-lus, navigate vers page notifications |
 | Page `/notifications` dédiée | 🔴 Haute | ✅ Terminé | Liste, icônes colorées, clic = mark read + navigation contextuelle |

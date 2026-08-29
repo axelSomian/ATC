@@ -90,7 +90,7 @@
 
     <!-- Prochain match -->
     @if (nextMatch()) {
-      <a routerLink="/my-matches" class="next-match card">
+      <a routerLink="/matchs" [queryParams]="{ vue: 'mes-matchs' }" class="next-match card">
         <div class="next-match-head">
           <span class="section-title">Prochain match</span>
           <span class="next-match-when">{{ nextMatch()!.when | date:"EEE d MMM · HH'h'mm" }}</span>

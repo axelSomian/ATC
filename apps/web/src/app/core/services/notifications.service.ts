@@ -38,22 +38,22 @@ export class NotificationsService {
     const p = n.payload;
     switch (n.type) {
       case 'match_request':
-        this.router.navigate(['/matchmaking'], { queryParams: { tab: 'mine', focus: p.dispoId ?? null } });
+        this.router.navigate(['/matchs'], { queryParams: { vue: 'trouver', tab: 'mine', focus: p.dispoId ?? null } });
         break;
       case 'match_declined':
-        this.router.navigate(['/matchmaking'], { queryParams: { tab: 'mine' } });
+        this.router.navigate(['/matchs'], { queryParams: { vue: 'trouver', tab: 'mine' } });
         break;
       case 'match_confirmed':
-        this.router.navigate(['/my-matches'], { queryParams: { tab: 'upcoming', focus: p.dispoId ?? p.quickMatchId ?? null } });
+        this.router.navigate(['/matchs'], { queryParams: { vue: 'mes-matchs', tab: 'upcoming', focus: p.dispoId ?? p.quickMatchId ?? null } });
         break;
       case 'quick_match_request':
-        this.router.navigate(['/my-matches'], { queryParams: { tab: 'challenges', focus: p.quickMatchId ?? null } });
+        this.router.navigate(['/matchs'], { queryParams: { vue: 'mes-matchs', tab: 'challenges', focus: p.quickMatchId ?? null } });
         break;
       case 'score_to_validate':
       case 'score_confirmed':
       case 'score_disputed':
       case 'score_resolved':
-        this.router.navigate(['/my-matches'], { queryParams: { tab: 'history', focus: p.matchId ?? null } });
+        this.router.navigate(['/matchs'], { queryParams: { vue: 'mes-matchs', tab: 'history', focus: p.matchId ?? null } });
         break;
       default:
         this.router.navigate(['/notifications']);
