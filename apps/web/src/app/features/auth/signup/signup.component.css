@@ -18,7 +18,7 @@
   background-color: var(--color-deep-forest);
   background-image: url('/assets/img/court-editorial.webp');
   background-size: cover;
-  background-position: center top;
+  background-position: 30% 56%;
   background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
@@ -235,6 +235,7 @@
     min-height: 200px;
     max-height: 280px;
     padding: 22px 24px 44px;
+    background-position: 34% 62%;
   }
   .auth-visual::before {
     background: linear-gradient(
