@@ -65,6 +65,24 @@ model Club {
   @@index([active, sortOrder])
 }
 
+// Terrains / lieux de jeu — éditables par un admin (pas de redéploiement).
+// `court` reste stocké en texte sur Match/DispoPost/QuickMatch (historique stable) ;
+// on rapproche par `name` pour afficher la carte et l'itinéraire.
+model Court {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  zone      String   @default("")
+  address   String   @default("")
+  lat       Float?
+  lng       Float?
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([active, sortOrder])
+}
+
 // Les 5 niveaux : contenu affiché (nom, profil, jeu) éditable par un admin.
 // Les bornes de rating ELO restent dans le code (src/modules/matches/elo.ts).
 model Level {

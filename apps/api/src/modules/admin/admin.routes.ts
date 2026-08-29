@@ -4,6 +4,8 @@ import { AppError } from '../../middleware/error.js';
 import {
   createClubSchema,
   updateClubSchema,
+  createCourtSchema,
+  updateCourtSchema,
   updateLevelSchema,
   resolveMatchSchema,
   setRoleSchema,
@@ -13,6 +15,10 @@ import {
   createClub,
   updateClub,
   deleteClub,
+  listAllCourts,
+  createCourt,
+  updateCourt,
+  deleteCourt,
   listAllLevels,
   updateLevel,
   listDisputedMatches,
@@ -56,6 +62,42 @@ router.patch('/clubs/:id', async (req, res, next) => {
 router.delete('/clubs/:id', async (req, res, next) => {
   try {
     await deleteClub(req.params.id);
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ── Terrains ── */
+router.get('/courts', async (_req, res, next) => {
+  try {
+    res.json(await listAllCourts());
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/courts', async (req, res, next) => {
+  try {
+    const dto = createCourtSchema.parse(req.body);
+    res.status(201).json(await createCourt(dto));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/courts/:id', async (req, res, next) => {
+  try {
+    const dto = updateCourtSchema.parse(req.body);
+    res.json(await updateCourt(req.params.id, dto));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/courts/:id', async (req, res, next) => {
+  try {
+    await deleteCourt(req.params.id);
     res.status(204).end();
   } catch (err) {
     next(err);

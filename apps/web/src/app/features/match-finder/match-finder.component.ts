@@ -8,8 +8,11 @@ import { DisposService, type DispoPost, type DisposQuery } from '../../core/serv
 import { AuthStore } from '../../core/stores/auth.store';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { SocketService } from '../../core/services/socket.service';
+import { ReferenceService } from '../../core/services/reference.service';
+import { CourtMapService } from '../../core/services/court-map.service';
 
-const COURTS = [
+// Repli si le catalogue de terrains (DB) est injoignable au démarrage.
+const COURTS_FALLBACK = [
   'Club Ivoire', 'INSEP', 'Plateau Tennis Club', 'Cocody', 'Marcory',
   'Riviera', 'Yopougon', 'II Plateaux', 'Treichville',
 ];
@@ -34,6 +37,8 @@ export class MatchFinderComponent implements OnInit, OnDestroy {
   private readonly fb            = inject(FormBuilder);
   private readonly route         = inject(ActivatedRoute);
   private readonly destroyRef    = inject(DestroyRef);
+  private readonly reference     = inject(ReferenceService);
+  private readonly courtMap      = inject(CourtMapService);
   readonly notifService          = inject(NotificationsService);
 
   readonly tab          = signal<'feed' | 'mine'>('feed');
@@ -66,8 +71,15 @@ export class MatchFinderComponent implements OnInit, OnDestroy {
   );
 
   readonly dots    = [1, 2, 3, 4, 5];
-  readonly courts  = COURTS;
+  readonly courts  = computed(() => {
+    const names = this.reference.courtNames();
+    return names.length ? names : COURTS_FALLBACK;
+  });
   readonly durations = DURATIONS;
+
+  openCourtMap(court: string): void {
+    this.courtMap.open(court);
+  }
 
   readonly createForm = this.fb.group({
     when:     ['', Validators.required],

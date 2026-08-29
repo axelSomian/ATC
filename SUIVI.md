@@ -74,6 +74,7 @@
 | Cloche flottante (fab fixe sur toute l'app) | 🔴 Haute | ✅ Terminé | Badge non-lus, navigate vers page notifications |
 | Page `/notifications` dédiée | 🔴 Haute | ✅ Terminé | Liste, icônes colorées, clic = mark read + navigation contextuelle |
 | Dashboard — stats réelles depuis la BDD | 🟡 Moyenne | 📋 Backlog | Compter matchs/victoires depuis la table Match |
+| Carte du terrain d'un match | 🟡 Moyenne | ✅ Terminé | Table `Court` admin-éditable (nom, zone, adresse, `lat`/`lng`) + `GET /api/v1/courts` + onglet admin « Terrains ». `CourtMapService` + `<app-court-map>` (plan OpenStreetMap sans clé API + lien itinéraire Google/Waze/Plans, repli recherche par nom). Clic sur le terrain d'un match (feed, à venir, historique, défis) ouvre la carte. Migration `20260829130000_courts` (9 terrains d'Abidjan géocodés en approximatif). Les sélecteurs de terrain (annonce, défi, préférences) tirent désormais du catalogue |
 
 ---
 

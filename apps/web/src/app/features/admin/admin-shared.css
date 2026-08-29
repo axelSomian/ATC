@@ -41,6 +41,15 @@
 /* ── Panels partagés ── */
 .panel { display: flex; flex-direction: column; gap: var(--space-4); }
 
+.panel-hint {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-muted);
+  background: var(--color-cream);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
 .panel-empty,
 .panel-loading {
   padding: var(--space-8) var(--space-4);

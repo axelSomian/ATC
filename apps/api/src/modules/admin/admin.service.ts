@@ -6,6 +6,8 @@ import { applyEloUpdate } from '../matches/matches.service.js';
 import type {
   CreateClubDto,
   UpdateClubDto,
+  CreateCourtDto,
+  UpdateCourtDto,
   UpdateLevelDto,
   ResolveMatchDto,
   SetRoleDto,
@@ -59,6 +61,52 @@ export async function deleteClub(id: string) {
     }
     throw err;
   }
+}
+
+/* ─────────────────────────── Terrains ─────────────────────────── */
+
+/** Tous les terrains (actifs et inactifs) pour l'admin. */
+export function listAllCourts() {
+  return prisma.court.findMany({
+    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+  });
+}
+
+export async function createCourt(dto: CreateCourtDto) {
+  try {
+    return await prisma.court.create({ data: dto });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      throw new AppError(409, 'Un terrain avec ce slug existe déjà');
+    }
+    throw err;
+  }
+}
+
+export async function updateCourt(id: string, dto: UpdateCourtDto) {
+  try {
+    return await prisma.court.update({ where: { id }, data: dto });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2025') throw new AppError(404, 'Terrain introuvable');
+      if (err.code === 'P2002') throw new AppError(409, 'Un terrain avec ce slug existe déjà');
+    }
+    throw err;
+  }
+}
+
+export async function deleteCourt(id: string) {
+  const court = await prisma.court.findUnique({ where: { id }, select: { name: true } });
+  if (!court) throw new AppError(404, 'Terrain introuvable');
+
+  const used = await prisma.match.count({ where: { court: court.name } });
+  if (used > 0) {
+    throw new AppError(
+      409,
+      `Ce terrain figure sur ${used} match(s). Désactivez-le plutôt que de le supprimer.`,
+    );
+  }
+  await prisma.court.delete({ where: { id } });
 }
 
 /* ─────────────────────────── Niveaux ─────────────────────────── */

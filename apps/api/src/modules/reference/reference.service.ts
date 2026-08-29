@@ -10,6 +10,15 @@ export function listClubs() {
   });
 }
 
+/** Terrains actifs, triés pour l'affichage (sélecteurs + carte). */
+export function listCourts() {
+  return prisma.court.findMany({
+    where: { active: true },
+    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    select: { id: true, slug: true, name: true, zone: true, address: true, lat: true, lng: true },
+  });
+}
+
 /** Les 5 niveaux, du plus bas au plus haut. */
 export function listLevels() {
   return prisma.level.findMany({

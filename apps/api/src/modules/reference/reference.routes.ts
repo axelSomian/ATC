@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listClubs, listLevels } from './reference.service.js';
+import { listClubs, listCourts, listLevels } from './reference.service.js';
 
 const router = Router();
 
@@ -7,6 +7,14 @@ const router = Router();
 router.get('/clubs', async (_req, res, next) => {
   try {
     res.json(await listClubs());
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/courts', async (_req, res, next) => {
+  try {
+    res.json(await listCourts());
   } catch (err) {
     next(err);
   }

@@ -19,8 +19,9 @@ const TIMES = [
   { value: 'weekend', label: 'Weekend' },
 ];
 
-const COURTS = [
-  'Club Ivoire', 'INSEP', 'Plateau', 'Cocody',
+// Repli si le catalogue de terrains (DB) est injoignable au démarrage.
+const COURTS_FALLBACK = [
+  'Club Ivoire', 'INSEP', 'Plateau Tennis Club', 'Cocody',
   'Marcory', 'Riviera', 'Yopougon', 'II Plateaux',
 ];
 
@@ -56,7 +57,10 @@ export class ProfileComponent implements OnInit {
   readonly dots = [1, 2, 3, 4, 5];
   readonly cities = CITIES_CI;
   readonly times  = TIMES;
-  readonly courts = COURTS;
+  readonly courts = computed(() => {
+    const names = this.reference.courtNames();
+    return names.length ? names : COURTS_FALLBACK;
+  });
   readonly clubsByZone = this.reference.clubsByZone;
   readonly otherClub   = this.reference.otherClub;
 

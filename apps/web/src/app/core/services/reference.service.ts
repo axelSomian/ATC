@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, of, catchError } from 'rxjs';
-import type { ClubRef, LevelRef } from '../models/reference.model';
+import type { ClubRef, CourtRef, LevelRef } from '../models/reference.model';
 
 const API = '/api/v1';
 
@@ -17,11 +17,16 @@ export class ReferenceService {
   private readonly http = inject(HttpClient);
 
   private readonly _clubs = signal<ClubRef[]>([]);
+  private readonly _courts = signal<CourtRef[]>([]);
   private readonly _levels = signal<LevelRef[]>([]);
   private loaded = false;
 
   readonly clubs = this._clubs.asReadonly();
+  readonly courts = this._courts.asReadonly();
   readonly levels = this._levels.asReadonly();
+
+  /** Noms de terrains pour les <select> (préférences, création d'annonce). */
+  readonly courtNames = computed(() => this._courts().map((c) => c.name));
 
   /** Clubs groupés par zone pour un <select> (l'option « autre » est isolée). */
   readonly clubsByZone = computed(() => {
@@ -42,9 +47,11 @@ export class ReferenceService {
     this.loaded = true;
     forkJoin({
       clubs: this.http.get<ClubRef[]>(`${API}/clubs`).pipe(catchError(() => of<ClubRef[]>([]))),
+      courts: this.http.get<CourtRef[]>(`${API}/courts`).pipe(catchError(() => of<CourtRef[]>([]))),
       levels: this.http.get<LevelRef[]>(`${API}/levels`).pipe(catchError(() => of<LevelRef[]>([]))),
-    }).subscribe(({ clubs, levels }) => {
+    }).subscribe(({ clubs, courts, levels }) => {
       this._clubs.set(clubs);
+      this._courts.set(courts);
       this._levels.set(levels);
     });
   }
@@ -60,5 +67,12 @@ export class ReferenceService {
   clubName(idOrSlug?: string | null): string {
     if (!idOrSlug) return '';
     return this._clubs().find((c) => c.id === idOrSlug || c.slug === idOrSlug)?.name ?? '';
+  }
+
+  /** Retrouve un terrain par son nom (insensible à la casse / aux espaces). */
+  courtByName(name?: string | null): CourtRef | undefined {
+    if (!name) return undefined;
+    const key = name.trim().toLowerCase();
+    return this._courts().find((c) => c.name.trim().toLowerCase() === key);
   }
 }

@@ -43,7 +43,7 @@
             <select class="form-control" formControlName="court"
               [class.is-invalid]="createForm.controls.court.invalid && createForm.controls.court.touched">
               <option value="">— Sélectionner —</option>
-              @for (c of courts; track c) {
+              @for (c of courts(); track c) {
                 <option [value]="c">{{ c }}</option>
               }
             </select>
@@ -160,10 +160,10 @@
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     {{ d.when | date:'EEE d MMM · HH:mm' }} · {{ formatDuration(d.duration) }}
                   </span>
-                  <span class="meta-chip chip-court">
+                  <button type="button" class="meta-chip chip-court chip-court-btn" (click)="openCourtMap(d.court)" title="Voir sur la carte">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     {{ d.court }}
-                  </span>
+                  </button>
                   <span class="type-badge type-{{ d.type }}">{{ typeLabel(d.type) }}</span>
                 </div>
                 @if (d.note) {

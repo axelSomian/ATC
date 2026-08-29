@@ -33,7 +33,9 @@ const PLAYERS: { name: string; level: number; city: string }[] = [
   { name: 'Christelle Ouattara',level: 1, city: 'Marcory' },
 ];
 
-const COURTS = ['Court Central', 'Court 2', 'Court 3', 'Court Annexe', 'Court Extérieur'];
+// Noms alignés sur le catalogue de terrains (migration 20260829130000_courts)
+// pour que la carte fonctionne sur les matchs de démo.
+const COURTS = ['Club Ivoire', 'Plateau Tennis Club', 'INSEP', 'Cocody', 'Riviera'];
 const TYPES  = ['simple', 'simple', 'simple', 'double', 'mixte'];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

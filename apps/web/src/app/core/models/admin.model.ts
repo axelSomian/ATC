@@ -11,6 +11,19 @@ export interface AdminClub {
   createdAt: string;
 }
 
+export interface AdminCourt {
+  id: string;
+  slug: string;
+  name: string;
+  zone: string;
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
 export interface AdminLevel {
   level: number;
   code: string;
@@ -57,4 +70,5 @@ export interface AdminMember {
 }
 
 export type ClubPayload = Partial<Omit<AdminClub, 'id' | 'createdAt'>>;
+export type CourtPayload = Partial<Omit<AdminCourt, 'id' | 'createdAt'>>;
 export type LevelPayload = Partial<Pick<AdminLevel, 'code' | 'nom' | 'profil' | 'jeu'>>;

@@ -150,6 +150,21 @@ model User {
   dispos          DispoPost[]
 }
 
+// Terrains / lieux de jeu — éditables par un admin (GET /api/v1/courts).
+// `court` reste stocké en texte sur Match/DispoPost/QuickMatch ; on rapproche
+// par `name` pour afficher la carte (OpenStreetMap) et l'itinéraire.
+model Court {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  name      String
+  zone      String  @default("")
+  address   String  @default("")
+  lat       Float?
+  lng       Float?
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
 model DispoPost {
   id        String   @id @default(cuid())
   userId    String
@@ -201,6 +216,11 @@ model Notification {
 
 Base : `/api/v1`
 
+### Référence (public, sans auth)
+- `GET /clubs` — clubs actifs (sélecteurs profil)
+- `GET /courts` — terrains actifs avec `lat`/`lng` (sélecteurs + carte des matchs)
+- `GET /levels` — libellés des 5 niveaux
+
 ### Auth
 - `POST /auth/signup` — créer un compte
 - `POST /auth/login` — email + mot de passe → JWT
@@ -232,6 +252,7 @@ Base : `/api/v1`
 
 ### Admin (`role = 'admin'` requis — `authenticate` + `requireAdmin`)
 - `GET/POST /admin/clubs`, `PATCH/DELETE /admin/clubs/:id` — CRUD clubs
+- `GET/POST /admin/courts`, `PATCH/DELETE /admin/courts/:id` — CRUD terrains (nom, zone, adresse, `lat`/`lng`)
 - `GET /admin/levels`, `PATCH /admin/levels/:level` — édition libellés de niveau
 - `GET /admin/matches/disputed`, `POST /admin/matches/:id/resolve` — résolution des litiges de score
 - `GET /admin/members`, `PATCH /admin/members/:id/role` — gestion des rôles
@@ -323,7 +344,8 @@ Base : `/api/v1`
 ### Phase 3 — Communauté
 - [ ] Notifications temps réel
 - [ ] Messagerie 1-to-1
-- [ ] Carte des courts/joueurs
+- [x] Carte du terrain d'un match (OpenStreetMap, sans clé API) + itinéraire ; catalogue `Court` admin-éditable
+- [ ] Carte des joueurs
 - [ ] Page asso (news, événements)
 
 ### Phase 4 — Plus

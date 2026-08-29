@@ -169,7 +169,7 @@
                   <select class="form-control" formControlName="court"
                     [class.is-invalid]="challengeForm.controls.court.invalid && challengeForm.controls.court.touched">
                     <option value="">— Sélectionner —</option>
-                    @for (c of courts; track c) {
+                    @for (c of courts(); track c) {
                       <option [value]="c">{{ c }}</option>
                     }
                   </select>

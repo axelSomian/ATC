@@ -4,6 +4,7 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatchesService, type RecordMatchDto } from '../../core/services/matches.service';
 import { QuickMatchesService } from '../../core/services/quick-matches.service';
+import { CourtMapService } from '../../core/services/court-map.service';
 import { AuthStore } from '../../core/stores/auth.store';
 import type { Match, UpcomingMatch } from '../../core/models/match.model';
 import type { QuickMatch } from '../../core/models/quick-match.model';
@@ -24,6 +25,7 @@ interface SetScore { h: string; g: string; }
 export class MyMatchesComponent implements OnInit {
   private readonly matchesSvc    = inject(MatchesService);
   private readonly quickSvc      = inject(QuickMatchesService);
+  private readonly courtMap      = inject(CourtMapService);
   private readonly authStore     = inject(AuthStore);
   private readonly route         = inject(ActivatedRoute);
   private readonly destroyRef    = inject(DestroyRef);
@@ -261,6 +263,8 @@ export class MyMatchesComponent implements OnInit {
   // ── Helpers ──
 
   typeLabel(type: string): string { return TYPE_LABELS[type] ?? type; }
+
+  openCourtMap(court: string): void { this.courtMap.open(court); }
 
   parseScoreSets(m: Match): { me: number; opp: number }[] {
     const score = this.myScore(m);

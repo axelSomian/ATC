@@ -9,7 +9,8 @@ import { ReferenceService } from '../../../core/services/reference.service';
 import { PresenceService } from '../../../core/services/presence.service';
 import type { UserProfile, RecentMatch } from '../../../core/models/user.model';
 
-const COURTS = [
+// Repli si le catalogue de terrains (DB) est injoignable au démarrage.
+const COURTS_FALLBACK = [
   'Club Ivoire', 'INSEP', 'Plateau Tennis Club', 'Cocody', 'Marcory',
   'Riviera', 'Yopougon', 'II Plateaux', 'Treichville',
 ];
@@ -43,7 +44,10 @@ export class MemberDetailComponent implements OnInit {
 
   readonly isOwnProfile = computed(() => this.authStore.user()?.id === this.id());
   readonly dots      = [1, 2, 3, 4, 5];
-  readonly courts    = COURTS;
+  readonly courts    = computed(() => {
+    const names = this.reference.courtNames();
+    return names.length ? names : COURTS_FALLBACK;
+  });
   readonly levelLabel = computed(() => this.reference.levelLabel(this.member()?.level ?? 1));
   readonly isOnline = computed(() => this.presence.isOnline(this.member()?.id, this.member()?.online ?? false));
 

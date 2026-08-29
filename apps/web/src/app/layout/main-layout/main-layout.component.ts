@@ -3,13 +3,14 @@ import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { TopbarComponent } from '../topbar/topbar.component';
 import { MobileNavComponent } from '../mobile-nav/mobile-nav.component';
+import { CourtMapComponent } from '../../shared/court-map/court-map.component';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { PresenceService } from '../../core/services/presence.service';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, TopbarComponent, MobileNavComponent],
+  imports: [RouterOutlet, SidebarComponent, TopbarComponent, MobileNavComponent, CourtMapComponent],
   template: `
     <div class="layout">
       <app-topbar />
@@ -20,6 +21,7 @@ import { PresenceService } from '../../core/services/presence.service';
         </main>
       </div>
       <app-mobile-nav />
+      <app-court-map />
     </div>
   `,
   styleUrl: './main-layout.component.css',

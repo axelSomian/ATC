@@ -97,7 +97,7 @@
                 </div>
                 <div class="match-info-row">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span>{{ m.court }}</span>
+                  <button type="button" class="court-link" (click)="openCourtMap(m.court)" title="Voir sur la carte">{{ m.court }}</button>
                 </div>
                 <div class="match-tags">
                   <span class="match-tag">{{ typeLabel(m.type) }}</span>
@@ -205,7 +205,7 @@
                 </div>
                 <div class="match-info-row">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span>{{ q.court }}</span>
+                  <button type="button" class="court-link" (click)="openCourtMap(q.court)" title="Voir sur la carte">{{ q.court }}</button>
                 </div>
                 <span class="match-tag">{{ typeLabel(q.type) }}</span>
               </div>
@@ -242,7 +242,7 @@
                 </div>
                 <div class="match-info-row">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span>{{ q.court }}</span>
+                  <button type="button" class="court-link" (click)="openCourtMap(q.court)" title="Voir sur la carte">{{ q.court }}</button>
                 </div>
                 <span class="status-pending" style="font-size:var(--text-xs);padding:2px 8px;border-radius:99px;background:rgba(176,125,60,.10);color:#8A5A22;border:1px solid rgba(176,125,60,.24)">En attente…</span>
               </div>
@@ -362,7 +362,7 @@
                 </div>
                 <div class="match-info-row">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span>{{ m.court }}</span>
+                  <button type="button" class="court-link" (click)="openCourtMap(m.court)" title="Voir sur la carte">{{ m.court }}</button>
                 </div>
                 <span class="match-tag">{{ typeLabel(m.type) }}</span>
               </div>
@@ -485,7 +485,7 @@
                 </div>
                 <div class="match-info-row">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span>{{ m.court }}</span>
+                  <button type="button" class="court-link" (click)="openCourtMap(m.court)" title="Voir sur la carte">{{ m.court }}</button>
                 </div>
                 <span class="match-tag">{{ typeLabel(m.type) }}</span>
               </div>

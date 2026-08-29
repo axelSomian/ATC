@@ -344,7 +344,7 @@
         <div class="pref-group">
           <span class="pref-label">Courts habituels</span>
           <div class="toggle-tags">
-            @for (c of courts; track c) {
+            @for (c of courts(); track c) {
               <button type="button" class="toggle-tag" [class.selected]="hasCourt(c)" (click)="toggleCourt(c)">
                 {{ c }}
               </button>

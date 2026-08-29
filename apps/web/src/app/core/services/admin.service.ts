@@ -2,9 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type {
   AdminClub,
+  AdminCourt,
   AdminLevel,
   AdminMember,
   ClubPayload,
+  CourtPayload,
   DisputedMatch,
   LevelPayload,
 } from '../models/admin.model';
@@ -28,6 +30,20 @@ export class AdminService {
   }
   deleteClub(id: string) {
     return this.http.delete<void>(`${API}/clubs/${id}`);
+  }
+
+  /* ── Terrains ── */
+  listCourts() {
+    return this.http.get<AdminCourt[]>(`${API}/courts`);
+  }
+  createCourt(payload: CourtPayload) {
+    return this.http.post<AdminCourt>(`${API}/courts`, payload);
+  }
+  updateCourt(id: string, payload: CourtPayload) {
+    return this.http.patch<AdminCourt>(`${API}/courts/${id}`, payload);
+  }
+  deleteCourt(id: string) {
+    return this.http.delete<void>(`${API}/courts/${id}`);
   }
 
   /* ── Niveaux ── */
