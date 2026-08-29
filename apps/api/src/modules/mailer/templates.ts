@@ -2,6 +2,28 @@ const ACCENT = '#C25D2E';
 const INK    = '#1A1814';
 const MUTED  = '#6B6357';
 
+// ── Sécurité ──────────────────────────────────────────────────────────────
+
+/**
+ * Échappe les caractères HTML. À appliquer à TOUTE valeur d'origine utilisateur
+ * (nom, court, note, score…) avant interpolation dans le HTML d'un e-mail —
+ * sinon un membre peut injecter du markup (liens de phishing, faux boutons,
+ * pixels de tracking) dans un e-mail reçu par un autre membre.
+ */
+function esc(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Nettoie une valeur destinée au sujet (pas de retour à la ligne / contrôle). */
+function subj(value: unknown): string {
+  return String(value ?? '').replace(/[\r\n\t\f\v]+/g, ' ').trim();
+}
+
 // ── Layout de base ────────────────────────────────────────────────────────
 
 function base(title: string, content: string): string {
@@ -10,7 +32,7 @@ function base(title: string, content: string): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${title}</title>
+<title>${esc(title)}</title>
 </head>
 <body style="margin:0;padding:0;background:#F3EEE4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
 <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F3EEE4;padding:40px 16px">
@@ -54,11 +76,15 @@ function strong(text: string): string {
   return `<strong style="color:${INK}">${text}</strong>`;
 }
 
+/**
+ * Tableau d'infos. Les libellés sont des littéraux internes ; les valeurs
+ * peuvent provenir de l'utilisateur → systématiquement échappées ici.
+ */
 function infoTable(rows: { label: string; value: string }[]): string {
   const cells = rows.map(r => `
     <tr>
       <td style="padding:10px 16px 10px 0;font-size:13px;color:${MUTED};font-weight:500;white-space:nowrap;border-bottom:1px solid #F0EBE3;vertical-align:top">${r.label}</td>
-      <td style="padding:10px 0;font-size:13px;color:${INK};font-weight:600;border-bottom:1px solid #F0EBE3">${r.value}</td>
+      <td style="padding:10px 0;font-size:13px;color:${INK};font-weight:600;border-bottom:1px solid #F0EBE3">${esc(r.value)}</td>
     </tr>`).join('');
   return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:20px 0 24px;border-top:1px solid #F0EBE3">${cells}</table>`;
 }
@@ -77,16 +103,16 @@ function fmtDateShort(date: Date): string {
 }
 
 function typeLabel(t: string): string {
-  return ({ simple: 'Simple', double: 'Double', mixte: 'Mixte' }[t] ?? t);
+  return ({ simple: 'Simple', double: 'Double', mixte: 'Mixte' }[t] ?? 'Match');
 }
 
 // ── Templates ─────────────────────────────────────────────────────────────
 
 export function welcomeTemplate(name: string): { subject: string; html: string } {
   return {
-    subject: `Bienvenue sur ATC, ${name} 🎾`,
+    subject: subj(`Bienvenue sur ATC, ${name} 🎾`),
     html: base('Bienvenue', `
-      ${h1(`Bienvenue, ${name} !`)}
+      ${h1(`Bienvenue, ${esc(name)} !`)}
       ${p(`Votre compte sur la plateforme d'${strong('Abidjan Tennis Community')} est créé.`)}
       ${p('Vous pouvez dès maintenant consulter les profils des membres, publier vos annonces de match et organiser des rencontres.')}
       ${p('Complétez votre profil pour apparaître dans l\'annuaire et trouver des adversaires à votre niveau.')}
@@ -109,10 +135,10 @@ export function challengeReceivedTemplate(opts: {
     ...(opts.note ? [{ label: 'Note', value: opts.note }] : []),
   ];
   return {
-    subject: `${opts.challengerName} vous défie en match 🎾`,
+    subject: subj(`${opts.challengerName} vous défie en match 🎾`),
     html: base('Défi reçu', `
       ${h1('Vous avez reçu un défi !')}
-      ${p(`${strong(opts.challengerName)} vous a envoyé un défi de match. Connectez-vous pour accepter ou décliner.`)}
+      ${p(`${strong(esc(opts.challengerName))} vous a envoyé un défi de match. Connectez-vous pour accepter ou décliner.`)}
       ${infoTable(rows)}
     `),
   };
@@ -131,10 +157,10 @@ export function challengeAcceptedTemplate(opts: {
     { label: 'Format', value: typeLabel(opts.type) },
   ];
   return {
-    subject: `${opts.challengedName} a accepté votre défi 🎾`,
+    subject: subj(`${opts.challengedName} a accepté votre défi 🎾`),
     html: base('Défi accepté', `
       ${h1('Défi accepté !')}
-      ${p(`${strong(opts.challengedName)} a accepté votre défi. Rendez-vous sur le court !`)}
+      ${p(`${strong(esc(opts.challengedName))} a accepté votre défi. Rendez-vous sur le court !`)}
       ${infoTable(rows)}
     `),
   };
@@ -145,10 +171,10 @@ export function challengeDeclinedTemplate(opts: {
   challengedName: string;
 }): { subject: string; html: string } {
   return {
-    subject: `${opts.challengedName} a décliné votre défi`,
+    subject: subj(`${opts.challengedName} a décliné votre défi`),
     html: base('Défi décliné', `
       ${h1('Défi décliné')}
-      ${p(`${strong(opts.challengedName)} n'est pas disponible pour ce match. Essayez un autre créneau ou défiez un autre joueur.`)}
+      ${p(`${strong(esc(opts.challengedName))} n'est pas disponible pour ce match. Essayez un autre créneau ou défiez un autre joueur.`)}
     `),
   };
 }
@@ -172,10 +198,10 @@ export function scoreToValidateTemplate(opts: {
     { label: 'Score adversaire',    value: oppScore },
   ];
   return {
-    subject: `Score à valider — match du ${fmtDateShort(opts.playedAt)}`,
+    subject: subj(`Score à valider — match du ${fmtDateShort(opts.playedAt)}`),
     html: base('Score à valider', `
       ${h1('Un score attend votre validation')}
-      ${p(`${strong(opts.submitterName)} a enregistré le score de votre match. Connectez-vous pour ${strong('confirmer ou contester')}.`)}
+      ${p(`${strong(esc(opts.submitterName))} a enregistré le score de votre match. Connectez-vous pour ${strong('confirmer ou contester')}.`)}
       ${infoTable(rows)}
     `),
   };
@@ -196,10 +222,10 @@ export function scoreConfirmedTemplate(opts: {
     { label: 'Date',     value: fmtDate(opts.playedAt) },
   ];
   return {
-    subject: `Score confirmé — ${opts.won ? 'Victoire' : 'Défaite'} vs ${opts.opponentName}`,
+    subject: subj(`Score confirmé — ${opts.won ? 'Victoire' : 'Défaite'} vs ${opts.opponentName}`),
     html: base('Score confirmé', `
       ${h1('Score confirmé')}
-      ${p(`${strong(opts.opponentName)} a validé le score. Votre classement a été mis à jour.`)}
+      ${p(`${strong(esc(opts.opponentName))} a validé le score. Votre classement a été mis à jour.`)}
       ${infoTable(rows)}
     `),
   };
@@ -212,10 +238,10 @@ export function scoreDisputedTemplate(opts: {
   playedAt: Date;
 }): { subject: string; html: string } {
   return {
-    subject: `Score contesté — match du ${fmtDateShort(opts.playedAt)}`,
+    subject: subj(`Score contesté — match du ${fmtDateShort(opts.playedAt)}`),
     html: base('Score contesté', `
       ${h1('Score contesté')}
-      ${p(`${strong(opts.opponentName)} a contesté le score du match du ${strong(fmtDate(opts.playedAt))} à ${opts.court}.`)}
+      ${p(`${strong(esc(opts.opponentName))} a contesté le score du match du ${strong(fmtDate(opts.playedAt))} à ${esc(opts.court)}.`)}
       ${p('Un administrateur examinera le litige. Vous serez notifié de la décision.')}
     `),
   };
@@ -225,14 +251,15 @@ export function passwordResetTemplate(opts: {
   name: string;
   resetUrl: string;
 }): { subject: string; html: string } {
+  const safeUrl = encodeURI(opts.resetUrl);
   return {
     subject: 'Réinitialisation de votre mot de passe ATC',
     html: base('Mot de passe oublié', `
       ${h1('Réinitialisez votre mot de passe')}
-      ${p(`Bonjour ${strong(opts.name)}, vous avez demandé à réinitialiser votre mot de passe.`)}
+      ${p(`Bonjour ${strong(esc(opts.name))}, vous avez demandé à réinitialiser votre mot de passe.`)}
       ${p(`Ce lien est valable <strong style="color:${INK}">30 minutes</strong>.`)}
       <div style="margin:28px 0;text-align:center">
-        <a href="${opts.resetUrl}"
+        <a href="${esc(safeUrl)}"
            style="display:inline-block;padding:14px 32px;background:${ACCENT};color:#fff;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:-0.01em">
           Changer mon mot de passe
         </a>
