@@ -394,6 +394,9 @@ select.form-control   { cursor: pointer; }
 .mt-auto { margin-top: auto; }
 .w-full  { width: 100%; }
 
+/* Repère du sélecteur de terrain (Leaflet divIcon) — pas de fond/bordure par défaut */
+.leaflet-div-icon.court-pin { background: transparent; border: 0; }
+
 /* ═══════════════════════════════════════
    SCROLLBAR
    ═══════════════════════════════════════ */

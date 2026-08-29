@@ -1,0 +1,29 @@
+<div class="court-picker">
+  <form class="cp-search" (submit)="$event.preventDefault(); search()">
+    <input
+      type="text"
+      [value]="query()"
+      (input)="query.set($any($event.target).value)"
+      placeholder="Rechercher : « Sofitel Hôtel Ivoire », « Plateau tennis »…"
+      aria-label="Rechercher une adresse"
+    />
+    <button type="submit" class="btn btn-outline btn-sm" [disabled]="searching()">
+      {{ searching() ? '…' : 'Rechercher' }}
+    </button>
+  </form>
+
+  @if (results().length) {
+    <ul class="cp-results">
+      @for (r of results(); track r.label) {
+        <li><button type="button" (click)="choose(r)">{{ r.label }}</button></li>
+      }
+    </ul>
+  }
+
+  <div #map class="cp-map"></div>
+
+  <p class="cp-hint">
+    Clique sur la carte ou déplace le repère pour ajuster.
+    <strong>{{ currentLabel() }}</strong>
+  </p>
+</div>

@@ -1,0 +1,82 @@
+/* Le CSS Leaflet est global (angular.json). Ici : styles encapsulés du composant. */
+.court-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.court-picker .cp-search {
+  display: flex;
+  gap: var(--space-2);
+}
+.court-picker .cp-search input {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+}
+.court-picker .cp-search input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(31, 90, 69, 0.14);
+}
+.court-picker .cp-search .btn { flex-shrink: 0; }
+
+.court-picker .cp-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 168px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.court-picker .cp-results li + li { border-top: 1px solid var(--color-border-light); }
+.court-picker .cp-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.court-picker .cp-results button:hover { background: var(--color-cream); }
+
+.court-picker .cp-map {
+  width: 100%;
+  height: 320px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-cream);
+  z-index: 0;
+}
+
+.court-picker .cp-hint {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+.court-picker .cp-hint strong {
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .court-picker .cp-map { height: 260px; }
+}
