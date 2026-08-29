@@ -286,38 +286,27 @@ describe('computeElo', () => {
   // ── Calcul du niveau ────────────────────────────────────────────────────────
 
   describe('calcul du niveau (newLevel)', () => {
-    // Règle : newLevel = ratingToLevel(myRating) si myGames+1 < 5
-    //                   ratingToLevel(newRating) si myGames+1 >= 5
+    // Nouveau contrat : computeElo().newLevel = ratingToLevel(newRating), toujours.
+    // Le « verrouillage 5 matchs » est la responsabilité de applyEloUpdate
+    // (qui ne touche pas `level` avant MIN_GAMES_TO_MOVE_LEVEL) — testé côté service.
 
-    describe('verrouillage avant 5 matchs confirmés', () => {
-      // computeElo(1098, 3, 1000, true) :
-      //   K=40, E≈0.637, delta=round(40×0.363)=15
-      //   newRating = 1113 (franchit le seuil 1100 → serait niveau 3)
-      //   myGames+1 = 4 < 5 → newLevel = ratingToLevel(1098) = 2 (verrouillé)
-
-      it('niveau verrouillé même si newRating franchit un seuil (myGames=3)', () => {
-        const r = computeElo(1098, 3, 1000, true);
-        expect(r.newRating).toBeGreaterThanOrEqual(1100);
-        expect(r.newLevel).toBe(2);
-      });
-
-      it('niveau verrouillé lors du 1er match (myGames=0)', () => {
+    describe('newLevel suit toujours newRating', () => {
+      it('reflète le nouveau palier même dès le 1er match (myGames=0)', () => {
         const r = computeElo(1098, 0, 1000, true);
-        expect(r.newLevel).toBe(2);
+        expect(r.newRating).toBeGreaterThanOrEqual(1100);
+        expect(r.newLevel).toBe(3);
       });
 
-      it('niveau verrouillé jusqu\'au 4ème match inclus (myGames=3)', () => {
-        for (let g = 0; g < 4; g++) {
+      it('indépendant du nombre de matchs joués', () => {
+        for (const g of [0, 1, 3, 4, 10, 30]) {
           const r = computeElo(1098, g, 1000, true);
-          expect(r.newLevel).toBe(2);
+          expect(r.newLevel).toBe(ratingToLevel(r.newRating));
         }
       });
     });
 
-    describe('déverrouillage à partir du 5ème match', () => {
-      // myGames=4 : myGames+1 = 5 >= 5 → newLevel = ratingToLevel(newRating) = 3
-
-      it('niveau se met à jour au 5ème match (myGames=4)', () => {
+    describe('niveau piloté par le rating', () => {
+      it('niveau se met à jour quand un seuil est franchi', () => {
         const r = computeElo(1098, 4, 1000, true);
         expect(r.newRating).toBeGreaterThanOrEqual(1100);
         expect(r.newLevel).toBe(3);
@@ -329,7 +318,7 @@ describe('computeElo', () => {
         expect(r.newLevel).toBe(2);
       });
 
-      it('montée au niveau 5 (Expert) depuis 1495 pts', () => {
+      it('montée au niveau 5 (Professionnel) depuis 1495 pts', () => {
         // 1495 + round(15×0.5) = 1503 → niveau 5
         const r = computeElo(1495, 30, 1495, true);
         expect(r.newRating).toBeGreaterThanOrEqual(1500);
@@ -341,7 +330,6 @@ describe('computeElo', () => {
       // computeElo(1101, 10, 1000, false) :
       //   K=25, E≈0.641, delta=round(25×-0.641)=-16
       //   newRating = 1085 (descend sous 1100 → niveau 2)
-      //   myGames+1 = 11 >= 5 → newLevel = 2 (rétrogradation)
 
       it('rétrogradation quand newRating descend sous un seuil', () => {
         const r = computeElo(1101, 10, 1000, false);

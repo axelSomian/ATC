@@ -122,7 +122,7 @@ hors palette sans raison UX forte.
   Créer une annonce / Membres / Clubs / Classement / Mes matchs / Profil). `/profile` =
   dashboard + profil fusionnés (infos + stats du joueur connecté). Pas de route `/dashboard`.
   `/clubs` = annuaire des clubs groupés par zone → chaque club renvoie vers `/members?club=<slug>`.
-- **Système de niveau** : 5 dots — N1 Débutant·e → N2 Initié·e → N3 Intermédiaire → N4 Avancé·e → N5 Compétition. Libellés + descriptions (profil / jeu) stockés en base (table `Level`, éditables par un admin) et exposés via `GET /api/v1/levels`. Les bornes de rating ELO restent dans `apps/api/src/modules/matches/elo.ts`.
+- **Système de niveau** : 5 dots — N1 Débutant → N2 Intermédiaire → N3 Avancé → N4 Compétiteur → N5 Professionnel (reclassé aoû. 2026, retour PO : séparer l'amateur-compétiteur du pro ; migration `20260829160000_levels_reclassification`). **Pas d'emoji** (les 5 dots restent la représentation). Libellés + descriptions (profil / jeu) stockés en base (table `Level`, éditables par un admin) et exposés via `GET /api/v1/levels`. Les bornes de rating ELO restent dans `apps/api/src/modules/matches/elo.ts` — N5 est atteignable par l'ELO (rating ≥ 1500), ce n'est pas un statut. Le niveau ne bouge qu'après 5 matchs confirmés (`applyEloUpdate` ne touche pas `level` avant).
 - **Layout** : sidebar fixe sur desktop, bottom nav sur mobile, breakpoint ~768px
 - **Ton** : premium, féminin, contemporain, épuré — jamais « appli sport générique ».
 

@@ -1,7 +1,8 @@
 // Tout le monde démarre au même rating — le niveau déclaré n'avantage personne.
-// Le level réel ne s'applique qu'après MIN_GAMES_TO_MOVE_LEVEL matchs confirmés.
+// Le niveau réel ne bouge qu'après MIN_GAMES_TO_MOVE_LEVEL matchs confirmés
+// (politique appliquée par `applyEloUpdate`, qui ne touche pas `level` avant ça).
 const INITIAL_RATING = 1000;
-const MIN_GAMES_TO_MOVE_LEVEL = 5;
+export const MIN_GAMES_TO_MOVE_LEVEL = 5;
 
 function kFactor(games: number): number {
   if (games < 10) return 40;
@@ -45,9 +46,8 @@ export function computeElo(
   const s        = won ? 1 : 0;
   const delta    = Math.round(kFactor(myGames) * (s - e));
   const newRating = clamp(myRating + delta, 600, 2000);
-  // Level only moves once MIN_GAMES_TO_MOVE_LEVEL confirmed matches reached
-  const newLevel  = myGames + 1 >= MIN_GAMES_TO_MOVE_LEVEL
-    ? ratingToLevel(newRating)
-    : ratingToLevel(myRating);
+  // Niveau = pure fonction du rating. Le « quand l'appliquer » (seuil des
+  // MIN_GAMES_TO_MOVE_LEVEL matchs) est géré par l'appelant.
+  const newLevel  = ratingToLevel(newRating);
   return { newRating, newLevel, delta };
 }

@@ -1,6 +1,9 @@
 # Moteur de calcul de niveau — ATC
 
-> Document de conception — à valider avant implémentation
+> Document de conception d'origine. **Partiellement dépassé par l'implémentation
+> livrée (Sprint 6)** : tout le monde démarre à 1000 (pas de rating initial par
+> niveau déclaré), et le niveau ne bouge pas avant 5 matchs confirmés. Source de
+> vérité = `apps/api/src/modules/matches/elo.ts` + `matches.service.ts`.
 
 ---
 
@@ -83,11 +86,11 @@ Le niveau affiché (1–5) est calculé à partir du rating :
 
 | Rating       | Niveau | Code | Label         |
 |--------------|--------|------|---------------|
-| < 900        | 1      | N1   | Débutant·e    |
-| 900 – 1099   | 2      | N2   | Initié·e      |
-| 1100 – 1299  | 3      | N3   | Intermédiaire |
-| 1300 – 1499  | 4      | N4   | Avancé·e      |
-| ≥ 1500       | 5      | N5   | Compétition   |
+| < 900        | 1      | N1   | Débutant      |
+| 900 – 1099   | 2      | N2   | Intermédiaire |
+| 1100 – 1299  | 3      | N3   | Avancé        |
+| 1300 – 1499  | 4      | N4   | Compétiteur   |
+| ≥ 1500       | 5      | N5   | Professionnel |
 
 > Les libellés et descriptions (profil / jeu) sont en base (table `Level`, éditables par un admin),
 > exposés via `GET /api/v1/levels`. Seules les **bornes de rating** ci-dessus vivent dans le code

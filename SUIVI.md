@@ -125,6 +125,7 @@
 | Carte "Ma position" dans le classement | 🟡 Moyenne | ✅ Terminé | Visible uniquement si ≥ 5 matchs confirmés |
 | Classement dans sidebar + mobile nav | 🟡 Moyenne | ✅ Terminé | Icône trending, 5e onglet mobile |
 | Stats profil membre (W/L, % victoire) | 🟡 Moyenne | 📋 Backlog | Page `/members/:id` — données actuellement statiques |
+| Reclassification des 5 niveaux (retour PO) | 🟡 Moyenne | ✅ Terminé | Débutant / Intermédiaire / Avancé / **Compétiteur** / **Professionnel** (au lieu de Débutant·e / Initié·e / Intermédiaire / Avancé·e / Compétition) — objectif : séparer l'amateur-compétiteur du pro. Migration `20260829160000_levels_reclassification` (contenu table `Level` uniquement). Pas d'emoji. N5 reste atteignable par l'ELO (≥ 1500). **Bug corrigé** : `applyEloUpdate` ne modifiait plus `level` correctement avant 5 matchs (il basculait au palier du rating dès le 1er match) → il ne touche plus `level` du tout avant `MIN_GAMES_TO_MOVE_LEVEL` |
 
 ---
 

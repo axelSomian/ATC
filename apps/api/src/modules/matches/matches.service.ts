@@ -2,7 +2,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { sendScoreToValidate, sendScoreConfirmed, sendScoreDisputed } from '../mailer/mailer.service.js';
-import { computeElo } from './elo.js';
+import { computeElo, MIN_GAMES_TO_MOVE_LEVEL } from './elo.js';
 import type { RecordMatchDto, ValidateMatchDto, MyMatchesQueryDto } from './matches.schema.js';
 
 const PLAYER_SELECT = {
@@ -183,14 +183,29 @@ export async function applyEloUpdate(hostId: string, guestId: string, winnerId: 
   const hostResult  = computeElo(host.rating,  host.ratingGames,  guest.rating, winnerId === hostId);
   const guestResult = computeElo(guest.rating, guest.ratingGames, host.rating,  winnerId === guestId);
 
+  // Le niveau ne bouge qu'à partir du MIN_GAMES_TO_MOVE_LEVEL-ième match confirmé.
+  // Avant, on ne touche pas `level` : le niveau auto-déclaré à l'inscription reste.
+  const hostMovesLevel  = host.ratingGames  + 1 >= MIN_GAMES_TO_MOVE_LEVEL;
+  const guestMovesLevel = guest.ratingGames + 1 >= MIN_GAMES_TO_MOVE_LEVEL;
+
   await prisma.$transaction([
     prisma.user.update({
       where: { id: hostId },
-      data:  { rating: hostResult.newRating,  level: hostResult.newLevel,  ratingGames: { increment: 1 }, ratingDelta: hostResult.delta },
+      data:  {
+        rating: hostResult.newRating,
+        ...(hostMovesLevel ? { level: hostResult.newLevel } : {}),
+        ratingGames: { increment: 1 },
+        ratingDelta: hostResult.delta,
+      },
     }),
     prisma.user.update({
       where: { id: guestId },
-      data:  { rating: guestResult.newRating, level: guestResult.newLevel, ratingGames: { increment: 1 }, ratingDelta: guestResult.delta },
+      data:  {
+        rating: guestResult.newRating,
+        ...(guestMovesLevel ? { level: guestResult.newLevel } : {}),
+        ratingGames: { increment: 1 },
+        ratingDelta: guestResult.delta,
+      },
     }),
   ]);
 

@@ -6,7 +6,7 @@ import type { ClubRef, CourtRef, LevelRef } from '../models/reference.model';
 const API = '/api/v1';
 
 // Filet de sécurité si l'API de référence est injoignable au démarrage.
-const FALLBACK_LEVEL_NAMES = ['', 'Débutant·e', 'Initié·e', 'Intermédiaire', 'Avancé·e', 'Compétition'];
+const FALLBACK_LEVEL_NAMES = ['', 'Débutant', 'Intermédiaire', 'Avancé', 'Compétiteur', 'Professionnel'];
 
 /**
  * Données de référence (clubs, niveaux) chargées une fois au démarrage.
