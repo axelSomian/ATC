@@ -21,6 +21,13 @@ export class ClubsComponent {
 
   readonly total = computed(() => this.reference.clubs().filter((c) => c.slug !== 'autre').length);
 
+  readonly totalMembers = computed(() =>
+    this.reference
+      .clubs()
+      .filter((c) => c.slug !== 'autre')
+      .reduce((sum, c) => sum + (c.memberCount ?? 0), 0),
+  );
+
   readonly groups = computed(() => {
     const q = this.search().trim().toLowerCase();
     return this.reference
