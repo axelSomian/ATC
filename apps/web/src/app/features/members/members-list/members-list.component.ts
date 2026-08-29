@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { BehaviorSubject, Subject, switchMap, debounceTime, distinctUntilChanged, catchError, EMPTY, takeUntil } from 'rxjs';
 import { MembersService, type MembersQuery } from '../../../core/services/members.service';
@@ -20,6 +20,8 @@ export class MembersListComponent implements OnInit, OnDestroy {
   private readonly membersService = inject(MembersService);
   private readonly reference = inject(ReferenceService);
   private readonly presence = inject(PresenceService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroy$ = new Subject<void>();
   private readonly query$ = new BehaviorSubject<MembersQuery>({ page: 1, limit: 18 });
 
@@ -31,6 +33,11 @@ export class MembersListComponent implements OnInit, OnDestroy {
 
   readonly levelFilter  = signal<number | null>(null);
   readonly onlineFilter = signal(false);
+  readonly clubFilter   = signal<string | null>(null);
+  readonly clubFilterName = computed(() => {
+    const slug = this.clubFilter();
+    return slug ? this.reference.clubs().find((c) => c.slug === slug)?.name ?? slug : '';
+  });
   readonly searchCtrl   = new FormControl('');
   readonly cityCtrl     = new FormControl('');
 
@@ -41,6 +48,12 @@ export class MembersListComponent implements OnInit, OnDestroy {
   get currentPage(): number { return this.query$.value.page ?? 1; }
 
   ngOnInit(): void {
+    const club = this.route.snapshot.queryParamMap.get('club');
+    if (club) {
+      this.clubFilter.set(club);
+      this.patch({ club, page: 1 });
+    }
+
     this.query$.pipe(
       debounceTime(80),
       switchMap(q => {
@@ -91,6 +104,12 @@ export class MembersListComponent implements OnInit, OnDestroy {
   }
 
   goTo(page: number): void { this.patch({ page }); }
+
+  clearClubFilter(): void {
+    this.clubFilter.set(null);
+    this.patch({ club: undefined, page: 1 });
+    this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+  }
 
   getLevelLabel(l: number): string { return this.reference.levelLabel(l); }
 

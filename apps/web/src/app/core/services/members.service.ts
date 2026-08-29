@@ -30,6 +30,7 @@ export interface MembersQuery {
   level?: number;
   online?: boolean;
   city?: string;
+  club?: string;
   page?: number;
   limit?: number;
 }

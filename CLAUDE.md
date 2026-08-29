@@ -115,8 +115,9 @@ hors palette sans raison UX forte.
   login ; `court-editorial` = héros signup. **Placeholders Unsplash à remplacer par de
   vraies photos ATC** (mêmes noms de fichiers). Pas de photo dans l'app connectée.
 - **Structure** : `/accueil` = page d'accueil = grille de widgets illustrés (lanceur vers
-  les sections). `/profile` = dashboard + profil fusionnés (infos + stats du joueur
-  connecté). Pas de route `/dashboard`.
+  Créer une annonce / Membres / Clubs / Classement / Mes matchs / Profil). `/profile` =
+  dashboard + profil fusionnés (infos + stats du joueur connecté). Pas de route `/dashboard`.
+  `/clubs` = annuaire des clubs groupés par zone → chaque club renvoie vers `/members?club=<slug>`.
 - **Système de niveau** : 5 dots — N1 Débutant·e → N2 Initié·e → N3 Intermédiaire → N4 Avancé·e → N5 Compétition. Libellés + descriptions (profil / jeu) stockés en base (table `Level`, éditables par un admin) et exposés via `GET /api/v1/levels`. Les bornes de rating ELO restent dans `apps/api/src/modules/matches/elo.ts`.
 - **Layout** : sidebar fixe sur desktop, bottom nav sur mobile, breakpoint ~768px
 - **Ton** : premium, féminin, contemporain, épuré — jamais « appli sport générique ».
@@ -218,7 +219,7 @@ model Notification {
 Base : `/api/v1`
 
 ### Référence (public, sans auth)
-- `GET /clubs` — clubs actifs (sélecteurs profil)
+- `GET /clubs` — clubs actifs + `memberCount` (sélecteurs profil, page `/clubs`)
 - `GET /courts` — terrains actifs avec `lat`/`lng` (sélecteurs + carte des matchs)
 - `GET /levels` — libellés des 5 niveaux
 
@@ -234,7 +235,7 @@ Base : `/api/v1`
 - `GET  /auth/me`
 
 ### Membres
-- `GET  /members` — liste paginée (filtres: `level`, `online`, `city`, `q`)
+- `GET  /members` — liste paginée (filtres: `level`, `online`, `city`, `club` (slug), `q`)
 - `GET  /members/:id` — profil détaillé
 - `PATCH /members/me` — update profil
 - `POST /members/me/avatar` — upload avatar

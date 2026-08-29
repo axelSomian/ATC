@@ -64,11 +64,6 @@
 .widget-grid > .widget:first-child .widget-title { font-size: var(--text-xl); }
 .widget-grid > .widget:first-child .widget-sub   { font-size: var(--text-sm); }
 
-/* la dernière tuile (Mon profil) s'étend sur 2 colonnes pour équilibrer la grille */
-.widget-grid > .widget:last-child {
-  grid-column: span 2;
-}
-
 .widget {
   position: relative;
   display: flex;
@@ -167,9 +162,6 @@
     grid-column: span 2;
     grid-row: span 1;
     min-height: 220px;
-  }
-  .widget-grid > .widget:last-child {
-    grid-column: span 1;
   }
 }
 

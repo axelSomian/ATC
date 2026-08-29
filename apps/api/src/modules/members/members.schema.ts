@@ -14,6 +14,7 @@ export const membersQuerySchema = z.object({
   }, z.number().int().min(1).max(5).optional()),
   online: z.preprocess(blankToUndefined, z.string().optional()).transform((v) => v === 'true'),
   city: z.preprocess(blankToUndefined, z.string().optional()),
+  club: z.preprocess(blankToUndefined, z.string().optional()),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });

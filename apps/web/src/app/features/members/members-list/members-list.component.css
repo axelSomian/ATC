@@ -327,3 +327,25 @@
   .row-level    { display: none; }
   .member-row   { padding: 12px var(--space-4); }
 }
+
+.club-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px 5px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-alpha);
+  border: 1px solid var(--color-positive-border);
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+.club-filter-chip button {
+  display: flex;
+  border: none;
+  background: rgba(31, 90, 69, 0.12);
+  color: var(--color-accent);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  cursor: pointer;
+}
+.club-filter-chip button:hover { background: rgba(31, 90, 69, 0.20); }

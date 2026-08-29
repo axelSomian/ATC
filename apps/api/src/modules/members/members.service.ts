@@ -36,7 +36,7 @@ const ME_SELECT = {
 } as const;
 
 export async function listMembers(dto: MembersQueryDto) {
-  const { q, level, online, city, page, limit } = dto;
+  const { q, level, online, city, club, page, limit } = dto;
   const skip = (page - 1) * limit;
 
   const where = {
@@ -44,6 +44,7 @@ export async function listMembers(dto: MembersQueryDto) {
     ...(level !== undefined ? { level } : {}),
     ...(online ? { online: true } : {}),
     ...(city ? { city: { contains: city, mode: 'insensitive' as const } } : {}),
+    ...(club ? { club: { slug: club } } : {}),
   };
 
   const [total, members] = await Promise.all([

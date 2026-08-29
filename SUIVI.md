@@ -77,6 +77,7 @@
 | Dashboard — stats réelles depuis la BDD | 🟡 Moyenne | 📋 Backlog | Compter matchs/victoires depuis la table Match |
 | Carte du terrain d'un match | 🟡 Moyenne | ✅ Terminé | Table `Court` admin-éditable (nom, zone, adresse, `lat`/`lng`) + `GET /api/v1/courts` + onglet admin « Terrains ». `CourtMapService` + `<app-court-map>` (plan OpenStreetMap sans clé API + lien itinéraire Google/Waze/Plans, repli recherche par nom). Clic sur le terrain d'un match (feed, à venir, historique, défis) ouvre la carte. Migration `20260829130000_courts` (9 terrains d'Abidjan géocodés en approximatif). Les sélecteurs de terrain (annonce, défi, préférences) tirent désormais du catalogue |
 | Saisie de la position d'un terrain (admin) | 🟡 Moyenne | ✅ Terminé | `<app-court-picker>` : carte Leaflet dans une modale — recherche d'adresse (Nominatim), clic / repère déplaçable, `lat`/`lng` auto-remplis + adresse suggérée par géocodage inverse. Leaflet (`~45 ko gz`) dans le chunk admin, CSS Leaflet global. Remplace la saisie manuelle des coordonnées |
+| Annuaire des clubs (`/clubs`) + widget accueil | 🟡 Moyenne | ✅ Terminé | Page groupée par zone, cartes avec adresse + `memberCount` (ajouté à `GET /clubs`). Widget accueil (6 tuiles à nouveau) + entrée sidebar. Clic sur un club → `/members?club=<slug>` (filtre `club` ajouté à `GET /members` + puce « retirer » dans la liste membres) |
 
 ---
 

@@ -5,6 +5,8 @@ export interface ClubRef {
   name: string;
   zone: string;
   location: string;
+  /** Nombre de membres rattachés (renvoyé par GET /api/v1/clubs). */
+  memberCount?: number;
 }
 
 /** Terrain / lieu de jeu (éditable par un admin), pour les sélecteurs et la carte. */

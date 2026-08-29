@@ -58,6 +58,15 @@ export class HomeComponent implements OnInit {
       icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
     },
     {
+      id: 'clubs',
+      route: '/clubs',
+      title: 'Clubs',
+      sub: 'Les clubs de la communauté et leurs membres',
+      tone: 'ivory',
+      img: 'w-clubs',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/><path d="M9 11h.01M15 11h.01"/></svg>',
+    },
+    {
       id: 'classement',
       route: '/rankings',
       title: 'Classement',
@@ -98,6 +107,10 @@ export class HomeComponent implements OnInit {
       case 'membres': {
         const n = this.onlineCount();
         return n > 0 ? `${n} en ligne` : '';
+      }
+      case 'clubs': {
+        const n = this.reference.clubs().filter((c) => c.slug !== 'autre').length;
+        return n > 0 ? `${n} clubs` : '';
       }
       case 'classement':
         return s?.rank != null ? `Tu es #${s.rank}` : '';

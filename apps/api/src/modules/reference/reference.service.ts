@@ -1,13 +1,21 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 
-/** Clubs actifs, triés pour l'affichage. */
-export function listClubs() {
-  return prisma.club.findMany({
+/** Clubs actifs, triés pour l'affichage, avec le nombre de membres rattachés. */
+export async function listClubs() {
+  const clubs = await prisma.club.findMany({
     where: { active: true },
     orderBy: { sortOrder: 'asc' },
-    select: { id: true, slug: true, name: true, zone: true, location: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      zone: true,
+      location: true,
+      _count: { select: { users: true } },
+    },
   });
+  return clubs.map(({ _count, ...club }) => ({ ...club, memberCount: _count.users }));
 }
 
 /** Terrains actifs, triés pour l'affichage (sélecteurs + carte). */

@@ -25,6 +25,11 @@ export const routes: Routes = [
           import('./features/members/members.routes').then((m) => m.MEMBERS_ROUTES),
       },
       {
+        path: 'clubs',
+        loadComponent: () =>
+          import('./features/clubs/clubs.component').then((m) => m.ClubsComponent),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile.component').then((m) => m.ProfileComponent),
