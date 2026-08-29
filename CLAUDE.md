@@ -32,7 +32,7 @@ Application web responsive permettant aux membres de la communauté de se connec
 - ~~Redis~~ — envisagé pour cache/sessions, **non utilisé** (retiré du projet)
 
 ### Services externes
-- **Cloudinary** — upload avatars
+- **Cloudinary** — upload avatars (`atc/avatars`) + photos de clubs (`atc/clubs`) ; helper `lib/cloudinary.ts` `uploadImage()`
 - **SendGrid** — emails transactionnels
 - **Twilio** ou **Orange CI SMS API** — SMS (vérification, rappels)
 - **Mapbox** — carte des courts et joueurs
@@ -121,7 +121,11 @@ hors palette sans raison UX forte.
 - **Structure** : `/accueil` = page d'accueil = grille de widgets illustrés (lanceur vers
   Créer une annonce / Membres / Clubs / Classement / Mes matchs / Profil). `/profile` =
   dashboard + profil fusionnés (infos + stats du joueur connecté). Pas de route `/dashboard`.
-  `/clubs` = annuaire des clubs groupés par zone → chaque club renvoie vers `/members?club=<slug>`.
+  `/clubs` = annuaire des clubs = **grille de cartes visuelles** (photo, nom, localisation,
+  nb membres ATC, cœur favori) → chaque carte renvoie vers `/members?club=<slug>` (pas encore
+  de fiche club dédiée). Favoris = localStorage (par appareil), favoris en tête. La photo est
+  la seule exception à « pas de photo dans l'app connectée » (c'est du contenu d'identité,
+  comme les avatars) ; placeholder = dégradé ATC + monogramme si `imageUrl` est null.
 - **Système de niveau** : 5 dots — N1 Débutant → N2 Intermédiaire → N3 Avancé → N4 Compétiteur → N5 Professionnel (reclassé aoû. 2026, retour PO : séparer l'amateur-compétiteur du pro ; migration `20260829160000_levels_reclassification`). **Pas d'emoji** (les 5 dots restent la représentation). Libellés + descriptions (profil / jeu) stockés en base (table `Level`, éditables par un admin) et exposés via `GET /api/v1/levels`. Les bornes de rating ELO restent dans `apps/api/src/modules/matches/elo.ts` — N5 est atteignable par l'ELO (rating ≥ 1500), ce n'est pas un statut. Le niveau ne bouge qu'après 5 matchs confirmés (`applyEloUpdate` ne touche pas `level` avant).
 - **Layout** : sidebar fixe sur desktop, bottom nav sur mobile, breakpoint ~768px
 - **Ton** : premium, féminin, contemporain, épuré — jamais « appli sport générique ».
@@ -223,7 +227,7 @@ model Notification {
 Base : `/api/v1`
 
 ### Référence (public, sans auth)
-- `GET /clubs` — clubs actifs + `memberCount` (sélecteurs profil, page `/clubs`)
+- `GET /clubs` — clubs actifs + `memberCount` + `imageUrl` (sélecteurs profil, page `/clubs`)
 - `GET /courts` — terrains actifs avec `lat`/`lng` (sélecteurs + carte des matchs)
 - `GET /levels` — libellés des 5 niveaux
 
@@ -262,6 +266,7 @@ Base : `/api/v1`
 
 ### Admin (`role = 'admin'` requis — `authenticate` + `requireAdmin`)
 - `GET/POST /admin/clubs`, `PATCH/DELETE /admin/clubs/:id` — CRUD clubs
+- `POST /admin/clubs/:id/image` — upload photo du club (multipart `image`, → Cloudinary `atc/clubs`, recadré 800×500, écrit `Club.imageUrl`)
 - `GET/POST /admin/courts`, `PATCH/DELETE /admin/courts/:id` — CRUD terrains (nom, zone, adresse, `lat`/`lng`)
 - `GET /admin/levels`, `PATCH /admin/levels/:level` — édition libellés de niveau
 - `GET /admin/matches/disputed`, `POST /admin/matches/:id/resolve` — résolution des litiges de score

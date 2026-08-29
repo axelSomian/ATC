@@ -6,7 +6,7 @@
       <p class="clubs-sub">
         {{ total() }} club{{ total() !== 1 ? 's' : '' }} de la communauté
         @if (totalMembers() > 0) {
-          <span class="clubs-sub-dot">·</span> {{ totalMembers() }} membre{{ totalMembers() !== 1 ? 's' : '' }}
+          <span class="clubs-sub-dot">·</span> {{ totalMembers() }} membre{{ totalMembers() !== 1 ? 's' : '' }} ATC
         }
       </p>
     </div>
@@ -22,41 +22,50 @@
     </div>
   </header>
 
-  @if (groups().length === 0) {
+  @if (visibleClubs().length === 0) {
     <div class="clubs-empty">Aucun club ne correspond à cette recherche.</div>
-  }
+  } @else {
+    <div class="clubs-grid">
+      @for (club of visibleClubs(); track club.id) {
+        <a class="club-card" [routerLink]="['/members']" [queryParams]="{ club: club.slug }">
+          <div class="club-card-media">
+            @if (club.imageUrl) {
+              <img class="club-card-photo" [src]="club.imageUrl" [alt]="'Photo — ' + club.name" loading="lazy" />
+            } @else {
+              <div class="club-card-placeholder" aria-hidden="true">
+                <span class="club-card-monogram">{{ initial(club.name) }}</span>
+              </div>
+            }
+            <button
+              type="button"
+              class="club-fav"
+              [class.is-active]="isFavorite(club.slug)"
+              [attr.aria-pressed]="isFavorite(club.slug)"
+              [attr.aria-label]="isFavorite(club.slug) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+              (click)="toggleFavorite(club.slug, $event)"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8z"/>
+              </svg>
+            </button>
+          </div>
 
-  <div class="clubs-zones">
-    @for (group of groups(); track group.zone) {
-      <section class="club-zone">
-        <div class="club-zone-head">
-          <span class="club-zone-name">{{ group.zone || 'Autres' }}</span>
-          <span class="club-zone-count">{{ group.clubs.length }}</span>
-        </div>
-        <ul class="club-rows">
-          @for (club of group.clubs; track club.id) {
-            <li>
-              <a class="club-row" [routerLink]="['/members']" [queryParams]="{ club: club.slug }">
-                <span class="club-monogram">{{ club.name.charAt(0) }}</span>
-                <span class="club-info">
-                  <span class="club-name">{{ club.name }}</span>
-                  @if (club.location) {
-                    <span class="club-location">{{ club.location }}</span>
-                  }
-                </span>
-                @if (club.memberCount != null) {
-                  <span class="club-members" [title]="club.memberCount + ' membre' + (club.memberCount !== 1 ? 's' : '')">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    {{ club.memberCount }}
-                  </span>
-                }
-                <svg class="club-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-              </a>
-            </li>
-          }
-        </ul>
-      </section>
-    }
-  </div>
+          <div class="club-card-body">
+            <span class="club-card-name">{{ club.name }}</span>
+            @if (club.location || club.zone) {
+              <span class="club-card-loc">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {{ club.location || club.zone }}
+              </span>
+            }
+            <span class="club-card-members">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              {{ club.memberCount ?? 0 }} membre{{ (club.memberCount ?? 0) !== 1 ? 's' : '' }} ATC
+            </span>
+          </div>
+        </a>
+      }
+    </div>
+  }
 
 </div>

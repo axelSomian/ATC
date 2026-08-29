@@ -5,6 +5,8 @@ export interface ClubRef {
   name: string;
   zone: string;
   location: string;
+  /** Photo du club (Cloudinary) — null/absent = placeholder. */
+  imageUrl?: string | null;
   /** Nombre de membres rattachés (renvoyé par GET /api/v1/clubs). */
   memberCount?: number;
 }

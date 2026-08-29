@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { authenticate, requireAdmin } from '../../middleware/passport.js';
 import { AppError } from '../../middleware/error.js';
+import { uploadImage } from '../../lib/cloudinary.js';
 import {
   createClubSchema,
   updateClubSchema,
@@ -15,6 +17,7 @@ import {
   createClub,
   updateClub,
   deleteClub,
+  setClubImage,
   listAllCourts,
   createCourt,
   updateCourt,
@@ -31,6 +34,15 @@ const router = Router();
 
 // Toutes les routes admin exigent un compte authentifié avec role = 'admin'.
 router.use(authenticate, requireAdmin);
+
+const uploadClubPhoto = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Seules les images sont acceptées'));
+  },
+});
 
 /* ── Clubs ── */
 router.get('/clubs', async (_req, res, next) => {
@@ -63,6 +75,20 @@ router.delete('/clubs/:id', async (req, res, next) => {
   try {
     await deleteClub(req.params.id);
     res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/clubs/:id/image', uploadClubPhoto.single('image'), async (req, res, next) => {
+  try {
+    if (!req.file) throw new AppError(400, 'Aucune image reçue');
+    const url = await uploadImage(req.file.buffer, {
+      folder: 'atc/clubs',
+      publicId: `club_${req.params.id}`,
+      transformation: [{ width: 800, height: 500, crop: 'fill', gravity: 'auto' }],
+    });
+    res.json(await setClubImage(req.params.id, url));
   } catch (err) {
     next(err);
   }

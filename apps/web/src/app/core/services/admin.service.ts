@@ -31,6 +31,11 @@ export class AdminService {
   deleteClub(id: string) {
     return this.http.delete<void>(`${API}/clubs/${id}`);
   }
+  uploadClubImage(id: string, file: File) {
+    const fd = new FormData();
+    fd.append('image', file);
+    return this.http.post<AdminClub>(`${API}/clubs/${id}/image`, fd);
+  }
 
   /* ── Terrains ── */
   listCourts() {

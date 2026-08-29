@@ -8,11 +8,18 @@ const slug = z
   .max(40)
   .regex(/^[a-z0-9-]+$/, 'Slug invalide (minuscules, chiffres, tirets)');
 
+/** URL d'image optionnelle : '' / null / undefined => null, sinon URL http(s). */
+const optionalImageUrl = z.preprocess(
+  (v) => (v === '' || v === null || v === undefined ? null : v),
+  z.string().url().max(500).nullable(),
+);
+
 export const createClubSchema = z.object({
   slug,
   name: z.string().trim().min(2).max(120),
   zone: z.string().trim().max(60).default(''),
   location: z.string().trim().max(160).default(''),
+  imageUrl: optionalImageUrl.default(null),
   active: z.boolean().default(true),
   sortOrder: z.coerce.number().int().min(0).max(999).default(0),
 });
@@ -22,6 +29,7 @@ export const updateClubSchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
   zone: z.string().trim().max(60).optional(),
   location: z.string().trim().max(160).optional(),
+  imageUrl: optionalImageUrl.optional(),
   active: z.boolean().optional(),
   sortOrder: z.coerce.number().int().min(0).max(999).optional(),
 });

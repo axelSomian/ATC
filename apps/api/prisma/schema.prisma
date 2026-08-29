@@ -57,6 +57,7 @@ model Club {
   name      String
   zone      String   @default("")
   location  String   @default("")
+  imageUrl  String? // photo du club (Cloudinary, dossier atc/clubs) — null = placeholder
   active    Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())

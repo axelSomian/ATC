@@ -12,6 +12,7 @@ export async function listClubs() {
       name: true,
       zone: true,
       location: true,
+      imageUrl: true,
       _count: { select: { users: true } },
     },
   });

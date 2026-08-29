@@ -4,10 +4,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AdminService } from '../../../core/services/admin.service';
 import type { AdminClub, ClubPayload } from '../../../core/models/admin.model';
 
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
 interface Editable extends AdminClub {
   _busy?: boolean;
   _msg?: string;
   _ok?: boolean;
+  _photoBusy?: boolean;
 }
 
 const EMPTY_NEW = { slug: '', name: '', zone: '', location: '', sortOrder: 0, active: true };
@@ -51,6 +54,26 @@ const EMPTY_NEW = { slug: '', name: '', zone: '', location: '', sortOrder: 0, ac
               <strong>{{ c.name || '(sans nom)' }}</strong>
               @if (!c.active) { <span class="pill-tag pill-inactive">Inactif</span> }
             </div>
+
+            <div class="club-photo-row">
+              @if (c.imageUrl) {
+                <img class="club-photo-thumb" [src]="c.imageUrl" [alt]="'Photo ' + c.name" />
+              } @else {
+                <div class="club-photo-thumb club-photo-empty">Pas de photo</div>
+              }
+              <div class="club-photo-actions">
+                <label class="btn btn-ghost btn-sm">
+                  {{ c._photoBusy ? 'Envoi…' : (c.imageUrl ? 'Changer la photo' : 'Ajouter une photo') }}
+                  <input type="file" accept="image/*" hidden
+                    [disabled]="c._photoBusy" (change)="onImage(c, $event)" />
+                </label>
+                @if (c.imageUrl) {
+                  <button class="btn btn-ghost btn-sm" [disabled]="c._photoBusy" (click)="removeImage(c)">Retirer</button>
+                }
+                <span class="club-photo-hint">JPG/PNG, max 5 Mo — recadré en 800×500</span>
+              </div>
+            </div>
+
             <div class="field-row">
               <label>Nom</label>
               <input type="text" [(ngModel)]="c.name" />
@@ -111,6 +134,51 @@ export class ClubsPanelComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.creating.set(false);
         this.createMsg.set(err.error?.error ?? 'Création impossible.');
+      },
+    });
+  }
+
+  onImage(c: Editable, ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (file.size > MAX_IMAGE_BYTES) {
+      c._ok = false;
+      c._msg = 'Image trop lourde (max 5 Mo).';
+      return;
+    }
+    c._photoBusy = true;
+    c._msg = undefined;
+    this.admin.uploadClubImage(c.id, file).subscribe({
+      next: (updated) => {
+        c._photoBusy = false;
+        c.imageUrl = updated.imageUrl;
+        c._ok = true;
+        c._msg = 'Photo mise à jour ✓';
+      },
+      error: (err: HttpErrorResponse) => {
+        c._photoBusy = false;
+        c._ok = false;
+        c._msg = err.error?.error ?? 'Envoi de la photo impossible.';
+      },
+    });
+  }
+
+  removeImage(c: Editable): void {
+    c._photoBusy = true;
+    c._msg = undefined;
+    this.admin.updateClub(c.id, { imageUrl: null }).subscribe({
+      next: () => {
+        c._photoBusy = false;
+        c.imageUrl = null;
+        c._ok = true;
+        c._msg = 'Photo retirée ✓';
+      },
+      error: (err: HttpErrorResponse) => {
+        c._photoBusy = false;
+        c._ok = false;
+        c._msg = err.error?.error ?? 'Erreur.';
       },
     });
   }

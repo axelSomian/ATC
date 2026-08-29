@@ -6,6 +6,7 @@ export interface AdminClub {
   name: string;
   zone: string;
   location: string;
+  imageUrl: string | null;
   active: boolean;
   sortOrder: number;
   createdAt: string;

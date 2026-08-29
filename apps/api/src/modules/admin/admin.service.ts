@@ -45,6 +45,17 @@ export async function updateClub(id: string, dto: UpdateClubDto) {
   }
 }
 
+export async function setClubImage(id: string, imageUrl: string) {
+  try {
+    return await prisma.club.update({ where: { id }, data: { imageUrl } });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+      throw new AppError(404, 'Club introuvable');
+    }
+    throw err;
+  }
+}
+
 export async function deleteClub(id: string) {
   const members = await prisma.user.count({ where: { clubId: id } });
   if (members > 0) {

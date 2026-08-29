@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { cloudinary } from '../../lib/cloudinary.js';
+import { uploadImage } from '../../lib/cloudinary.js';
 import { listMembers, getOwnProfile, getMemberById, updateMe, updateAvatar, getRankings } from './members.service.js';
 import { membersQuerySchema, updateMeSchema } from './members.schema.js';
 import { authenticate } from '../../middleware/passport.js';
@@ -13,18 +13,6 @@ const uploadAvatar = multer({
     else cb(new Error('Seules les images sont acceptées'));
   },
 });
-
-function uploadToCloudinary(buffer: Buffer, publicId: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream(
-      { folder: 'atc/avatars', public_id: publicId, overwrite: true, transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }] },
-      (err, result) => {
-        if (err || !result) return reject(err ?? new Error('Cloudinary upload failed'));
-        resolve(result.secure_url);
-      },
-    ).end(buffer);
-  });
-}
 
 const router = Router();
 
@@ -72,7 +60,11 @@ router.post('/me/avatar', authenticate, uploadAvatar.single('avatar'), async (re
   try {
     if (!req.file) { res.status(400).json({ error: 'Aucun fichier reçu' }); return; }
     const userId = (req.user as { id: string }).id;
-    const avatarUrl = await uploadToCloudinary(req.file.buffer, `user_${userId}`);
+    const avatarUrl = await uploadImage(req.file.buffer, {
+      folder: 'atc/avatars',
+      publicId: `user_${userId}`,
+      transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }],
+    });
     const updated = await updateAvatar(userId, avatarUrl);
     res.json(updated);
   } catch (err) {
