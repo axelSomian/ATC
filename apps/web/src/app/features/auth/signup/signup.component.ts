@@ -4,13 +4,15 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReferenceService } from '../../../core/services/reference.service';
+import { GoogleAuthButtonComponent } from '../../../shared/google-auth-button/google-auth-button.component';
+import { environment } from '../../../../environments/environment';
 import { CITIES_CI } from '@atc/shared';
 import type { LevelRef } from '../../../core/models/reference.model';
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, GoogleAuthButtonComponent],
   templateUrl: './signup.component.html',
   styleUrl: './signup.component.css',
 })
@@ -20,6 +22,7 @@ export class SignupComponent {
   private readonly reference = inject(ReferenceService);
   private readonly router = inject(Router);
 
+  readonly googleEnabled = !!environment.googleClientId;
   readonly cities = CITIES_CI;
   readonly levels = [1, 2, 3, 4, 5];
   readonly clubsByZone = this.reference.clubsByZone;

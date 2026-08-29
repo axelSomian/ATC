@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ZodError } from 'zod';
-import { signup, login, refresh, getMe } from './auth.service.js';
-import { signupSchema, loginSchema } from './auth.schema.js';
+import { signup, login, loginWithGoogle, refresh, getMe } from './auth.service.js';
+import { signupSchema, loginSchema, googleAuthSchema } from './auth.schema.js';
 import { authenticate } from '../../middleware/passport.js';
 import { AppError } from '../../middleware/error.js';
 
@@ -24,6 +24,21 @@ router.post('/login', async (req, res, next) => {
     const result = await login(dto);
     res.cookie('refreshToken', result.refreshToken, cookieOptions());
     res.json({ user: result.user, accessToken: result.accessToken });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/google', async (req, res, next) => {
+  try {
+    const dto = googleAuthSchema.parse(req.body);
+    const result = await loginWithGoogle(dto);
+    res.cookie('refreshToken', result.refreshToken, cookieOptions());
+    res.status(result.isNew ? 201 : 200).json({
+      user: result.user,
+      accessToken: result.accessToken,
+      isNew: result.isNew,
+    });
   } catch (err) {
     next(err);
   }

@@ -5,4 +5,7 @@ export const environment = {
   //
   // Socket.IO NE PEUT PAS être proxifié par Vercel : il faut l'URL publique de l'API.
   socketUrl: 'https://atc-api-ws9f.onrender.com',
+  // ID client OAuth Google (public). Même valeur que GOOGLE_CLIENT_ID côté API.
+  // Vide = bouton « Continuer avec Google » masqué.
+  googleClientId: '',
 };

@@ -83,6 +83,7 @@ const signupLimiter = rateLimit({
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/v1/auth/login', loginLimiter);
+app.use('/api/v1/auth/google', loginLimiter);
 app.use('/api/v1/auth/signup', signupLimiter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1', referenceRoutes);

@@ -131,6 +131,11 @@
         </button>
       </form>
 
+      @if (googleEnabled) {
+        <div class="auth-divider"><span>ou</span></div>
+        <app-google-auth-button (failed)="error.set($event)" />
+      }
+
       <p class="auth-footer">
         Déjà membre ?
         <a routerLink="/auth/login" class="link-clay">Se connecter</a>

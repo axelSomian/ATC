@@ -16,6 +16,11 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+/** Jeton d'identité (ID token JWT) renvoyé par Google Identity Services. */
+export const googleAuthSchema = z.object({
+  credential: z.string().min(20, 'Jeton Google manquant'),
+});
+
 export const updateProfileSchema = z.object({
   name: z.string().min(2).max(50).optional(),
   phone: phoneField.optional().nullable(),
@@ -31,4 +36,5 @@ export const updateProfileSchema = z.object({
 
 export type SignupDto = z.infer<typeof signupSchema>;
 export type LoginDto = z.infer<typeof loginSchema>;
+export type GoogleAuthDto = z.infer<typeof googleAuthSchema>;
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;

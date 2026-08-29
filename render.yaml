@@ -44,6 +44,11 @@ services:
       # URL exacte du front Vercel, ex: https://atc.vercel.app (sans slash final)
       - key: CORS_ORIGIN
         sync: false
+      # ID client OAuth Google (public) — même valeur que googleClientId côté front.
+      # Console Google Cloud → API et services → Identifiants → ID client OAuth 2.0
+      # (type « Application Web »). Laisser vide désactive « Continuer avec Google ».
+      - key: GOOGLE_CLIENT_ID
+        sync: false
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY

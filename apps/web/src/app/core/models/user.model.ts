@@ -73,3 +73,8 @@ export interface LoginResponse {
   user: AuthUser;
   accessToken: string;
 }
+
+export interface GoogleLoginResponse extends LoginResponse {
+  /** true si le compte vient d'être créé (→ inviter à compléter le profil). */
+  isNew: boolean;
+}

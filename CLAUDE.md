@@ -130,7 +130,8 @@ model User {
   id              String   @id @default(cuid())
   email           String   @unique
   phone           String?  @unique
-  passwordHash    String
+  passwordHash    String?  // null si compte créé via Google
+  googleId        String?  @unique
   name            String
   initials        String
   avatarUrl       String?
@@ -224,6 +225,10 @@ Base : `/api/v1`
 ### Auth
 - `POST /auth/signup` — créer un compte
 - `POST /auth/login` — email + mot de passe → JWT
+- `POST /auth/google` — `{ credential }` (ID token Google Identity Services) → JWT ; crée
+  ou relie le compte (par `googleId`, sinon par email). Réponse `{ user, accessToken, isNew }`.
+  Nécessite `GOOGLE_CLIENT_ID` (API) + `googleClientId` (front, `environment*.ts`) —
+  sans ça le bouton « Continuer avec Google » est masqué.
 - `POST /auth/refresh` — refresh token
 - `POST /auth/logout`
 - `GET  /auth/me`
@@ -269,7 +274,9 @@ Base : `/api/v1`
 
 - **JWT** access (15 min) + refresh (7 jours, stocké HttpOnly cookie)
 - **bcrypt** rounds 12 minimum
-- **Rate limiting** : `express-rate-limit` (login: 5/min, signup: 3/h)
+- **Rate limiting** : `express-rate-limit` (login + google: 5/min, signup: 3/h)
+- **Google** : l'ID token est vérifié côté serveur (`google-auth-library`, audience = `GOOGLE_CLIENT_ID`) ;
+  compte relié seulement si `email_verified`
 - **Helmet** pour headers sécurisés
 - **CORS** : whitelist explicite (front domain uniquement)
 - **Validation Zod** sur TOUS les payloads entrants

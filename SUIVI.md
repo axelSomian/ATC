@@ -24,6 +24,7 @@
 | Setup monorepo pnpm (apps/web, apps/api, libs/shared) | ✅ Terminé | |
 | Schéma Prisma + migrations | ✅ Terminé | User, Match, DispoPost, MatchRequest, Notification, QuickMatch |
 | Auth signup / login (JWT access + refresh) | ✅ Terminé | bcrypt, Passport.js |
+| Connexion Google (OAuth) | ✅ Terminé | `POST /auth/google` : ID token Google Identity Services vérifié serveur (`google-auth-library`), compte créé/relié (niveau 1, bannière « complète ton profil » → `/profile?bienvenue=1`). `User.passwordHash` nullable + `googleId` (migration `20260829140000_google_auth`). Bouton `<app-google-auth-button>` sur login+signup, masqué si `GOOGLE_CLIENT_ID` / `googleClientId` non configurés |
 | Guards Angular (authGuard) | ✅ Terminé | |
 | Intercepteur HTTP (ajout du token) | ✅ Terminé | |
 | Layout responsive sidebar / bottom nav | ✅ Terminé | Desktop sidebar fixe, mobile bottom nav 4 tabs |

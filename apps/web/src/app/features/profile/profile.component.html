@@ -12,6 +12,19 @@
     <div class="alert-error">{{ error() }}</div>
   }
 
+  <!-- Bienvenue (1re connexion Google) -->
+  @if (showWelcome() && !loading()) {
+    <div class="welcome-banner">
+      <div>
+        <strong>Bienvenue sur ATC&nbsp;!</strong>
+        <p>Renseigne ton niveau et ton club pour apparaître dans l'annuaire et trouver des adversaires à ta mesure.</p>
+      </div>
+      <button type="button" class="welcome-close" aria-label="Fermer" (click)="showWelcome.set(false)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  }
+
   <!-- View mode -->
   @if (!loading() && profile() && !editing()) {
     <!-- Hero card -->

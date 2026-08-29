@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap, catchError, throwError } from 'rxjs';
 import { AuthStore } from '../stores/auth.store';
-import type { LoginResponse, UserMe } from '../models/user.model';
+import type { GoogleLoginResponse, LoginResponse, UserMe } from '../models/user.model';
 
 const API = '/api/v1';
 
@@ -38,6 +38,13 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${API}/auth/signup`, payload, { withCredentials: true }).pipe(
       tap((res) => this.store.setAuth(res.user, res.accessToken)),
     );
+  }
+
+  /** Échange l'ID token Google Identity Services contre une session ATC. */
+  loginWithGoogle(credential: string) {
+    return this.http
+      .post<GoogleLoginResponse>(`${API}/auth/google`, { credential }, { withCredentials: true })
+      .pipe(tap((res) => this.store.setAuth(res.user, res.accessToken)));
   }
 
   refresh() {

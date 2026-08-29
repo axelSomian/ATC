@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { MembersService, type UpdateProfilePayload } from '../../core/services/members.service';
@@ -36,7 +36,11 @@ export class ProfileComponent implements OnInit {
   private readonly membersService = inject(MembersService);
   private readonly matchesService = inject(MatchesService);
   private readonly reference = inject(ReferenceService);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
+
+  /** Arrivée depuis une 1re connexion Google → inviter à compléter le profil. */
+  readonly showWelcome = signal(this.route.snapshot.queryParamMap.get('bienvenue') === '1');
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 

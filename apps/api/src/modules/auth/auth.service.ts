@@ -1,16 +1,40 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { initialRating } from '../matches/elo.js';
 import { assertValidClub } from '../reference/reference.service.js';
 import { sendWelcome } from '../mailer/mailer.service.js';
-import type { SignupDto, LoginDto } from './auth.schema.js';
+import type { SignupDto, LoginDto, GoogleAuthDto } from './auth.schema.js';
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 const ACCESS_EXPIRES = (process.env.JWT_ACCESS_EXPIRES_IN ?? '15m') as string;
 const REFRESH_EXPIRES = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as string;
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+
+interface AuthUserRow {
+  id: string;
+  name: string;
+  email: string;
+  initials: string;
+  level: number;
+  role: string;
+}
+
+function authUserResponse(u: AuthUserRow) {
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    initials: u.initials,
+    level: u.level,
+    role: u.role,
+  };
+}
 
 function buildInitials(name: string): string {
   return name
@@ -79,21 +103,75 @@ export async function login(dto: LoginDto) {
   const user = await prisma.user.findUnique({ where: { email: dto.email } });
   if (!user) throw new AppError(401, 'Email ou mot de passe incorrect');
 
+  if (!user.passwordHash) {
+    throw new AppError(401, 'Ce compte utilise la connexion Google. Cliquez sur « Continuer avec Google ».');
+  }
+
   const valid = await bcrypt.compare(dto.password, user.passwordHash);
   if (!valid) throw new AppError(401, 'Email ou mot de passe incorrect');
 
   const tokens = generateTokens(user.id);
-  return {
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      initials: user.initials,
-      level: user.level,
-      role: user.role,
-    },
-    ...tokens,
-  };
+  return { user: authUserResponse(user), ...tokens };
+}
+
+export async function loginWithGoogle(dto: GoogleAuthDto) {
+  if (!googleClient || !GOOGLE_CLIENT_ID) {
+    throw new AppError(503, "La connexion Google n'est pas configurée sur le serveur");
+  }
+
+  let payload: import('google-auth-library').TokenPayload | undefined;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: dto.credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    throw new AppError(401, 'Jeton Google invalide ou expiré');
+  }
+
+  if (!payload?.sub || !payload.email) throw new AppError(401, 'Jeton Google invalide');
+  if (payload.email_verified === false) throw new AppError(401, 'Adresse Google non vérifiée');
+
+  const googleId = payload.sub;
+  const email = payload.email.toLowerCase();
+  const name = payload.name?.trim() || email.split('@')[0];
+  const picture = payload.picture ?? null;
+
+  // 1. Compte déjà relié à ce Google.
+  let user = await prisma.user.findUnique({ where: { googleId } });
+
+  // 2. Sinon, compte existant avec le même email → on relie les deux.
+  if (!user) {
+    const byEmail = await prisma.user.findUnique({ where: { email } });
+    if (byEmail) {
+      user = await prisma.user.update({
+        where: { id: byEmail.id },
+        data: { googleId, avatarUrl: byEmail.avatarUrl ?? picture },
+      });
+    }
+  }
+
+  // 3. Sinon, création d'un nouveau compte (niveau 1 par défaut, à compléter au profil).
+  let isNew = false;
+  if (!user) {
+    isNew = true;
+    user = await prisma.user.create({
+      data: {
+        email,
+        name,
+        initials: buildInitials(name),
+        googleId,
+        avatarUrl: picture,
+        level: 1,
+        rating: initialRating(1),
+      },
+    });
+    sendWelcome(user.email, user.name);
+  }
+
+  const tokens = generateTokens(user.id);
+  return { user: authUserResponse(user), isNew, ...tokens };
 }
 
 export async function refresh(token: string) {

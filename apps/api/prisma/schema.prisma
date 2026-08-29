@@ -15,7 +15,8 @@ model User {
   id              String   @id @default(cuid())
   email           String   @unique
   phone           String?  @unique
-  passwordHash    String
+  passwordHash    String? // null pour les comptes créés via Google
+  googleId        String?  @unique
   name            String
   initials        String
   avatarUrl       String?
