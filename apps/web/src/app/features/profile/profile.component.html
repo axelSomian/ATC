@@ -54,6 +54,69 @@
       </button>
     </div>
 
+    <!-- Statistiques -->
+    <div class="stats-row">
+      <div class="stat-tile">
+        <span class="stat-tile-label">Matchs joués</span>
+        <span class="stat-tile-value">{{ stats()?.matchesPlayed ?? 0 }}</span>
+        <span class="stat-tile-hint">
+          @if ((stats()?.matchesPlayed ?? 0) === 0) { Aucun encore }
+          @else { {{ stats()!.wins }}V · {{ stats()!.losses }}D }
+        </span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-tile-label">% Victoire</span>
+        <span class="stat-tile-value" [class.is-positive]="(stats()?.winRate ?? 0) >= 50">
+          {{ (stats()?.matchesPlayed ?? 0) === 0 ? '—' : (stats()!.winRate + '%') }}
+        </span>
+        <span class="stat-tile-hint">
+          @if ((stats()?.matchesPlayed ?? 0) > 0 && stats()?.rating != null) { {{ stats()!.rating }} pts }
+        </span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-tile-label">Classement</span>
+        <span class="stat-tile-value stat-tile-rank">{{ rankLabel() }}</span>
+        <span class="stat-tile-hint">
+          @if (stats()?.rank == null) {
+            5 matchs requis
+          } @else if (deltaLabel()) {
+            <span [class.delta-up]="deltaUp()" [class.delta-down]="deltaDown()">{{ deltaLabel() }} dernier match</span>
+          } @else if (profile()?.bestRanking) {
+            Meilleur : #{{ profile()!.bestRanking }}
+          }
+        </span>
+      </div>
+    </div>
+
+    <!-- Prochain match -->
+    @if (nextMatch()) {
+      <a routerLink="/my-matches" class="next-match card">
+        <div class="next-match-head">
+          <span class="section-title">Prochain match</span>
+          <span class="next-match-when">{{ nextMatch()!.when | date:"EEE d MMM · HH'h'mm" }}</span>
+        </div>
+        <div class="next-match-body">
+          <div class="next-match-opp">
+            @if (nextMatch()!.opponent) {
+              <div class="avatar avatar-md">
+                @if (nextMatch()!.opponent!.avatarUrl) {
+                  <img [src]="nextMatch()!.opponent!.avatarUrl" [alt]="nextMatch()!.opponent!.name" class="avatar-img" />
+                } @else { {{ nextMatch()!.opponent!.initials }} }
+              </div>
+              <span class="next-match-name">{{ nextMatch()!.opponent!.name }}</span>
+            } @else {
+              <div class="avatar avatar-md">?</div>
+              <span class="next-match-name text-muted">Adversaire à confirmer</span>
+            }
+          </div>
+          <div class="next-match-meta">
+            <span>{{ nextMatch()!.court }}</span>
+            @if (nextMatch()!.duration) { <span>· {{ formatDuration(nextMatch()!.duration) }}</span> }
+          </div>
+        </div>
+      </a>
+    }
+
     <!-- Info grid -->
     <div class="profile-grid">
 

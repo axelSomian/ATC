@@ -30,7 +30,7 @@ export class LoginComponent {
     this.loading.set(true);
 
     this.authService.login(this.form.getRawValue()).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: () => this.router.navigate(['/accueil']),
       error: (err: HttpErrorResponse) => {
         this.error.set(err.error?.error ?? 'Erreur de connexion');
         this.loading.set(false);

@@ -78,6 +78,73 @@
   gap: var(--space-4);
 }
 
+/* ── Statistiques ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+.stat-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.stat-tile-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.stat-tile-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-ink);
+  line-height: 1;
+  margin: 4px 0 2px;
+}
+.stat-tile-value.is-positive { color: var(--color-positive); }
+.stat-tile-rank { color: #836841; }
+.stat-tile-hint { font-size: 12px; color: var(--color-muted); }
+.delta-up   { color: var(--color-positive); }
+.delta-down { color: var(--color-error); }
+
+/* ── Prochain match ── */
+.next-match {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow var(--transition), transform var(--transition-fast);
+}
+.next-match:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.next-match-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.next-match-head .section-title { margin: 0; }
+.next-match-when { font-size: var(--text-sm); color: var(--color-muted); font-weight: 500; }
+.next-match-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.next-match-opp { display: flex; align-items: center; gap: var(--space-3); }
+.next-match-name { font-size: var(--text-base); font-weight: 600; letter-spacing: -0.01em; }
+.next-match-meta { display: flex; gap: 4px; font-size: var(--text-sm); color: var(--color-muted); }
+
 /* ── Section card ── */
 .profile-section { padding: var(--space-6); }
 
@@ -319,4 +386,9 @@ textarea.form-control.bio-input { min-height: 100px; }
   .profile-grid,
   .edit-grid    { grid-template-columns: 1fr; }
   .edit-header  { flex-direction: column; align-items: flex-start; padding: var(--space-5); }
+}
+
+@media (max-width: 560px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stats-row .stat-tile:first-child { grid-column: 1 / -1; }
 }

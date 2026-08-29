@@ -1,11 +1,14 @@
 import { Component, OnInit, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { MembersService, type UpdateProfilePayload } from '../../core/services/members.service';
+import { MatchesService, type MyStats } from '../../core/services/matches.service';
 import { ReferenceService } from '../../core/services/reference.service';
 import { CITIES_CI } from '@atc/shared';
 import type { UserMe } from '../../core/models/user.model';
+import type { UpcomingMatch } from '../../core/models/match.model';
 import type { LevelRef } from '../../core/models/reference.model';
 
 const TIMES = [
@@ -24,18 +27,21 @@ const COURTS = [
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, RouterLink],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
 })
 export class ProfileComponent implements OnInit {
   private readonly membersService = inject(MembersService);
+  private readonly matchesService = inject(MatchesService);
   private readonly reference = inject(ReferenceService);
   private readonly fb = inject(FormBuilder);
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   readonly profile         = signal<UserMe | null>(null);
+  readonly stats           = signal<MyStats | null>(null);
+  readonly nextMatch       = signal<UpcomingMatch | null>(null);
   readonly loading         = signal(true);
   readonly saving          = signal(false);
   readonly editing         = signal(false);
@@ -58,6 +64,18 @@ export class ProfileComponent implements OnInit {
   readonly editLevelLabel = computed(() => this.reference.levelLabel(this.selectedLevel()));
   readonly editLevelDef   = computed<LevelRef | undefined>(() => this.reference.levelDef(this.selectedLevel()));
 
+  readonly rankLabel  = computed(() => {
+    const r = this.stats()?.rank;
+    return r != null ? `#${r}` : '—';
+  });
+  readonly deltaLabel = computed(() => {
+    const d = this.stats()?.ratingDelta;
+    if (!d) return null;
+    return d > 0 ? `+${d}` : `${d}`;
+  });
+  readonly deltaUp   = computed(() => (this.stats()?.ratingDelta ?? 0) > 0);
+  readonly deltaDown = computed(() => (this.stats()?.ratingDelta ?? 0) < 0);
+
   readonly form = this.fb.group({
     name:    ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
     bio:     [''],
@@ -73,6 +91,14 @@ export class ProfileComponent implements OnInit {
       next: (data) => { this.profile.set(data); this.loading.set(false); },
       error: () => { this.error.set('Impossible de charger le profil.'); this.loading.set(false); },
     });
+    this.matchesService.getMyStats().subscribe({ next: (s) => this.stats.set(s) });
+    this.matchesService.getUpcoming().subscribe({ next: (list) => this.nextMatch.set(list[0] ?? null) });
+  }
+
+  formatDuration(min: number | null): string {
+    if (!min) return '';
+    const h = Math.floor(min / 60), m = min % 60;
+    return h > 0 ? (m > 0 ? `${h}h${m}` : `${h}h`) : `${m}min`;
   }
 
   startEdit(): void {

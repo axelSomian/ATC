@@ -113,10 +113,12 @@ hors palette sans raison UX forte.
   `--color-positive` `#2F6B4F` (victoires, scores confirmés),
   `--color-error` `#B23B2E`, `--color-warning` `#B07D3C`.
 - **Fontes** : Inter (corps + titres), Plus Jakarta Sans (logo).
-- **Photos** : `apps/web/src/assets/img/*.webp` — photographie tennis lifestyle
-  pour casser le côté « appli bancaire ». `court-serve` (voile Deep Forest) = héros
-  login ; `court-editorial` = héros signup ; `court-detail` = vignette du hero dashboard.
-  **Placeholders Unsplash à remplacer par de vraies photos ATC** (même noms de fichiers).
+- **Photos** : `apps/web/src/assets/img/*.webp` — `court-serve` (voile Deep Forest) = héros
+  login ; `court-editorial` = héros signup. **Placeholders Unsplash à remplacer par de
+  vraies photos ATC** (mêmes noms de fichiers). Pas de photo dans l'app connectée.
+- **Structure** : `/accueil` = page d'accueil = grille de widgets illustrés (lanceur vers
+  les sections). `/profile` = dashboard + profil fusionnés (infos + stats du joueur
+  connecté). Pas de route `/dashboard`.
 - **Système de niveau** : 5 dots — N1 Débutant·e → N2 Initié·e → N3 Intermédiaire → N4 Avancé·e → N5 Compétition. Libellés + descriptions (profil / jeu) stockés en base (table `Level`, éditables par un admin) et exposés via `GET /api/v1/levels`. Les bornes de rating ELO restent dans `apps/api/src/modules/matches/elo.ts`.
 - **Layout** : sidebar fixe sur desktop, bottom nav sur mobile, breakpoint ~768px
 - **Ton** : premium, féminin, contemporain, épuré — jamais « appli sport générique ».

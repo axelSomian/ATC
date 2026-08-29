@@ -17,7 +17,7 @@ export const guestGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (!store.isAuthenticated()) return true;
-  return router.createUrlTree(['/dashboard']);
+  return router.createUrlTree(['/accueil']);
 };
 
 /**
@@ -28,7 +28,7 @@ export const adminGuard: CanActivateFn = () => {
   const store = inject(AuthStore);
   const auth = inject(AuthService);
   const router = inject(Router);
-  const deny = () => router.createUrlTree(['/dashboard']);
+  const deny = () => router.createUrlTree(['/accueil']);
 
   if (store.user()) return store.isAdmin() ? true : deny();
   if (!store.isAuthenticated()) return router.createUrlTree(['/auth/login']);

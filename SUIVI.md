@@ -34,9 +34,9 @@
 
 | Tâche | Statut | Notes |
 |-------|--------|-------|
-| Design system Apple (noir/blanc/bleu `#0071E3`) | ✅ Terminé | Variables CSS globales, Inter font |
+| Design system Apple (noir/blanc/bleu `#0071E3`) | ⚠️ Remplacé | Palette client « premium tennis lifestyle » (ATC Green + warm off-white) — voir § Identité couleur |
 | Composants partagés (avatar, badge online, level-dots, spinner) | ✅ Terminé | |
-| Dashboard avec hero sombre + stats + actions rapides | ✅ Terminé | Stats à connecter aux vraies données |
+| ~~Dashboard~~ → **Page d'accueil (grille de widgets)** + **Mon profil unifié** | ✅ Terminé | `/accueil` = lanceur de widgets illustrés (Créer une annonce, Membres, Classement, Mes matchs, Dispos, Profil). `/profile` = infos + stats + prochain match du joueur connecté + édition. Route `/dashboard` supprimée. Photos sur les héros login/signup uniquement |
 | Page membres — liste avec recherche + filtres | ✅ Terminé | Recherche temps réel, filtre niveau, filtre online |
 | Page membres — pagination | ✅ Terminé | |
 | Détail membre — style ATP (hero sombre + stats bar) | ✅ Terminé | Victoires, défaites, % victoire, niveau |

@@ -1,0 +1,32 @@
+<div class="home-page">
+
+  <header class="home-greeting">
+    <p class="home-hello">Bonjour</p>
+    <h1 class="home-name">{{ firstName() }}</h1>
+    <div class="home-level">
+      <span class="level-dots">
+        @for (d of dots; track d) {
+          <span class="level-dot" [class.active]="d <= (user()?.level ?? 1)"></span>
+        }
+      </span>
+      <span class="home-level-label">{{ levelLabel() }}</span>
+    </div>
+  </header>
+
+  <div class="widget-grid">
+    @for (w of widgets; track w.route) {
+      <a [routerLink]="w.route" class="widget" [attr.data-tone]="w.tone">
+        <span class="widget-icon" [innerHTML]="w.icon"></span>
+        <span class="widget-title">{{ w.title }}</span>
+        <span class="widget-sub">{{ w.sub }}</span>
+        @if (meta(w.route); as m) {
+          <span class="widget-meta">{{ m }}</span>
+        }
+        <span class="widget-arrow" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+    }
+  </div>
+
+</div>

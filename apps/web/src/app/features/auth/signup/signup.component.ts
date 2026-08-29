@@ -65,7 +65,7 @@ export class SignupComponent {
         clubId: raw.clubId || undefined,
       })
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: () => this.router.navigate(['/accueil']),
         error: (err: HttpErrorResponse) => {
           this.error.set(err.error?.error ?? 'Erreur lors de la création du compte');
           this.loading.set(false);
