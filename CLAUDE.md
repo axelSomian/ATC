@@ -111,9 +111,13 @@ hors palette sans raison UX forte.
   `--color-positive` `#2F6B4F` (victoires, scores confirmés),
   `--color-error` `#B23B2E`, `--color-warning` `#B07D3C`.
 - **Fontes** : Inter (corps + titres), Plus Jakarta Sans (logo).
-- **Photos** : `apps/web/src/assets/img/*.webp` — `court-serve` (voile Deep Forest) = héros
-  login ; `court-editorial` = héros signup. **Placeholders Unsplash à remplacer par de
-  vraies photos ATC** (mêmes noms de fichiers). Pas de photo dans l'app connectée.
+- **Photos** : `apps/web/src/assets/img/*.webp` — `court-serve` = héros login ;
+  `court-editorial` = héros signup (photo aérienne de volée) ; `w/w-*.webp` = les 6
+  tuiles de l'accueil (annonce, membres, clubs, classement, matchs, profil), voile
+  dégradé pesé vers le bas. **Toutes générées / d'illustration → à remplacer par de
+  vraies photos ATC** (mêmes noms de fichiers, aucun code). Sinon pas de photo dans
+  l'app connectée : ambiance = filigrane « blueprint » (lignes de court, `stroke-opacity`
+  ~0.07) sur `.layout-content`, + hero Deep Forest + demi-court SVG sur la page match.
 - **Structure** : `/accueil` = page d'accueil = grille de widgets illustrés (lanceur vers
   Créer une annonce / Membres / Clubs / Classement / Mes matchs / Profil). `/profile` =
   dashboard + profil fusionnés (infos + stats du joueur connecté). Pas de route `/dashboard`.
@@ -281,8 +285,15 @@ Base : `/api/v1`
 - **Helmet** pour headers sécurisés
 - **CORS** : whitelist explicite (front domain uniquement)
 - **Validation Zod** sur TOUS les payloads entrants
-- Sanitization HTML pour les champs bio/notes
+- **E-mails** : toute valeur utilisateur (nom, court, note, score) passe par `esc()` dans
+  `modules/mailer/templates.ts` avant interpolation HTML — sinon injection de markup chez
+  le destinataire. Ne jamais interpoler une valeur brute dans un template.
+- Affichage front : auto-échappement Angular ; `[innerHTML]` réservé à des constantes
+  (icônes SVG codées en dur), jamais de données utilisateur.
 - HTTPS obligatoire en prod (Let's Encrypt)
+- Audit sess. 7 : aucun problème critique. Reste (bas) — voir `SUIVI.md` § Audit sécurité :
+  bornes de longueur sur `note`/`score`, `email_verified === true` strict, intercepteur
+  front à restreindre à `/api/`, aucun parcours « mot de passe oublié ».
 
 ---
 

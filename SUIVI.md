@@ -1,6 +1,6 @@
 # ATC — Suivi Produit
 
-> Dernière mise à jour : 2026-08-27 (session 5 — déploiement, clubs/niveaux en base, temps réel)
+> Dernière mise à jour : 2026-08-29 (session 7 — refonte visuelle, photos d'accueil, hero inscription, audit sécurité)
 
 ---
 
@@ -37,12 +37,15 @@
 |-------|--------|-------|
 | Design system Apple (noir/blanc/bleu `#0071E3`) | ⚠️ Remplacé | Palette client « premium tennis lifestyle » (ATC Green + warm off-white) — voir § Identité couleur |
 | Composants partagés (avatar, badge online, level-dots, spinner) | ✅ Terminé | |
-| ~~Dashboard~~ → **Page d'accueil (grille de widgets)** + **Mon profil unifié** | ✅ Terminé | `/accueil` = lanceur de widgets illustrés (Créer une annonce, Membres, Classement, Mes matchs, Dispos, Profil). `/profile` = infos + stats + prochain match du joueur connecté + édition. Route `/dashboard` supprimée. Photos sur les héros login/signup uniquement |
+| ~~Dashboard~~ → **Page d'accueil (grille de widgets)** + **Mon profil unifié** | ✅ Terminé | `/accueil` = lanceur de widgets illustrés (Créer une annonce, Membres, Clubs, Classement, Mes matchs, Profil). `/profile` = infos + stats + prochain match du joueur connecté + édition. Route `/dashboard` supprimée |
+| Photos des 6 widgets d'accueil | ✅ Terminé | Série lifestyle ATC (`w-annonce`/`w-membres`/`w-clubs`/`w-classement`/`w-matchs`/`w-profil`.webp, ~30-60 ko). Voile allégé (dégradé vertical pesé vers le bas au lieu d'un aplat) pour laisser ressortir la photo. **Générées via ChatGPT → à remplacer par de vraies photos ATC (mêmes noms de fichiers, aucun code)** |
+| Ambiance visuelle app connectée | ✅ Terminé | Filigrane « blueprint » (lignes de court, `stroke-opacity 0.07`) sur `.layout-content` → toutes les pages. Hero Deep Forest + demi-court SVG sur la page match |
 | Page membres — liste avec recherche + filtres | ✅ Terminé | Recherche temps réel, filtre niveau, filtre online |
 | Page membres — pagination | ✅ Terminé | |
 | Détail membre — style ATP (hero sombre + stats bar) | ✅ Terminé | Victoires, défaites, % victoire, niveau |
 | Page profil — vue + mode édition | ✅ Terminé | |
 | Upload avatar — Cloudinary | ✅ Terminé | multer mémoire → Cloudinary, crop 400x400 face |
+| Pages Connexion / Inscription — refonte mobile | ✅ Terminé | Bande photo + panneau qui remonte, inputs 16px (pas de zoom iOS), `.auth-divider` + bouton Google. Héros : `court-serve.webp` (connexion), `court-editorial.webp` (inscription — **remplacée aoû. 2026 par une photo aérienne de volée**, `background-position` calé sur le joueur). Toujours des placeholders à remplacer par de vraies photos ATC |
 
 ---
 
@@ -77,7 +80,7 @@
 | Dashboard — stats réelles depuis la BDD | 🟡 Moyenne | 📋 Backlog | Compter matchs/victoires depuis la table Match |
 | Carte du terrain d'un match | 🟡 Moyenne | ✅ Terminé | Table `Court` admin-éditable (nom, zone, adresse, `lat`/`lng`) + `GET /api/v1/courts` + onglet admin « Terrains ». `CourtMapService` + `<app-court-map>` (plan OpenStreetMap sans clé API + lien itinéraire Google/Waze/Plans, repli recherche par nom). Clic sur le terrain d'un match (feed, à venir, historique, défis) ouvre la carte. Migration `20260829130000_courts` (9 terrains d'Abidjan géocodés en approximatif). Les sélecteurs de terrain (annonce, défi, préférences) tirent désormais du catalogue |
 | Saisie de la position d'un terrain (admin) | 🟡 Moyenne | ✅ Terminé | `<app-court-picker>` : carte Leaflet dans une modale — recherche d'adresse (Nominatim), clic / repère déplaçable, `lat`/`lng` auto-remplis + adresse suggérée par géocodage inverse. Leaflet (`~45 ko gz`) dans le chunk admin, CSS Leaflet global. Remplace la saisie manuelle des coordonnées |
-| Annuaire des clubs (`/clubs`) + widget accueil | 🟡 Moyenne | ✅ Terminé | Page groupée par zone, cartes avec adresse + `memberCount` (ajouté à `GET /clubs`). Widget accueil (6 tuiles à nouveau) + entrée sidebar. Clic sur un club → `/members?club=<slug>` (filtre `club` ajouté à `GET /members` + puce « retirer » dans la liste membres) |
+| Annuaire des clubs (`/clubs`) + widget accueil | 🟡 Moyenne | ✅ Terminé | Page groupée par zone. **Refonte aoû. 2026 : grille de cartes → liste en rangées** (panneau par zone, filets fins, monogramme circulaire, compteur membres discret, chevron). Sous-titre = total clubs + total membres. `memberCount` ajouté à `GET /clubs`. Widget accueil + entrée sidebar. Clic sur un club → `/members?club=<slug>` (filtre `club` ajouté à `GET /members` + puce « retirer » dans la liste membres) |
 
 ---
 
@@ -207,6 +210,20 @@
 
 ---
 
+## Audit sécurité (session 7) — aucun problème critique
+
+| Point | Sévérité | Statut |
+|-------|----------|--------|
+| **Injection HTML dans les e-mails transactionnels** (nom / note / score non échappés → rendu chez le destinataire) | 🟠 Moyenne | ✅ Corrigé — helper `esc()` + `subj()` dans `templates.ts`, `infoTable()` échappe toutes ses valeurs |
+| Longueur non bornée : `quick-matches` `note`, `matches` `scoreHost`/`scoreGuest` | 🟢 Basse | 📋 À faire — ajouter `.max()` + regex score |
+| `loginWithGoogle` accepte `email_verified !== true` (`undefined` passe) | 🟢 Basse | 📋 À faire — exiger `=== true` |
+| Intercepteur front ajoute `Authorization` à **toutes** les requêtes `HttpClient` (OK aujourd'hui, tout est relatif) | 🟢 Basse | 📋 À faire — restreindre à `/api/` |
+| Access token en `localStorage` (`atc_token`) | ⚪️ Info | Compromis standard SPA ; refresh token bien en cookie `HttpOnly` |
+| Aucun parcours « mot de passe oublié » (comptes e-mail **et** Google-only) | 🟡 Moyenne | 📋 À décider produit — `passwordResetTemplate` est du code mort (pas de route/token) |
+| Bon : contrôles de propriété sur toutes les mutations, `/admin/*` derrière `requireAdmin`, Zod partout, zéro SQL brut, bcrypt 12, refresh `HttpOnly`+`secure`, double validation des scores | — | ✅ |
+
+---
+
 ## Bugs connus / Dette technique
 
 | Problème | Sévérité | Statut |
@@ -217,8 +234,10 @@
 | Pas d'auto-validation des scores après 48h | 🟡 Moyenne | 📋 Backlog |
 | Aucun test métier, aucune CI | 🔴 Haute | 📋 À faire — les 2 builds ont déjà cassé |
 | Rate-limiting seulement sur auth ; contournable derrière Cloudflare/CGNAT | 🟠 Moyenne | 📋 Backlog (déplacer au niveau Cloudflare) |
-| Pas de sanitization HTML sur `bio` / `note` | 🟠 Moyenne | 📋 Backlog |
+| Pas de sanitization HTML sur `bio` / `note` en **stockage** (l'affichage Angular échappe ; les e-mails échappent depuis sess. 7) | 🟢 Basse | 📋 Backlog |
 | Perf : endpoints DB plafonnent ~15 req/s (Render↔Neon sur 2 continents) | 🟡 Moyenne | 📋 Co-localiser + cacher `/clubs` `/levels` |
+| Photos d'illustration (accueil + héros auth) à remplacer par de vraies photos ATC | 🟢 Basse | 📋 PO — remplacement sans code |
+| ~9 terrains seedés avec coordonnées approximatives | 🟢 Basse | 📋 À affiner par l'admin via `<app-court-picker>` |
 
 ---
 
