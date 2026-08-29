@@ -66,17 +66,11 @@
 .widget-icon {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
   color: #fff;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
 }
-.widget-icon svg { width: 21px; height: 21px; }
+.widget-icon svg { width: 26px; height: 26px; }
 
 .widget-text { display: flex; flex-direction: column; gap: 3px; }
 
