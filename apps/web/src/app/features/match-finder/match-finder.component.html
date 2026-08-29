@@ -1,12 +1,23 @@
 <div class="mf-page">
 
-  <!-- Header -->
-  <div class="mf-header">
-    <div>
+  <!-- Hero -->
+  <header class="mf-hero">
+    <svg class="mf-hero-court" viewBox="0 0 400 220" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <rect x="10" y="10" width="380" height="200" rx="2"/>
+      <line x1="10" y1="34" x2="390" y2="34"/>
+      <line x1="10" y1="186" x2="390" y2="186"/>
+      <line x1="200" y1="4" x2="200" y2="216"/>
+      <line x1="120" y1="34" x2="120" y2="186"/>
+      <line x1="280" y1="34" x2="280" y2="186"/>
+      <line x1="120" y1="110" x2="280" y2="110"/>
+      <circle cx="200" cy="110" r="4" fill="currentColor" stroke="none"/>
+    </svg>
+    <div class="mf-hero-text">
+      <span class="mf-hero-kicker">Communauté ATC</span>
       <h1>Trouver un match</h1>
-      <p class="text-muted">Rejoins une annonce ou publie la tienne.</p>
+      <p>Rejoins une annonce ou publie la tienne — le prochain échange commence ici.</p>
     </div>
-    <button class="btn btn-primary" (click)="toggleCreate()">
+    <button class="mf-hero-cta" (click)="toggleCreate()">
       @if (showCreate()) {
         Annuler
       } @else {
@@ -14,7 +25,7 @@
         Créer une annonce
       }
     </button>
-  </div>
+  </header>
 
   <!-- Create form -->
   @if (showCreate()) {
