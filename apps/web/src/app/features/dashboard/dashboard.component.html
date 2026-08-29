@@ -12,13 +12,8 @@
         <span class="greeting-level-label">{{ levelLabel() }}</span>
       </div>
     </div>
-    <div class="greeting-illustration">
-      <svg width="110" height="110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.6">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 2a10 10 0 0 1 0 20"/>
-        <path d="M2 12h20"/>
-        <path d="M12 2c-2.76 4-2.76 16 0 20"/>
-      </svg>
+    <div class="greeting-photo">
+      <img src="/assets/img/court-detail.webp" alt="" loading="lazy" />
     </div>
   </div>
 
@@ -51,15 +46,19 @@
         </span>
       }
     </div>
-    <a routerLink="/members" class="stat-card card">
-      <span class="stat-label">Membres</span>
-      @if (loading()) {
-        <span class="stat-value stat-loading">—</span>
-      } @else {
-        <span class="stat-value">{{ stats()?.membersTotal ?? '—' }}</span>
-        <span class="stat-hint positive">Voir l'annuaire →</span>
-      }
-    </a>
+    <div class="stat-card card cta-card">
+      <span class="cta-label">Envie de jouer&nbsp;?</span>
+      <div class="cta-actions">
+        <a routerLink="/matchmaking" class="cta-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Créer une annonce
+        </a>
+        <a routerLink="/members" class="cta-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5" fill="currentColor"/></svg>
+          Défier un joueur
+        </a>
+      </div>
+    </div>
     <a routerLink="/rankings" class="stat-card card stat-card-rank">
       <span class="stat-label">Classement</span>
       @if (loading()) {

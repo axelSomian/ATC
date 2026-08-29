@@ -6,7 +6,11 @@
 /* ── Visual panel ── */
 .auth-visual {
   flex: 1;
-  background: var(--color-deep-forest);
+  background-color: var(--color-deep-forest);
+  background-image: url('/assets/img/court-serve.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: flex-end;
   padding: 52px;
@@ -14,11 +18,17 @@
   overflow: hidden;
 }
 
+/* Voile vert pour garder le texte lisible sur la photo */
 .auth-visual::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 25% 65%, rgba(143, 174, 155, 0.14) 0%, transparent 62%);
+  background: linear-gradient(
+    180deg,
+    rgba(22, 63, 50, 0.45) 0%,
+    rgba(22, 63, 50, 0.68) 48%,
+    rgba(22, 63, 50, 0.95) 100%
+  );
 }
 
 .visual-content {
