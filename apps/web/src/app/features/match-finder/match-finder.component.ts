@@ -259,4 +259,8 @@ export class MatchFinderComponent implements OnInit, OnDestroy {
   typeLabel(t: string): string {
     return { simple: 'Simple', double: 'Double', mixte: 'Mixte' }[t] ?? t;
   }
+
+  levelLabel(level: number): string {
+    return this.reference.levelLabel(level);
+  }
 }

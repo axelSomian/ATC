@@ -50,7 +50,7 @@
 
 | Tâche | Statut | Notes |
 |-------|--------|-------|
-| Page match finder — feed des annonces | ✅ Terminé | Filtres type/court/date |
+| Page match finder — feed des annonces | ✅ Terminé | Filtres type/court/date. Refonte visuelle des cartes (aoû. 2026) : format « carte d'invitation » — identité joueur + niveau, bandeau détails (date/terrain) en ivoire, note en citation, CTA « Rejoindre ce match », lueur d'accent (sans photo, la PO n'en voulait pas à la création) |
 | Créer une annonce de dispo (DispoPost) | ✅ Terminé | |
 | Supprimer sa propre annonce | ✅ Terminé | |
 | Demander à rejoindre une annonce | ✅ Terminé | Bouton "Rejoindre" → statut en attente en temps réel |

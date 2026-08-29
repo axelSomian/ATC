@@ -3,8 +3,8 @@
   <!-- Header -->
   <div class="mf-header">
     <div>
-      <h1>Matchmaking</h1>
-      <p class="text-muted">Trouvez ou proposez un match.</p>
+      <h1>Trouver un match</h1>
+      <p class="text-muted">Rejoins une annonce ou publie la tienne.</p>
     </div>
     <button class="btn btn-primary" (click)="toggleCreate()">
       @if (showCreate()) {
@@ -141,50 +141,60 @@
       <p class="feed-count">{{ total() }} annonce{{ total() !== 1 ? 's' : '' }} disponible{{ total() !== 1 ? 's' : '' }}</p>
       <div class="dispo-list">
         @for (d of dispos(); track d.id) {
-          <div class="dispo-card card" [class.is-new]="isNew(d.id)">
-            <div class="dispo-left">
-              <a [routerLink]="['/members', d.user.id]" class="dispo-avatar-link">
+          <article class="dispo-card" [class.is-new]="isNew(d.id)">
+            <header class="dc-head">
+              <a [routerLink]="['/members', d.user.id]" class="dc-avatar">
                 <div class="avatar avatar-md">{{ d.user.initials }}</div>
               </a>
-              <div class="dispo-info">
-                <div class="dispo-user-row">
-                  <a [routerLink]="['/members', d.user.id]" class="dispo-name">{{ d.user.name }}</a>
+              <div class="dc-identity">
+                <a [routerLink]="['/members', d.user.id]" class="dc-name">{{ d.user.name }}</a>
+                <span class="dc-level">
                   <span class="level-dots">
                     @for (dot of dots; track dot) {
                       <span class="level-dot" [class.active]="dot <= d.user.level"></span>
                     }
                   </span>
-                </div>
-                <div class="dispo-meta">
-                  <span class="meta-chip chip-time">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    {{ d.when | date:'EEE d MMM · HH:mm' }} · {{ formatDuration(d.duration) }}
-                  </span>
-                  <button type="button" class="meta-chip chip-court chip-court-btn" (click)="openCourtMap(d.court)" title="Voir sur la carte">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    {{ d.court }}
-                  </button>
-                  <span class="type-badge type-{{ d.type }}">{{ typeLabel(d.type) }}</span>
-                </div>
-                @if (d.note) {
-                  <p class="dispo-note">"{{ d.note }}"</p>
-                }
+                  {{ levelLabel(d.user.level) }}
+                </span>
               </div>
+              <span class="type-badge type-{{ d.type }}">{{ typeLabel(d.type) }}</span>
+            </header>
+
+            <div class="dc-details">
+              <span class="dc-detail">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <strong>{{ d.when | date:'EEE d MMM' }}</strong>
+                <span>{{ d.when | date:'HH:mm' }}</span>
+                <span class="dc-dim">· {{ formatDuration(d.duration) }}</span>
+              </span>
+              <button type="button" class="dc-detail dc-court" (click)="openCourtMap(d.court)" title="Voir sur la carte">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {{ d.court }}
+                <span class="dc-court-cta">Carte</span>
+              </button>
             </div>
-            <div class="dispo-action">
+
+            @if (d.note) {
+              <p class="dc-note">{{ d.note }}</p>
+            }
+
+            <div class="dc-foot">
               @if (isMyDispo(d)) {
-                <span class="action-label-muted">Votre annonce</span>
+                <span class="dc-mine">C'est votre annonce</span>
               } @else if (myRequestStatus(d) === 'pending') {
-                <span class="status-badge status-pending">En attente…</span>
+                <span class="status-badge status-pending">Demande envoyée</span>
               } @else if (myRequestStatus(d) === 'accepted') {
                 <span class="status-badge status-accepted">Accepté ✓</span>
               } @else if (myRequestStatus(d) === 'declined') {
                 <span class="status-badge status-declined">Refusé</span>
               } @else {
-                <button class="btn btn-outline btn-sm" (click)="joinDispo(d)">Rejoindre</button>
+                <button class="dc-join" (click)="joinDispo(d)">
+                  Rejoindre ce match
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
               }
             </div>
-          </div>
+          </article>
         }
       </div>
     }
@@ -211,17 +221,20 @@
     @if (!loadingMine() && myDispos().length) {
       <div class="dispo-list">
         @for (d of myDispos(); track d.id) {
-          <div class="my-dispo-card card" [id]="'d-' + d.id" [class.is-focused]="focusId() === d.id">
+          <div class="dispo-card my-dispo-card" [id]="'d-' + d.id" [class.is-focused]="focusId() === d.id">
             <div class="my-dispo-header">
-              <div class="dispo-meta">
-                <span class="meta-chip chip-time">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  {{ d.when | date:'EEE d MMM · HH:mm' }} · {{ formatDuration(d.duration) }}
+              <div class="dc-details">
+                <span class="dc-detail">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <strong>{{ d.when | date:'EEE d MMM' }}</strong>
+                  <span>{{ d.when | date:'HH:mm' }}</span>
+                  <span class="dc-dim">· {{ formatDuration(d.duration) }}</span>
                 </span>
-                <span class="meta-chip chip-court">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <button type="button" class="dc-detail dc-court" (click)="openCourtMap(d.court)" title="Voir sur la carte">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   {{ d.court }}
-                </span>
+                  <span class="dc-court-cta">Carte</span>
+                </button>
                 <span class="type-badge type-{{ d.type }}">{{ typeLabel(d.type) }}</span>
               </div>
               <button class="btn-delete" (click)="deleteDispo(d)" title="Supprimer">
@@ -230,7 +243,7 @@
             </div>
 
             @if (d.note) {
-              <p class="dispo-note">"{{ d.note }}"</p>
+              <p class="dc-note">{{ d.note }}</p>
             }
 
             <!-- Requests -->

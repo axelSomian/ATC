@@ -227,15 +227,16 @@
 }
 
 /* ── Dispo list ── */
-.dispo-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.dispo-list { display: flex; flex-direction: column; gap: var(--space-3); }
 
 /* ── Skeleton ── */
 .dispo-skeleton {
-  height: 88px;
+  height: 150px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(90deg,
-    var(--color-cream-dark) 25%,
-    var(--color-border) 50%,
-    var(--color-cream-dark) 75%
+    var(--color-cream) 25%,
+    var(--color-cream-dark) 50%,
+    var(--color-cream) 75%
   );
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
@@ -245,18 +246,41 @@
   100% { background-position: 0% 50%; }
 }
 
-/* ── Dispo card ── */
+/* ── Carte annonce (invitation) ── */
 .dispo-card {
+  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  transition: box-shadow var(--transition);
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  transition: box-shadow var(--transition), transform var(--transition-fast), border-color var(--transition);
 }
-.dispo-card:hover { box-shadow: var(--shadow-md); }
+/* lueur d'accent discrète en haut à droite — thème sans photo */
+.dispo-card::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-accent-alpha) 0%, transparent 70%);
+  pointer-events: none;
+}
+.dispo-card > * { position: relative; }
+.dispo-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--color-sage);
+}
 .dispo-card.is-new {
-  box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-md);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-alpha), var(--shadow-md);
   animation: dispo-in 0.35s ease-out;
 }
 @keyframes dispo-in {
@@ -264,96 +288,130 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.dispo-left {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.dispo-avatar-link { flex-shrink: 0; text-decoration: none; }
-
-.dispo-info { min-width: 0; }
-
-.dispo-user-row {
+/* Identité */
+.dc-head {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  margin-bottom: 4px;
+  gap: var(--space-3);
 }
-
-.dispo-name {
-  font-weight: 600;
-  font-size: var(--text-sm);
+.dc-avatar { flex-shrink: 0; text-decoration: none; }
+.dc-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.dc-name {
+  font-weight: 700;
+  font-size: var(--text-md);
   color: var(--color-ink);
   text-decoration: none;
+  letter-spacing: -0.01em;
+}
+.dc-name:hover { color: var(--color-accent); }
+.dc-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+/* Détails (date · terrain) */
+.dc-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.dc-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-cream);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-ink-light);
   letter-spacing: -0.005em;
 }
-.dispo-name:hover { color: var(--color-accent); }
+.dc-detail svg { color: var(--color-accent); flex-shrink: 0; }
+.dc-detail strong { color: var(--color-ink); font-weight: 600; text-transform: capitalize; }
+.dc-dim { color: var(--color-muted); }
 
-.dispo-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.meta-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-}
-
-/* Chip terrain cliquable → ouvre la carte */
-.chip-court-btn {
+.dc-court {
   border: none;
-  background: none;
-  padding: 2px 6px 2px 0;
-  margin: -2px 0;
-  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: color var(--transition);
+  transition: background var(--transition);
 }
-.chip-court-btn:hover { color: var(--color-accent); text-decoration: underline; }
-.chip-court-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
-
-.dispo-note {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-  font-style: italic;
-  margin-top: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 380px;
-}
-
-/* ── Type badges ── */
-.type-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
+.dc-court:hover { background: var(--color-cream-dark); }
+.dc-court:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.dc-court-cta {
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-accent);
 }
-.type-simple { background: rgba(31, 90, 69, 0.08); color: var(--color-accent); }
-.type-double { background: rgba(29, 29, 31, 0.07);  color: var(--color-ink-light); }
-.type-mixte  { background: rgba(47, 107, 79, 0.10);  color: var(--color-positive); }
 
-/* ── Dispo action ── */
-.dispo-action { flex-shrink: 0; }
+/* Note = invitation */
+.dc-note {
+  margin: 0;
+  padding: 3px 0 3px 14px;
+  border-left: 2px solid var(--color-sage);
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--color-ink-light);
+  line-height: 1.5;
+}
 
-.action-label-muted {
+/* Pied : action */
+.dc-foot { display: flex; align-items: center; }
+.dc-mine {
   font-size: var(--text-xs);
   color: var(--color-muted);
   font-weight: 500;
 }
+.dc-join {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition-fast), box-shadow var(--transition);
+}
+.dc-join svg { transition: transform var(--transition-fast); }
+.dc-join:hover {
+  background: var(--color-accent-hover);
+  box-shadow: 0 6px 18px rgba(31, 90, 69, 0.22);
+}
+.dc-join:hover svg { transform: translateX(3px); }
+
+/* ── Type badges ── */
+.type-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.type-simple { background: rgba(31, 90, 69, 0.10); color: var(--color-accent); }
+.type-double { background: rgba(22, 63, 50, 0.10); color: var(--color-deep-forest); }
+.type-mixte  { background: var(--color-sand-beige); color: #5C4A32; }
 
 /* ── Status badges ── */
 .status-badge {
@@ -371,21 +429,17 @@
 
 /* ── My dispo card ── */
 .my-dispo-card.is-focused {
-  box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-md);
-}
-.my-dispo-card {
-  padding: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-alpha), var(--shadow-md);
 }
 
 .my-dispo-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
 }
+.my-dispo-header .dc-details { flex: 1; }
 
 .btn-delete {
   flex-shrink: 0;
@@ -494,5 +548,8 @@
 /* ── Mobile ── */
 @media (max-width: 540px) {
   .create-grid { grid-template-columns: 1fr; }
-  .dispo-note  { max-width: 200px; }
+  .dispo-card { padding: var(--space-4); }
+  .dc-details { gap: 6px; }
+  .dc-detail { width: 100%; }
+  .dc-foot .dc-join { width: 100%; justify-content: center; }
 }
