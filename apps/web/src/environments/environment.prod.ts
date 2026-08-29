@@ -7,5 +7,5 @@ export const environment = {
   socketUrl: 'https://atc-api-ws9f.onrender.com',
   // ID client OAuth Google (public). Même valeur que GOOGLE_CLIENT_ID côté API.
   // Vide = bouton « Continuer avec Google » masqué.
-  googleClientId: '',
+  googleClientId: '71404413466-brpgo6ilptts14hl6qojgvudggm1p5up.apps.googleusercontent.com',
 };
