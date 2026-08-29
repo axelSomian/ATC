@@ -85,14 +85,18 @@
 }
 .widget:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
 
-/* voile de couleur pour lisibilité du texte blanc */
+/* voile léger, pesé vers le bas (là où se trouve le texte) — la photo doit rester lisible */
 .widget::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 0;
   background: var(--w-overlay,
-    linear-gradient(160deg, rgba(20, 48, 39, 0.55) 0%, rgba(14, 36, 29, 0.90) 100%));
+    linear-gradient(180deg,
+      rgba(14, 36, 29, 0.22) 0%,
+      rgba(14, 36, 29, 0.05) 36%,
+      rgba(11, 30, 24, 0.55) 76%,
+      rgba(9, 26, 20, 0.84) 100%));
 }
 .widget > * { position: relative; z-index: 1; }
 
@@ -101,7 +105,7 @@
   align-items: center;
   color: #fff;
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55)) drop-shadow(0 3px 10px rgba(0, 0, 0, 0.4));
 }
 .widget-icon svg { width: 26px; height: 26px; }
 
@@ -111,13 +115,13 @@
   font-size: var(--text-md);
   font-weight: 700;
   letter-spacing: -0.01em;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 2px 16px rgba(0, 0, 0, 0.5);
 }
 .widget-sub {
   font-size: var(--text-xs);
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.82);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 12px rgba(0, 0, 0, 0.45);
 }
 .widget-meta {
   align-self: flex-start;
@@ -126,28 +130,38 @@
   font-weight: 700;
   padding: 3px 9px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.22);
   color: #fff;
+  backdrop-filter: blur(2px);
 }
 
-/* ── Voiles par ton ── */
+/* ── Voiles par ton : teinte discrète en haut, dégradé lisible en bas ── */
 .widget[data-tone='green'] {
-  --w-overlay: linear-gradient(160deg, rgba(31, 90, 69, 0.50) 0%, rgba(14, 40, 32, 0.90) 100%);
+  --w-overlay: linear-gradient(180deg, rgba(31, 90, 69, 0.24) 0%, rgba(31, 90, 69, 0.05) 38%, rgba(12, 38, 30, 0.56) 76%, rgba(9, 28, 22, 0.85) 100%);
 }
 .widget[data-tone='forest'] {
-  --w-overlay: linear-gradient(160deg, rgba(22, 63, 50, 0.52) 0%, rgba(10, 32, 25, 0.92) 100%);
+  --w-overlay: linear-gradient(180deg, rgba(22, 63, 50, 0.26) 0%, rgba(22, 63, 50, 0.06) 38%, rgba(9, 32, 25, 0.58) 76%, rgba(7, 24, 19, 0.86) 100%);
 }
 .widget[data-tone='sage'] {
-  --w-overlay: linear-gradient(160deg, rgba(45, 84, 68, 0.48) 0%, rgba(16, 42, 33, 0.88) 100%);
+  --w-overlay: linear-gradient(180deg, rgba(45, 84, 68, 0.22) 0%, rgba(45, 84, 68, 0.04) 38%, rgba(14, 42, 33, 0.54) 76%, rgba(10, 30, 24, 0.83) 100%);
 }
 .widget[data-tone='sand'] {
-  --w-overlay: linear-gradient(160deg, rgba(74, 58, 38, 0.48) 0%, rgba(32, 25, 17, 0.90) 100%);
+  --w-overlay: linear-gradient(180deg, rgba(74, 58, 38, 0.22) 0%, rgba(74, 58, 38, 0.04) 38%, rgba(30, 24, 16, 0.56) 76%, rgba(22, 17, 11, 0.85) 100%);
 }
 .widget[data-tone='positive'] {
-  --w-overlay: linear-gradient(160deg, rgba(47, 107, 79, 0.48) 0%, rgba(15, 40, 30, 0.90) 100%);
+  --w-overlay: linear-gradient(180deg, rgba(47, 107, 79, 0.22) 0%, rgba(47, 107, 79, 0.05) 38%, rgba(13, 40, 30, 0.55) 76%, rgba(9, 28, 21, 0.84) 100%);
 }
 .widget[data-tone='ivory'] {
-  --w-overlay: linear-gradient(160deg, rgba(62, 54, 42, 0.46) 0%, rgba(28, 23, 17, 0.88) 100%);
+  --w-overlay: linear-gradient(180deg, rgba(62, 54, 42, 0.20) 0%, rgba(62, 54, 42, 0.04) 38%, rgba(26, 21, 15, 0.54) 76%, rgba(18, 15, 10, 0.83) 100%);
+}
+
+/* Héro (1re tuile) : voile encore plus discret, la photo domine */
+.widget-grid > .widget:first-child::before {
+  background: linear-gradient(180deg,
+    rgba(12, 34, 27, 0.16) 0%,
+    rgba(12, 34, 27, 0.02) 42%,
+    rgba(10, 28, 22, 0.44) 74%,
+    rgba(8, 24, 19, 0.74) 100%);
 }
 
 /* ── Responsive ── */
