@@ -48,7 +48,7 @@ interface GoogleGsi {
   styles: [
     `
       .google-btn-wrap { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
-      .google-btn-target { display: flex; justify-content: center; min-height: 40px; color-scheme: light; }
+      .google-btn-target { display: flex; justify-content: center; width: 100%; min-height: 40px; color-scheme: light; }
       .google-btn-busy { font-size: var(--text-sm); color: var(--color-muted); text-align: center; }
     `,
   ],
@@ -95,6 +95,9 @@ export class GoogleAuthButtonComponent implements AfterViewInit, OnDestroy {
       callback: (res) => this.zone.run(() => this.onCredential(res.credential)),
       cancel_on_tap_outside: true,
     });
+    // GSI n'accepte pas 100 % : on cale la largeur sur le conteneur (borné 240–400).
+    const available = host.getBoundingClientRect().width || 320;
+    const width = Math.round(Math.max(240, Math.min(400, available)));
     gsi.accounts.id.renderButton(host, {
       type: 'standard',
       theme: 'outline',
@@ -102,7 +105,7 @@ export class GoogleAuthButtonComponent implements AfterViewInit, OnDestroy {
       text: 'continue_with',
       shape: 'pill',
       logo_alignment: 'center',
-      width: 320,
+      width,
       locale: 'fr',
     });
   }

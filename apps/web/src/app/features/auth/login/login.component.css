@@ -1,105 +1,123 @@
+/* ============================================================
+   Page de connexion — desktop : split photo / formulaire
+   mobile : photo en bandeau + feuille du formulaire qui remonte
+   ============================================================ */
+
 .auth-page {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--color-surface);
 }
 
-/* ── Visual panel ── */
+/* ── Panneau visuel (photo) ── */
 .auth-visual {
+  position: relative;
   flex: 1;
+  min-width: 0;
   background-color: var(--color-deep-forest);
   background-image: url('/assets/img/court-serve.webp');
   background-size: cover;
-  background-position: center;
+  background-position: center 22%;
   background-repeat: no-repeat;
   display: flex;
-  align-items: flex-end;
-  padding: 52px;
-  position: relative;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: clamp(32px, 5vw, 56px);
   overflow: hidden;
 }
 
-/* Voile vert pour garder le texte lisible sur la photo */
+/* Voile vert : dégradé bas pour garder le texte lisible */
 .auth-visual::before {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(22, 63, 50, 0.45) 0%,
-    rgba(22, 63, 50, 0.68) 48%,
-    rgba(22, 63, 50, 0.95) 100%
+    rgba(22, 63, 50, 0.25) 0%,
+    rgba(22, 63, 50, 0.50) 44%,
+    rgba(16, 42, 33, 0.92) 100%
   );
 }
 
 .visual-content {
   position: relative;
   z-index: 1;
+  max-width: 440px;
 }
 
 .visual-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.50);
-  font-size: 10px;
-  font-weight: 600;
-  padding: 5px 11px;
+  font-family: var(--font-logo);
+  background: rgba(255, 255, 255, 0.10);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 13px;
   border-radius: var(--radius-full);
-  margin-bottom: 28px;
-  letter-spacing: 0.10em;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 26px;
+  letter-spacing: 0.14em;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   text-transform: uppercase;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .visual-title {
-  font-size: clamp(34px, 4vw, 50px);
+  font-size: clamp(32px, 3.6vw, 48px);
   font-weight: 700;
-  line-height: 1.08;
+  line-height: 1.06;
   letter-spacing: -0.03em;
   color: #fff;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.25);
 }
 
 .visual-sub {
-  color: rgba(255, 255, 255, 0.35);
-  font-size: 14px;
-  max-width: 280px;
-  line-height: 1.65;
-  margin-bottom: 40px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 15px;
+  max-width: 320px;
+  line-height: 1.6;
+  margin-bottom: 34px;
 }
 
 .ci-stripe {
   display: flex;
   gap: 6px;
-  width: 40px;
+  width: 44px;
 }
 .ci-stripe::before,
 .ci-stripe::after {
   content: '';
-  height: 2px;
+  height: 3px;
   flex: 1;
   border-radius: 2px;
 }
 .ci-stripe::before { background: var(--color-sage); }
-.ci-stripe::after  { background: rgba(255,255,255,0.15); }
+.ci-stripe::after  { background: rgba(255, 255, 255, 0.22); }
 
-/* ── Form panel ── */
+/* ── Panneau formulaire ── */
 .auth-panel {
-  width: 460px;
+  width: 480px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 52px;
+  padding: 48px;
   background: var(--color-surface);
 }
 
-.auth-card { width: 100%; max-width: 360px; }
+.auth-card {
+  width: 100%;
+  max-width: 360px;
+}
 
-.auth-header { margin-bottom: 32px; }
+.auth-header { margin-bottom: 30px; }
 
 .auth-header h2 {
-  font-size: 24px;
+  font-size: var(--text-2xl);
   font-weight: 700;
   letter-spacing: -0.025em;
   color: var(--color-ink);
@@ -118,15 +136,8 @@
   color: var(--color-error);
   padding: 10px 14px;
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 500;
-}
-
-.auth-footer {
-  margin-top: 24px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--color-muted);
 }
 
 .auth-divider {
@@ -135,9 +146,9 @@
   gap: 12px;
   margin: 18px 0;
   color: var(--color-muted);
-  font-size: 12px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 .auth-divider::before,
 .auth-divider::after {
@@ -147,6 +158,13 @@
   background: var(--color-border);
 }
 
+.auth-footer {
+  margin-top: 26px;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
 .link-clay {
   color: var(--color-accent);
   font-weight: 600;
@@ -154,13 +172,61 @@
 }
 .link-clay:hover { text-decoration: underline; }
 
-/* ── Mobile ── */
+/* ── Tablette ── */
+@media (max-width: 900px) {
+  .auth-panel { width: 400px; padding: 40px; }
+}
+
+/* ── Mobile : empilé ── */
 @media (max-width: 768px) {
-  .auth-visual { display: none; }
-  .auth-panel  {
-    width: 100%;
-    padding: 32px 24px;
-    padding-top: 52px;
-    align-items: flex-start;
+  .auth-page { flex-direction: column; }
+
+  .auth-visual {
+    flex: none;
+    height: 38vh;
+    min-height: 232px;
+    max-height: 340px;
+    padding: 24px 24px 46px;
   }
+  .auth-visual::before {
+    background: linear-gradient(
+      180deg,
+      rgba(22, 63, 50, 0.15) 0%,
+      rgba(22, 63, 50, 0.42) 42%,
+      rgba(16, 42, 33, 0.88) 100%
+    );
+  }
+  .visual-badge { margin-bottom: 14px; }
+  .visual-title {
+    font-size: 27px;
+    margin-bottom: 0;
+  }
+  .visual-sub { display: none; }
+  .ci-stripe { display: none; }
+
+  .auth-panel {
+    width: 100%;
+    flex: 1;
+    align-items: flex-start;
+    padding: 30px 22px 44px;
+    margin-top: -20px;
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    box-shadow: 0 -12px 32px rgba(22, 63, 50, 0.16);
+    position: relative;
+    z-index: 2;
+  }
+  .auth-card { max-width: 420px; margin: 0 auto; }
+  .auth-header { margin-bottom: 22px; }
+
+  /* 16px minimum = pas de zoom auto iOS au focus ; cibles tactiles plus hautes */
+  .auth-panel :is(input, select).form-control {
+    height: 46px;
+    font-size: 16px;
+  }
+  .auth-panel .btn-lg { height: 46px; }
+}
+
+@media (max-width: 360px) {
+  .auth-visual { padding-left: 18px; padding-right: 18px; }
+  .auth-panel { padding-left: 16px; padding-right: 16px; }
 }
