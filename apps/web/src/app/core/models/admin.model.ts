@@ -6,6 +6,11 @@ export interface AdminClub {
   name: string;
   zone: string;
   location: string;
+  address: string | null;
+  description: string | null;
+  feesInfo: string | null;
+  phone: string | null;
+  website: string | null;
   imageUrl: string | null;
   active: boolean;
   sortOrder: number;

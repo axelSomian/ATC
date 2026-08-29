@@ -30,6 +30,13 @@ export const routes: Routes = [
           import('./features/clubs/clubs.component').then((m) => m.ClubsComponent),
       },
       {
+        path: 'clubs/:slug',
+        loadComponent: () =>
+          import('./features/clubs/club-detail/club-detail.component').then(
+            (m) => m.ClubDetailComponent,
+          ),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile.component').then((m) => m.ProfileComponent),

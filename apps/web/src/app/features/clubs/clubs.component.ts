@@ -1,23 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReferenceService } from '../../core/services/reference.service';
+import { ClubFavoritesService } from '../../core/services/club-favorites.service';
 import type { ClubRef } from '../../core/models/reference.model';
-
-const FAV_KEY = 'atc_fav_clubs';
-
-function loadFavorites(): Set<string> {
-  try {
-    const raw = localStorage.getItem(FAV_KEY);
-    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
-  } catch {
-    return new Set();
-  }
-}
 
 /**
  * Annuaire des clubs : grille de cartes visuelles (photo, nom, localisation,
- * nombre de membres ATC, favori). La carte renvoie vers les membres du club
- * (`/members?club=<slug>`). Favoris stockés par appareil (localStorage).
+ * nombre de membres ATC, favori). La carte renvoie vers la fiche du club
+ * (`/clubs/:slug`). Favoris stockés par appareil ([[ClubFavoritesService]]).
  * Source : `ReferenceService` (chargé au démarrage, `GET /api/v1/clubs`).
  */
 @Component({
@@ -29,9 +19,9 @@ function loadFavorites(): Set<string> {
 })
 export class ClubsComponent {
   private readonly reference = inject(ReferenceService);
+  private readonly favs = inject(ClubFavoritesService);
 
   readonly search = signal('');
-  readonly favorites = signal<Set<string>>(loadFavorites());
 
   private readonly realClubs = computed(() =>
     this.reference.clubs().filter((c) => c.slug !== 'autre'),
@@ -45,7 +35,7 @@ export class ClubsComponent {
   /** Liste à plat, filtrée par la recherche, favoris en tête. */
   readonly visibleClubs = computed<ClubRef[]>(() => {
     const q = this.search().trim().toLowerCase();
-    const favs = this.favorites();
+    const favs = this.favs.slugs();
     return this.realClubs()
       .filter(
         (c) =>
@@ -63,20 +53,13 @@ export class ClubsComponent {
   });
 
   isFavorite(slug: string): boolean {
-    return this.favorites().has(slug);
+    return this.favs.has(slug);
   }
 
   toggleFavorite(slug: string, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    const next = new Set(this.favorites());
-    next.has(slug) ? next.delete(slug) : next.add(slug);
-    this.favorites.set(next);
-    try {
-      localStorage.setItem(FAV_KEY, JSON.stringify([...next]));
-    } catch {
-      /* stockage indisponible — favori gardé pour la session en cours */
-    }
+    this.favs.toggle(slug);
   }
 
   /** Initiale pour le visuel de repli quand le club n'a pas de photo. */

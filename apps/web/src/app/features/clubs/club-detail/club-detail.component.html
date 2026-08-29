@@ -1,0 +1,130 @@
+<div class="club-detail-page">
+
+  <a class="back-link" routerLink="/clubs">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Clubs
+  </a>
+
+  @if (loading()) {
+    <div class="cd-skeleton"></div>
+  } @else if (notFound()) {
+    <div class="cd-empty">
+      <p class="cd-empty-title">Club introuvable</p>
+      <a class="btn btn-primary" routerLink="/clubs">Retour à l'annuaire</a>
+    </div>
+  } @else {
+    @if (club(); as c) {
+
+    <!-- En-tête -->
+    <header class="cd-hero">
+      <div class="cd-hero-media">
+        @if (c.imageUrl) {
+          <img [src]="c.imageUrl" [alt]="'Photo — ' + c.name" />
+        } @else {
+          <div class="cd-hero-placeholder" aria-hidden="true">
+            <span>{{ initial(c.name) }}</span>
+          </div>
+        }
+        <button
+          type="button"
+          class="cd-fav"
+          [class.is-active]="isFavorite()"
+          [attr.aria-pressed]="isFavorite()"
+          [attr.aria-label]="isFavorite() ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+          (click)="toggleFavorite($event)"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="cd-hero-body">
+        <h1>{{ c.name }}</h1>
+        @if (c.location || c.zone) {
+          <p class="cd-hero-loc">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {{ c.location || c.zone }}
+          </p>
+        }
+        <p class="cd-hero-members">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          {{ c.memberCount }} membre{{ c.memberCount !== 1 ? 's' : '' }} ATC
+        </p>
+      </div>
+    </header>
+
+    @if (c.description) {
+      <p class="cd-description">{{ c.description }}</p>
+    }
+
+    <!-- Infos pratiques -->
+    @if (c.address || c.feesInfo || c.phone || c.website) {
+      <div class="cd-info-grid">
+        @if (c.address) {
+          <div class="cd-info">
+            <span class="cd-info-label">Adresse</span>
+            <span class="cd-info-value">{{ c.address }}</span>
+          </div>
+        }
+        @if (c.feesInfo) {
+          <div class="cd-info">
+            <span class="cd-info-label">Honoraires</span>
+            <span class="cd-info-value cd-info-fees">{{ c.feesInfo }}</span>
+          </div>
+        }
+        @if (c.phone) {
+          <div class="cd-info">
+            <span class="cd-info-label">Contact</span>
+            <a class="cd-info-value cd-info-link" [href]="'tel:' + c.phone">{{ c.phone }}</a>
+          </div>
+        }
+        @if (c.website) {
+          <div class="cd-info">
+            <span class="cd-info-label">Site web</span>
+            <a class="cd-info-value cd-info-link" [href]="c.website" target="_blank" rel="noopener noreferrer">{{ c.website }}</a>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Membres -->
+    <section class="cd-members">
+      <div class="cd-members-head">
+        <h2>Membres du club</h2>
+        @if (hasMoreMembers()) {
+          <a class="cd-members-all" routerLink="/members" [queryParams]="{ club: c.slug }">
+            Voir les {{ memberTotal() }} membres
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        }
+      </div>
+
+      @if (memberPreview().length === 0) {
+        <p class="cd-members-empty">Aucun membre ATC rattaché à ce club pour le moment.</p>
+      } @else {
+        <div class="cd-members-grid">
+          @for (m of memberPreview(); track m.id) {
+            <a class="cd-member" [routerLink]="['/members', m.id]">
+              <span class="avatar avatar-md">
+                @if (m.avatarUrl) { <img [src]="m.avatarUrl" [alt]="m.name" /> } @else { {{ m.initials }} }
+              </span>
+              <span class="cd-member-name">{{ m.name }}</span>
+              <span class="cd-member-level">
+                <span class="level-dots">
+                  @for (d of dots; track d) {
+                    <span class="level-dot" [class.active]="d <= m.level"></span>
+                  }
+                </span>
+                {{ levelLabel(m.level) }}
+              </span>
+            </a>
+          }
+        </div>
+      }
+    </section>
+
+    }
+  }
+
+</div>

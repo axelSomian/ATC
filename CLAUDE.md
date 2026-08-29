@@ -122,10 +122,12 @@ hors palette sans raison UX forte.
   Créer une annonce / Membres / Clubs / Classement / Mes matchs / Profil). `/profile` =
   dashboard + profil fusionnés (infos + stats du joueur connecté). Pas de route `/dashboard`.
   `/clubs` = annuaire des clubs = **grille de cartes visuelles** (photo, nom, localisation,
-  nb membres ATC, cœur favori) → chaque carte renvoie vers `/members?club=<slug>` (pas encore
-  de fiche club dédiée). Favoris = localStorage (par appareil), favoris en tête. La photo est
-  la seule exception à « pas de photo dans l'app connectée » (c'est du contenu d'identité,
-  comme les avatars) ; placeholder = dégradé ATC + monogramme si `imageUrl` est null.
+  nb membres ATC, cœur favori) → chaque carte renvoie vers la **fiche club `/clubs/:slug`**
+  (`ClubDetailComponent` : hero photo, présentation, adresse, honoraires, contact/site,
+  aperçu des 12 premiers membres + lien « voir tous » vers `/members?club=<slug>`).
+  Favoris = localStorage (par appareil, `ClubFavoritesService`), favoris en tête. La photo
+  est la seule exception à « pas de photo dans l'app connectée » (contenu d'identité, comme
+  les avatars) ; placeholder = dégradé ATC + monogramme si `imageUrl` est null.
 - **Système de niveau** : 5 dots — N1 Débutant → N2 Intermédiaire → N3 Avancé → N4 Compétiteur → N5 Professionnel (reclassé aoû. 2026, retour PO : séparer l'amateur-compétiteur du pro ; migration `20260829160000_levels_reclassification`). **Pas d'emoji** (les 5 dots restent la représentation). Libellés + descriptions (profil / jeu) stockés en base (table `Level`, éditables par un admin) et exposés via `GET /api/v1/levels`. Les bornes de rating ELO restent dans `apps/api/src/modules/matches/elo.ts` — N5 est atteignable par l'ELO (rating ≥ 1500), ce n'est pas un statut. Le niveau ne bouge qu'après 5 matchs confirmés (`applyEloUpdate` ne touche pas `level` avant).
 - **Layout** : sidebar fixe sur desktop, bottom nav sur mobile, breakpoint ~768px
 - **Ton** : premium, féminin, contemporain, épuré — jamais « appli sport générique ».
@@ -228,6 +230,7 @@ Base : `/api/v1`
 
 ### Référence (public, sans auth)
 - `GET /clubs` — clubs actifs + `memberCount` + `imageUrl` (sélecteurs profil, page `/clubs`)
+- `GET /clubs/:slug` — fiche d'un club actif (`address`, `description`, `feesInfo`, `phone`, `website`, `imageUrl`, `memberCount`) ; 404 si inconnu/inactif
 - `GET /courts` — terrains actifs avec `lat`/`lng` (sélecteurs + carte des matchs)
 - `GET /levels` — libellés des 5 niveaux
 

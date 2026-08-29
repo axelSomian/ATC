@@ -27,7 +27,7 @@
   } @else {
     <div class="clubs-grid">
       @for (club of visibleClubs(); track club.id) {
-        <a class="club-card" [routerLink]="['/members']" [queryParams]="{ club: club.slug }">
+        <a class="club-card" [routerLink]="['/clubs', club.slug]">
           <div class="club-card-media">
             @if (club.imageUrl) {
               <img class="club-card-photo" [src]="club.imageUrl" [alt]="'Photo — ' + club.name" loading="lazy" />

@@ -52,15 +52,20 @@ model User {
 
 // Clubs / structures de tennis — éditables par un admin (pas de redéploiement).
 model Club {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  name      String
-  zone      String   @default("")
-  location  String   @default("")
-  imageUrl  String? // photo du club (Cloudinary, dossier atc/clubs) — null = placeholder
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  zone        String   @default("")
+  location    String   @default("") // libellé court (affiché sur les cartes de l'annuaire)
+  address     String? // adresse complète (fiche club)
+  description String? // présentation du club (fiche club)
+  feesInfo    String? // honoraires / cotisation, texte libre (fiche club)
+  phone       String? // contact du club
+  website     String? // site web du club
+  imageUrl    String? // photo du club (Cloudinary, dossier atc/clubs) — null = placeholder
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
 
   users User[]
 

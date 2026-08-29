@@ -14,11 +14,29 @@ const optionalImageUrl = z.preprocess(
   z.string().url().max(500).nullable(),
 );
 
+/** Texte optionnel : '' / null / undefined => null, sinon chaîne trimmée bornée. */
+const optionalText = (max: number) =>
+  z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '') || v === null || v === undefined ? null : v,
+    z.string().trim().max(max).nullable(),
+  );
+
+/** URL optionnelle (site web) : '' => null, sinon URL http(s). */
+const optionalUrl = z.preprocess(
+  (v) => (v === '' || v === null || v === undefined ? null : v),
+  z.string().url().max(200).nullable(),
+);
+
 export const createClubSchema = z.object({
   slug,
   name: z.string().trim().min(2).max(120),
   zone: z.string().trim().max(60).default(''),
   location: z.string().trim().max(160).default(''),
+  address: optionalText(300).default(null),
+  description: optionalText(2000).default(null),
+  feesInfo: optionalText(1000).default(null),
+  phone: optionalText(40).default(null),
+  website: optionalUrl.default(null),
   imageUrl: optionalImageUrl.default(null),
   active: z.boolean().default(true),
   sortOrder: z.coerce.number().int().min(0).max(999).default(0),
@@ -29,6 +47,11 @@ export const updateClubSchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
   zone: z.string().trim().max(60).optional(),
   location: z.string().trim().max(160).optional(),
+  address: optionalText(300).optional(),
+  description: optionalText(2000).optional(),
+  feesInfo: optionalText(1000).optional(),
+  phone: optionalText(40).optional(),
+  website: optionalUrl.optional(),
   imageUrl: optionalImageUrl.optional(),
   active: z.boolean().optional(),
   sortOrder: z.coerce.number().int().min(0).max(999).optional(),

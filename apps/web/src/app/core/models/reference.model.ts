@@ -11,6 +11,16 @@ export interface ClubRef {
   memberCount?: number;
 }
 
+/** Fiche club complète — GET /api/v1/clubs/:slug. */
+export interface ClubDetail extends ClubRef {
+  address: string | null;
+  description: string | null;
+  feesInfo: string | null;
+  phone: string | null;
+  website: string | null;
+  memberCount: number;
+}
+
 /** Terrain / lieu de jeu (éditable par un admin), pour les sélecteurs et la carte. */
 export interface CourtRef {
   id: string;

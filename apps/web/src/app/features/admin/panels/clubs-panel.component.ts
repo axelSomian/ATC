@@ -13,7 +13,19 @@ interface Editable extends AdminClub {
   _photoBusy?: boolean;
 }
 
-const EMPTY_NEW = { slug: '', name: '', zone: '', location: '', sortOrder: 0, active: true };
+const EMPTY_NEW = {
+  slug: '',
+  name: '',
+  zone: '',
+  location: '',
+  address: '',
+  description: '',
+  feesInfo: '',
+  phone: '',
+  website: '',
+  sortOrder: 0,
+  active: true,
+};
 
 @Component({
   selector: 'app-clubs-panel',
@@ -32,11 +44,21 @@ const EMPTY_NEW = { slug: '', name: '', zone: '', location: '', sortOrder: 0, ac
           <input type="text" [(ngModel)]="draft.slug" placeholder="golf" />
           <label>Zone</label>
           <input type="text" [(ngModel)]="draft.zone" placeholder="Cocody" />
-          <label>Lieu</label>
-          <input type="text" [(ngModel)]="draft.location" placeholder="Riviera Golf" />
+          <label>Lieu (libellé court)</label>
+          <input type="text" [(ngModel)]="draft.location" placeholder="Cocody – 2 Plateaux" />
+          <label>Adresse complète</label>
+          <input type="text" [(ngModel)]="draft.address" placeholder="Rue des Jardins, 2 Plateaux, Cocody" />
+          <label>Téléphone</label>
+          <input type="text" [(ngModel)]="draft.phone" placeholder="+225 07 00 00 00 00" />
+          <label>Site web</label>
+          <input type="text" [(ngModel)]="draft.website" placeholder="https://…" />
           <label>Ordre</label>
           <input type="number" [(ngModel)]="draft.sortOrder" />
         </div>
+        <label class="field-block-label">Présentation</label>
+        <textarea rows="2" [(ngModel)]="draft.description" placeholder="Quelques lignes sur le club…"></textarea>
+        <label class="field-block-label">Honoraires / cotisation</label>
+        <textarea rows="2" [(ngModel)]="draft.feesInfo" placeholder="Ex : 15 000 F/mois · 120 000 F/an · cotisation ATC à part"></textarea>
         @if (createMsg()) { <p class="form-msg err">{{ createMsg() }}</p> }
         <div class="row-actions">
           <button class="btn btn-primary btn-sm" [disabled]="creating()" (click)="create()">
@@ -81,13 +103,23 @@ const EMPTY_NEW = { slug: '', name: '', zone: '', location: '', sortOrder: 0, ac
               <input type="text" [(ngModel)]="c.slug" />
               <label>Zone</label>
               <input type="text" [(ngModel)]="c.zone" />
-              <label>Lieu</label>
+              <label>Lieu (libellé court)</label>
               <input type="text" [(ngModel)]="c.location" />
+              <label>Adresse complète</label>
+              <input type="text" [(ngModel)]="c.address" />
+              <label>Téléphone</label>
+              <input type="text" [(ngModel)]="c.phone" />
+              <label>Site web</label>
+              <input type="text" [(ngModel)]="c.website" />
               <label>Ordre</label>
               <input type="number" [(ngModel)]="c.sortOrder" />
               <label>Actif</label>
               <input type="checkbox" [(ngModel)]="c.active" style="width: auto; justify-self: start;" />
             </div>
+            <label class="field-block-label">Présentation</label>
+            <textarea rows="2" [(ngModel)]="c.description"></textarea>
+            <label class="field-block-label">Honoraires / cotisation</label>
+            <textarea rows="2" [(ngModel)]="c.feesInfo"></textarea>
             @if (c._msg) { <p class="form-msg" [class.err]="!c._ok" [class.ok]="c._ok">{{ c._msg }}</p> }
             <div class="row-actions">
               <button class="btn btn-primary btn-sm" [disabled]="c._busy" (click)="save(c)">Enregistrer</button>
@@ -191,6 +223,11 @@ export class ClubsPanelComponent implements OnInit {
       slug: c.slug,
       zone: c.zone,
       location: c.location,
+      address: c.address ?? null,
+      description: c.description ?? null,
+      feesInfo: c.feesInfo ?? null,
+      phone: c.phone ?? null,
+      website: c.website ?? null,
       sortOrder: Number(c.sortOrder),
       active: c.active,
     };

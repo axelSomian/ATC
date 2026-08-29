@@ -19,6 +19,30 @@ export async function listClubs() {
   return clubs.map(({ _count, ...club }) => ({ ...club, memberCount: _count.users }));
 }
 
+/** Fiche d'un club actif (page /clubs/:slug). 404 si inconnu ou inactif. */
+export async function getClubBySlug(slug: string) {
+  const club = await prisma.club.findFirst({
+    where: { slug, active: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      zone: true,
+      location: true,
+      address: true,
+      description: true,
+      feesInfo: true,
+      phone: true,
+      website: true,
+      imageUrl: true,
+      _count: { select: { users: true } },
+    },
+  });
+  if (!club) throw new AppError(404, 'Club introuvable');
+  const { _count, ...rest } = club;
+  return { ...rest, memberCount: _count.users };
+}
+
 /** Terrains actifs, triés pour l'affichage (sélecteurs + carte). */
 export function listCourts() {
   return prisma.court.findMany({
