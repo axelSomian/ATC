@@ -170,6 +170,7 @@
 | CI/CD GitHub Actions | 🟡 Moyenne | 📋 Backlog | lint + test + build sur PR — **pas encore fait**, les 2 builds ont déjà cassé une fois |
 | Sentry monitoring | 🟡 Moyenne | 📋 Backlog | DSN prod à câbler ; logs Render perdus au redémarrage |
 | Tests E2E Playwright (signup → match) | 🟡 Moyenne | 📋 Backlog | Couverture tests quasi nulle (seul `elo.test.ts`) |
+| « Se connecter avec Apple » | 🟢 Basse | 💡 Idée (reporté) | Même schéma que Google (`appleId`, `/auth/apple`, `apple-signin-auth`). Nécessite compte Apple Developer 99 $/an + `client_secret` JWT à régénérer ≤ 6 mois + gérer « nom envoyé 1 seule fois » + e-mail relais privé. ~1 j |
 
 ---
 
