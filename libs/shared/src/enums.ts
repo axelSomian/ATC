@@ -18,12 +18,6 @@ export enum MatchRequestStatus {
   Declined = 'declined',
 }
 
-export enum AvailabilityStatus {
-  Free = 'free',
-  Busy = 'busy',
-  Matched = 'matched',
-}
-
 export enum NotificationType {
   MatchRequest = 'match_request',
   MatchConfirmed = 'match_confirmed',

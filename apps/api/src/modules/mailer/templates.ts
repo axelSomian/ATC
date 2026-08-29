@@ -88,7 +88,7 @@ export function welcomeTemplate(name: string): { subject: string; html: string }
     html: base('Bienvenue', `
       ${h1(`Bienvenue, ${name} !`)}
       ${p(`Votre compte sur la plateforme d'${strong('Abidjan Tennis Community')} est créé.`)}
-      ${p('Vous pouvez dès maintenant consulter les profils des membres, publier vos disponibilités et organiser des matchs.')}
+      ${p('Vous pouvez dès maintenant consulter les profils des membres, publier vos annonces de match et organiser des rencontres.')}
       ${p('Complétez votre profil pour apparaître dans l\'annuaire et trouver des adversaires à votre niveau.')}
     `),
   };

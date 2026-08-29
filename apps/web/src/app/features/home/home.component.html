@@ -22,7 +22,7 @@
   </header>
 
   <div class="widget-grid">
-    @for (w of widgets; track w.route) {
+    @for (w of widgets; track w.id) {
       <a
         [routerLink]="w.route"
         [queryParams]="w.query ?? null"

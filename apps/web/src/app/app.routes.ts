@@ -37,11 +37,6 @@ export const routes: Routes = [
       { path: 'matchmaking', redirectTo: 'matchs', pathMatch: 'full' },
       { path: 'my-matches', redirectTo: 'matchs', pathMatch: 'full' },
       {
-        path: 'availability',
-        loadComponent: () =>
-          import('./features/availability/availability.component').then((m) => m.AvailabilityComponent),
-      },
-      {
         path: 'notifications',
         loadComponent: () =>
           import('./features/notifications/notifications.component').then((m) => m.NotificationsComponent),

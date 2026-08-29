@@ -1,6 +1,6 @@
 # ATC — Abidjan Tennis Community
 
-Application web responsive permettant aux membres de la communauté de se connecter, consulter le profil et le niveau des autres membres, publier leurs disponibilités et organiser des matchs de tennis.
+Application web responsive permettant aux membres de la communauté de se connecter, consulter le profil et le niveau des autres membres, publier des annonces et organiser des matchs de tennis.
 
 ---
 
@@ -62,7 +62,6 @@ atc/
 │   │   │   │   │   ├── dashboard/
 │   │   │   │   │   ├── members/
 │   │   │   │   │   ├── profile/
-│   │   │   │   │   ├── availability/
 │   │   │   │   │   ├── match-finder/
 │   │   │   │   │   └── history/
 │   │   │   │   ├── layout/      # sidebar, topbar, mobile-nav
@@ -75,7 +74,6 @@ atc/
 │       │   │   ├── auth/
 │       │   │   ├── members/
 │       │   │   ├── matches/
-│       │   │   ├── availability/
 │       │   │   └── notifications/
 │       │   ├── middleware/
 │       │   ├── lib/             # prisma, redis, mailer, sms
@@ -147,19 +145,9 @@ model User {
   joinedAt        DateTime @default(now())
   online          Boolean  @default(false)
 
-  availabilities  Availability[]
   matchesAsHost   Match[]      @relation("host")
   matchesAsGuest  Match[]      @relation("guest")
   dispos          DispoPost[]
-}
-
-model Availability {
-  id        String   @id @default(cuid())
-  userId    String
-  startsAt  DateTime
-  endsAt    DateTime
-  status    String   // 'free' | 'busy' | 'matched'
-  user      User     @relation(fields: [userId], references: [id])
 }
 
 model DispoPost {
@@ -225,11 +213,6 @@ Base : `/api/v1`
 - `GET  /members/:id` — profil détaillé
 - `PATCH /members/me` — update profil
 - `POST /members/me/avatar` — upload avatar
-
-### Disponibilités
-- `GET    /availability/me?week=YYYY-MM-DD`
-- `PUT    /availability/me/slot` — `{ startsAt, endsAt, status }`
-- `DELETE /availability/me/slot/:id`
 
 ### Annonces de match (DispoPost)
 - `GET  /dispos` — feed (filtres: `date`, `level`, `type`, `court`)
@@ -334,7 +317,6 @@ Base : `/api/v1`
 ### Phase 2 — Core features
 - [ ] CRUD membres + profil
 - [ ] Annuaire avec recherche/filtres
-- [ ] Calendrier de disponibilités
 - [ ] Publication de dispo + demandes
 - [ ] Historique des matchs
 

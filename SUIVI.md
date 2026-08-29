@@ -67,7 +67,7 @@
 
 | Tâche | Priorité | Statut | Notes |
 |-------|----------|--------|-------|
-| Calendrier de disponibilités (`/availability`) | 🔴 Haute | ✅ Terminé | Grille CSS hebdomadaire, optimistic toggle, API upsert |
+| ~~Calendrier de disponibilités (`/availability`)~~ | — | 🗑️ Retiré | Feature supprimée (aoû. 2026) : grille privée jamais exposée aux autres, sans impact sur l'annuaire ni le matchmaking. Les annonces (`DispoPost`) restent le seul mécanisme de dispo. Table `Availability` droppée (migration `20260829120000_drop_availability`) |
 | Page Mes matchs | 🔴 Haute | ✅ Terminé | Onglets À venir / Défis / Historique |
 | Fusion Matchmaking + Mes matchs → `/matchs` | 🟢 Basse | ✅ Terminé | `MatchesHubComponent` : segment « Trouver un adversaire » / « Mes matchs » (query `vue`). `/matchmaking` et `/my-matches` redirigent. 1 seule entrée nav |
 | Notifications backend (service + routes + hooks) | 🔴 Haute | ✅ Terminé | Polling 30s, types : match_request / confirmed / declined / score_to_validate / score_confirmed / score_disputed |
