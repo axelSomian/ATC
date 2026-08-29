@@ -171,7 +171,7 @@
 |-------|----------|--------|-------|
 | Déploiement prod | 🔴 Haute | ✅ Terminé | Neon (DB) + Render (API, `render.yaml`) + Vercel (front, `apps/web/vercel.json`, rewrite `/api/*`). Voir `DEPLOY.md`. Tous en tier gratuit |
 | App mobile Ionic/Capacitor | 🟢 Basse | 💡 Idée | Réutiliser le code Angular |
-| Docker Compose en dev | 🟢 Basse | 💡 Idée | postgres + redis + api + web |
+| Docker Compose en dev | 🟢 Basse | 💡 Idée | `docker-compose.yml` = postgres seul (Redis retiré, non utilisé) |
 | CI/CD GitHub Actions | 🟡 Moyenne | 📋 Backlog | lint + test + build sur PR — **pas encore fait**, les 2 builds ont déjà cassé une fois |
 | Sentry monitoring | 🟡 Moyenne | 📋 Backlog | DSN prod à câbler ; logs Render perdus au redémarrage |
 | Tests E2E Playwright (signup → match) | 🟡 Moyenne | 📋 Backlog | Couverture tests quasi nulle (seul `elo.test.ts`) |

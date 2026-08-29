@@ -45,21 +45,3 @@ export function sendEmail(
     ...(tags ? { tags } : {}),
   });
 }
-
-export function sendTemplatedEmail(
-  to:           EmailAddress | EmailAddress[],
-  subject:      string,
-  templateId:   number,
-  templateData?: Record<string, unknown>,
-  tags?:        Record<string, string>,
-): Promise<void> {
-  return post('/emails/template', {
-    from: { address: FROM_ADDRESS, display_name: FROM_NAME },
-    to,
-    subject,
-    template_id:   templateId,
-    template_data: templateData,
-    tracking:      false,
-    ...(tags ? { tags } : {}),
-  });
-}

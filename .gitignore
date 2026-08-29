@@ -6,6 +6,12 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Uploads locaux (les avatars vont sur Cloudinary, pas sur le disque)
+apps/api/uploads/
+
+# Réglages Claude Code spécifiques à une machine
+.claude/settings.local.json
+
 # Prisma
 # NOTE: les migrations DOIVENT être versionnées (nécessaires à `prisma migrate deploy` en prod).
 # Ne pas ré-ignorer apps/api/prisma/migrations/

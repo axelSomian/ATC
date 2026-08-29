@@ -7,7 +7,6 @@ Architecture :
 | PostgreSQL  | **Neon** (free) | 0,5 Go, autosuspend ~5 min |
 | API Express + Socket.IO | **Render** Web Service (free) | s'endort après 15 min d'inactivité (cold start ~1 min) |
 | Front Angular (statique) | **Vercel** (free) | proxy `/api/*` -> Render via `vercel.json` |
-| Redis | — | non utilisé pour le MVP |
 
 Le front appelle l'API en **relatif** (`/api/v1`). Vercel réécrit `/api/*` vers Render :
 pour le navigateur c'est du **same-origin**, donc le cookie `refreshToken` (HttpOnly) reste first-party.

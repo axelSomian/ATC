@@ -29,7 +29,7 @@ Application web responsive permettant aux membres de la communauté de se connec
 
 ### Base de données
 - **PostgreSQL 16** (entités relationnelles)
-- **Redis** pour cache + sessions
+- ~~Redis~~ — envisagé pour cache/sessions, **non utilisé** (retiré du projet)
 
 ### Services externes
 - **Cloudinary** — upload avatars
@@ -76,7 +76,7 @@ atc/
 │       │   │   ├── matches/
 │       │   │   └── notifications/
 │       │   ├── middleware/
-│       │   ├── lib/             # prisma, redis, mailer, sms
+│       │   ├── lib/             # prisma, mailer, cloudinary, socket, phone
 │       │   └── server.ts
 │       └── prisma/
 │           ├── schema.prisma

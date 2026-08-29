@@ -1,1 +1,1 @@
-TRUNCATE TABLE "MatchRequest", "DispoPost", "QuickMatch", "Notification", "Match", "Availability", "User" RESTART IDENTITY CASCADE;
+TRUNCATE TABLE "MatchRequest", "DispoPost", "QuickMatch", "Notification", "Match", "User" RESTART IDENTITY CASCADE;
