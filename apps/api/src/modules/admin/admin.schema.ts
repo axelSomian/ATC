@@ -27,6 +27,13 @@ const optionalUrl = z.preprocess(
   z.string().url().max(200).nullable(),
 );
 
+/** Coordonnée optionnelle : '' / null / undefined => null, sinon nombre fini. */
+const optionalCoord = (min: number, max: number) =>
+  z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+    z.number().finite().min(min).max(max).nullable(),
+  );
+
 export const createClubSchema = z.object({
   slug,
   name: z.string().trim().min(2).max(120),
@@ -38,6 +45,8 @@ export const createClubSchema = z.object({
   phone: optionalText(40).default(null),
   website: optionalUrl.default(null),
   imageUrl: optionalImageUrl.default(null),
+  lat: optionalCoord(-90, 90).default(null),
+  lng: optionalCoord(-180, 180).default(null),
   active: z.boolean().default(true),
   sortOrder: z.coerce.number().int().min(0).max(999).default(0),
 });
@@ -53,33 +62,6 @@ export const updateClubSchema = z.object({
   phone: optionalText(40).optional(),
   website: optionalUrl.optional(),
   imageUrl: optionalImageUrl.optional(),
-  active: z.boolean().optional(),
-  sortOrder: z.coerce.number().int().min(0).max(999).optional(),
-});
-
-/** Coordonnée optionnelle : '' / null / undefined => null, sinon nombre fini. */
-const optionalCoord = (min: number, max: number) =>
-  z.preprocess(
-    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
-    z.number().finite().min(min).max(max).nullable(),
-  );
-
-export const createCourtSchema = z.object({
-  slug,
-  name: z.string().trim().min(2).max(120),
-  zone: z.string().trim().max(60).default(''),
-  address: z.string().trim().max(200).default(''),
-  lat: optionalCoord(-90, 90).default(null),
-  lng: optionalCoord(-180, 180).default(null),
-  active: z.boolean().default(true),
-  sortOrder: z.coerce.number().int().min(0).max(999).default(0),
-});
-
-export const updateCourtSchema = z.object({
-  slug: slug.optional(),
-  name: z.string().trim().min(2).max(120).optional(),
-  zone: z.string().trim().max(60).optional(),
-  address: z.string().trim().max(200).optional(),
   lat: optionalCoord(-90, 90).optional(),
   lng: optionalCoord(-180, 180).optional(),
   active: z.boolean().optional(),
@@ -105,8 +87,6 @@ export const setRoleSchema = z.object({
 
 export type CreateClubDto = z.infer<typeof createClubSchema>;
 export type UpdateClubDto = z.infer<typeof updateClubSchema>;
-export type CreateCourtDto = z.infer<typeof createCourtSchema>;
-export type UpdateCourtDto = z.infer<typeof updateCourtSchema>;
 export type UpdateLevelDto = z.infer<typeof updateLevelSchema>;
 export type ResolveMatchDto = z.infer<typeof resolveMatchSchema>;
 export type SetRoleDto = z.infer<typeof setRoleSchema>;

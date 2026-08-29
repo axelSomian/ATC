@@ -1,27 +1,25 @@
 import { Component, signal } from '@angular/core';
 import { DisputesPanelComponent } from './panels/disputes-panel.component';
 import { ClubsPanelComponent } from './panels/clubs-panel.component';
-import { CourtsPanelComponent } from './panels/courts-panel.component';
 import { LevelsPanelComponent } from './panels/levels-panel.component';
 import { MembersPanelComponent } from './panels/members-panel.component';
 
-type Tab = 'disputes' | 'clubs' | 'courts' | 'levels' | 'members';
+type Tab = 'disputes' | 'clubs' | 'levels' | 'members';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [DisputesPanelComponent, ClubsPanelComponent, CourtsPanelComponent, LevelsPanelComponent, MembersPanelComponent],
+  imports: [DisputesPanelComponent, ClubsPanelComponent, LevelsPanelComponent, MembersPanelComponent],
   template: `
     <div class="admin-page">
       <header class="admin-header">
         <h1>Administration</h1>
-        <p class="text-muted">Litiges, clubs, terrains, niveaux et rôles des membres.</p>
+        <p class="text-muted">Litiges, clubs, niveaux et rôles des membres.</p>
       </header>
 
       <nav class="tabs">
         <button class="tab-btn" [class.active]="tab() === 'disputes'" (click)="tab.set('disputes')">Litiges</button>
         <button class="tab-btn" [class.active]="tab() === 'clubs'" (click)="tab.set('clubs')">Clubs</button>
-        <button class="tab-btn" [class.active]="tab() === 'courts'" (click)="tab.set('courts')">Terrains</button>
         <button class="tab-btn" [class.active]="tab() === 'levels'" (click)="tab.set('levels')">Niveaux</button>
         <button class="tab-btn" [class.active]="tab() === 'members'" (click)="tab.set('members')">Membres</button>
       </nav>
@@ -29,7 +27,6 @@ type Tab = 'disputes' | 'clubs' | 'courts' | 'levels' | 'members';
       @switch (tab()) {
         @case ('disputes') { <app-disputes-panel /> }
         @case ('clubs') { <app-clubs-panel /> }
-        @case ('courts') { <app-courts-panel /> }
         @case ('levels') { <app-levels-panel /> }
         @case ('members') { <app-members-panel /> }
       }

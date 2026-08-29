@@ -19,10 +19,10 @@ const TIMES = [
   { value: 'weekend', label: 'Weekend' },
 ];
 
-// Repli si le catalogue de terrains (DB) est injoignable au démarrage.
-const COURTS_FALLBACK = [
-  'Club Ivoire', 'INSEP', 'Plateau Tennis Club', 'Cocody',
-  'Marcory', 'Riviera', 'Yopougon', 'II Plateaux',
+// Repli si le catalogue des clubs (DB) est injoignable au démarrage.
+const VENUE_FALLBACK = [
+  'Le Central Tennis Club (LCTC)', "N'Goran Tennis Concept (NTC)", 'Golf Tennis Club',
+  'Sotra Tennis Academy', 'Athlétic Club', 'Sol Béni', 'Yop Tennis Academy',
 ];
 
 @Component({
@@ -62,8 +62,8 @@ export class ProfileComponent implements OnInit {
   readonly cities = CITIES_CI;
   readonly times  = TIMES;
   readonly courts = computed(() => {
-    const names = this.reference.courtNames();
-    return names.length ? names : COURTS_FALLBACK;
+    const names = this.reference.venueNames();
+    return names.length ? names : VENUE_FALLBACK;
   });
   readonly clubsByZone = this.reference.clubsByZone;
   readonly otherClub   = this.reference.otherClub;

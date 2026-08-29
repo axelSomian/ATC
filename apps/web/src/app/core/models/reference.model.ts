@@ -1,4 +1,7 @@
-/** Club renvoyé par l'API (relation User.club). */
+/**
+ * Club = unique entité « lieu » de l'appli (fusion avec l'ancienne table Court).
+ * Sert d'appartenance des membres, d'annuaire, et de lieu de jeu (carte).
+ */
 export interface ClubRef {
   id: string;
   slug: string;
@@ -7,6 +10,9 @@ export interface ClubRef {
   location: string;
   /** Photo du club (Cloudinary) — null/absent = placeholder. */
   imageUrl?: string | null;
+  /** Position du lieu de jeu (carte). */
+  lat?: number | null;
+  lng?: number | null;
   /** Nombre de membres rattachés (renvoyé par GET /api/v1/clubs). */
   memberCount?: number;
 }
@@ -18,18 +24,9 @@ export interface ClubDetail extends ClubRef {
   feesInfo: string | null;
   phone: string | null;
   website: string | null;
-  memberCount: number;
-}
-
-/** Terrain / lieu de jeu (éditable par un admin), pour les sélecteurs et la carte. */
-export interface CourtRef {
-  id: string;
-  slug: string;
-  name: string;
-  zone: string;
-  address: string;
   lat: number | null;
   lng: number | null;
+  memberCount: number;
 }
 
 /** Niveau tel que stocké en base (éditable par un admin). */

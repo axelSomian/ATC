@@ -13,6 +13,8 @@ export async function listClubs() {
       zone: true,
       location: true,
       imageUrl: true,
+      lat: true,
+      lng: true,
       _count: { select: { users: true } },
     },
   });
@@ -35,21 +37,14 @@ export async function getClubBySlug(slug: string) {
       phone: true,
       website: true,
       imageUrl: true,
+      lat: true,
+      lng: true,
       _count: { select: { users: true } },
     },
   });
   if (!club) throw new AppError(404, 'Club introuvable');
   const { _count, ...rest } = club;
   return { ...rest, memberCount: _count.users };
-}
-
-/** Terrains actifs, triés pour l'affichage (sélecteurs + carte). */
-export function listCourts() {
-  return prisma.court.findMany({
-    where: { active: true },
-    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-    select: { id: true, slug: true, name: true, zone: true, address: true, lat: true, lng: true },
-  });
 }
 
 /** Les 5 niveaux, du plus bas au plus haut. */

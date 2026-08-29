@@ -51,6 +51,10 @@ model User {
 }
 
 // Clubs / structures de tennis — éditables par un admin (pas de redéploiement).
+// Club = **unique entité « lieu »** de l'appli (fusion avec l'ancienne table Court,
+// aoû. 2026). Sert à la fois d'appartenance des membres (`User.clubId`), d'annuaire
+// (`/clubs`, `/clubs/:slug`) et de lieu de jeu : `court` reste stocké en texte sur
+// Match/DispoPost/QuickMatch (historique stable), on rapproche par `name` pour la carte.
 model Club {
   id          String   @id @default(cuid())
   slug        String   @unique
@@ -63,29 +67,13 @@ model Club {
   phone       String? // contact du club
   website     String? // site web du club
   imageUrl    String? // photo du club (Cloudinary, dossier atc/clubs) — null = placeholder
+  lat         Float? // position (carte du lieu de jeu + fiche club)
+  lng         Float?
   active      Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
 
   users User[]
-
-  @@index([active, sortOrder])
-}
-
-// Terrains / lieux de jeu — éditables par un admin (pas de redéploiement).
-// `court` reste stocké en texte sur Match/DispoPost/QuickMatch (historique stable) ;
-// on rapproche par `name` pour afficher la carte et l'itinéraire.
-model Court {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  name      String
-  zone      String   @default("")
-  address   String   @default("")
-  lat       Float?
-  lng       Float?
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
 
   @@index([active, sortOrder])
 }
