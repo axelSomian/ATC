@@ -2,21 +2,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { emitToUser } from '../../lib/socket.js';
 
-const PLAYER_SELECT = {
-  id: true, name: true, initials: true, avatarUrl: true, level: true,
-} as const;
-
 // ── Contexte « rappel du match » ───────────────────────────────────────────
-
-interface ContextInput {
-  dispoPost:
-    | { id: string; userId: string; when: Date; court: string; type: string }
-    | null;
-  quickMatch:
-    | { id: string; challengerId: string; challengedId: string; when: Date; court: string; type: string }
-    | null;
-  participants?: { userId: string }[];
-}
 
 export interface MatchContext {
   source: 'dispo' | 'quick';
@@ -27,24 +13,6 @@ export interface MatchContext {
   hostId: string;
   guestId: string;
 }
-
-function buildContext(c: ContextInput): MatchContext | null {
-  if (c.dispoPost) {
-    const d = c.dispoPost;
-    const guestId = c.participants?.find((p) => p.userId !== d.userId)?.userId ?? '';
-    return { source: 'dispo', sourceId: d.id, when: d.when, court: d.court, type: d.type, hostId: d.userId, guestId };
-  }
-  if (c.quickMatch) {
-    const q = c.quickMatch;
-    return { source: 'quick', sourceId: q.id, when: q.when, court: q.court, type: q.type, hostId: q.challengerId, guestId: q.challengedId };
-  }
-  return null;
-}
-
-const CONTEXT_INCLUDE = {
-  dispoPost: { select: { id: true, userId: true, when: true, court: true, type: true } },
-  quickMatch: { select: { id: true, challengerId: true, challengedId: true, when: true, court: true, type: true } },
-} as const;
 
 // ── Création (appelée à l'acceptation d'une proposition de match) ───────────
 
@@ -93,41 +61,134 @@ async function assertParticipant(userId: string, conversationId: string) {
   return p;
 }
 
+/** Vérifie l'appartenance ET renvoie les IDs des participants (cibles des emits). */
+async function participantIdsOrThrow(userId: string, conversationId: string): Promise<string[]> {
+  const rows = await prisma.conversationParticipant.findMany({
+    where: { conversationId },
+    select: { userId: true },
+  });
+  if (rows.length === 0 || !rows.some((r) => r.userId === userId)) {
+    throw new AppError(404, 'Conversation introuvable');
+  }
+  return rows.map((r) => r.userId);
+}
+
 // ── Lecture ──────────────────────────────────────────────────────────────
 
+interface ConvListRow {
+  id: string;
+  lastMessageAt: Date;
+  dispoPostId: string | null;
+  quickMatchId: string | null;
+  other_id: string | null;
+  other_name: string | null;
+  other_initials: string | null;
+  other_avatar: string | null;
+  other_level: number | null;
+  last_body: string | null;
+  last_created: Date | null;
+  last_sender: string | null;
+  unread: number;
+  dp_host: string | null;
+  dp_when: Date | null;
+  dp_court: string | null;
+  dp_type: string | null;
+  qm_host: string | null;
+  qm_guest: string | null;
+  qm_when: Date | null;
+  qm_court: string | null;
+  qm_type: string | null;
+}
+
+/**
+ * Liste des conversations de l'utilisateur — **une seule requête** (perf : chaque
+ * aller-retour Render↔Neon coûte ~100-200 ms, on ne peut pas se permettre les
+ * 5 requêtes qu'imposerait un `include` Prisma imbriqué).
+ */
 export async function listConversations(userId: string) {
-  const convs = await prisma.conversation.findMany({
-    where: { participants: { some: { userId } } },
-    orderBy: { lastMessageAt: 'desc' },
-    include: {
-      ...CONTEXT_INCLUDE,
-      participants: { select: { userId: true, user: { select: PLAYER_SELECT } } },
-      messages: { orderBy: { createdAt: 'desc' }, take: 1 },
-    },
-  });
-
-  const unreadRows = await prisma.$queryRaw<{ conversationId: string; count: number }[]>`
-    SELECT m."conversationId", COUNT(*)::int AS count
-    FROM "Message" m
-    JOIN "ConversationParticipant" p
-      ON p."conversationId" = m."conversationId" AND p."userId" = ${userId}
-    WHERE m."senderId" <> ${userId} AND m."createdAt" > p."lastReadAt"
-    GROUP BY m."conversationId"
+  const rows = await prisma.$queryRaw<ConvListRow[]>`
+    SELECT
+      c.id, c."lastMessageAt", c."dispoPostId", c."quickMatchId",
+      ou.id            AS other_id,
+      ou.name          AS other_name,
+      ou.initials      AS other_initials,
+      ou."avatarUrl"   AS other_avatar,
+      ou.level         AS other_level,
+      lm.body          AS last_body,
+      lm."createdAt"   AS last_created,
+      lm."senderId"    AS last_sender,
+      COALESCE(uc.cnt, 0)::int AS unread,
+      dp."userId"      AS dp_host,
+      dp."when"        AS dp_when,
+      dp.court         AS dp_court,
+      dp.type          AS dp_type,
+      qm."challengerId" AS qm_host,
+      qm."challengedId" AS qm_guest,
+      qm."when"        AS qm_when,
+      qm.court         AS qm_court,
+      qm.type          AS qm_type
+    FROM "Conversation" c
+    JOIN "ConversationParticipant" me
+      ON me."conversationId" = c.id AND me."userId" = ${userId}
+    LEFT JOIN LATERAL (
+      SELECT op."userId"
+      FROM "ConversationParticipant" op
+      WHERE op."conversationId" = c.id AND op."userId" <> ${userId}
+      LIMIT 1
+    ) other ON true
+    LEFT JOIN "User" ou ON ou.id = other."userId"
+    LEFT JOIN LATERAL (
+      SELECT m.body, m."createdAt", m."senderId"
+      FROM "Message" m
+      WHERE m."conversationId" = c.id
+      ORDER BY m."createdAt" DESC
+      LIMIT 1
+    ) lm ON true
+    LEFT JOIN LATERAL (
+      SELECT COUNT(*) AS cnt
+      FROM "Message" m
+      WHERE m."conversationId" = c.id
+        AND m."senderId" <> ${userId}
+        AND m."createdAt" > me."lastReadAt"
+    ) uc ON true
+    LEFT JOIN "DispoPost"  dp ON dp.id = c."dispoPostId"
+    LEFT JOIN "QuickMatch" qm ON qm.id = c."quickMatchId"
+    ORDER BY c."lastMessageAt" DESC
   `;
-  const unreadBy = Object.fromEntries(unreadRows.map((r) => [r.conversationId, r.count]));
 
-  return convs.map((c) => {
-    const other = c.participants.find((p) => p.userId !== userId)?.user ?? null;
-    const last = c.messages[0] ?? null;
+  return rows.map((r) => {
+    let match: MatchContext | null = null;
+    if (r.dispoPostId && r.dp_when) {
+      match = {
+        source: 'dispo', sourceId: r.dispoPostId, when: r.dp_when,
+        court: r.dp_court ?? '', type: r.dp_type ?? '',
+        hostId: r.dp_host ?? '', guestId: r.other_id ?? '',
+      };
+    } else if (r.quickMatchId && r.qm_when) {
+      match = {
+        source: 'quick', sourceId: r.quickMatchId, when: r.qm_when,
+        court: r.qm_court ?? '', type: r.qm_type ?? '',
+        hostId: r.qm_host ?? '', guestId: r.qm_guest ?? '',
+      };
+    }
+
     return {
-      id: c.id,
-      otherUser: other,
-      lastMessage: last
-        ? { body: last.body, createdAt: last.createdAt, senderId: last.senderId }
+      id: r.id,
+      otherUser: r.other_id
+        ? {
+            id: r.other_id,
+            name: r.other_name ?? '',
+            initials: r.other_initials ?? '',
+            avatarUrl: r.other_avatar,
+            level: r.other_level ?? 1,
+          }
         : null,
-      unread: unreadBy[c.id] ?? 0,
-      lastMessageAt: c.lastMessageAt,
-      match: buildContext(c),
+      lastMessage: r.last_created
+        ? { body: r.last_body ?? '', createdAt: r.last_created, senderId: r.last_sender ?? '' }
+        : null,
+      unread: r.unread,
+      lastMessageAt: r.lastMessageAt,
+      match,
     };
   });
 }
@@ -143,22 +204,73 @@ export async function getUnreadTotal(userId: string) {
   return { unread: rows[0]?.count ?? 0 };
 }
 
-export async function getConversation(userId: string, conversationId: string) {
-  await assertParticipant(userId, conversationId);
+interface ConvDetailRow {
+  id: string;
+  dispoPostId: string | null;
+  quickMatchId: string | null;
+  p_user: string;
+  u_id: string;
+  u_name: string;
+  u_initials: string;
+  u_avatar: string | null;
+  u_level: number;
+  dp_host: string | null;
+  dp_when: Date | null;
+  dp_court: string | null;
+  dp_type: string | null;
+  qm_host: string | null;
+  qm_guest: string | null;
+  qm_when: Date | null;
+  qm_court: string | null;
+  qm_type: string | null;
+}
 
-  const c = await prisma.conversation.findUnique({
-    where: { id: conversationId },
-    include: {
-      ...CONTEXT_INCLUDE,
-      participants: { select: { userId: true, user: { select: PLAYER_SELECT } } },
-    },
-  });
-  if (!c) throw new AppError(404, 'Conversation introuvable');
+export async function getConversation(userId: string, conversationId: string) {
+  // Une seule requête : participants (2 lignes) + contexte match.
+  const rows = await prisma.$queryRaw<ConvDetailRow[]>`
+    SELECT c.id, c."dispoPostId", c."quickMatchId",
+      p."userId"     AS p_user,
+      u.id           AS u_id,
+      u.name         AS u_name,
+      u.initials     AS u_initials,
+      u."avatarUrl"  AS u_avatar,
+      u.level        AS u_level,
+      dp."userId"    AS dp_host, dp."when" AS dp_when, dp.court AS dp_court, dp.type AS dp_type,
+      qm."challengerId" AS qm_host, qm."challengedId" AS qm_guest, qm."when" AS qm_when, qm.court AS qm_court, qm.type AS qm_type
+    FROM "Conversation" c
+    JOIN "ConversationParticipant" p ON p."conversationId" = c.id
+    JOIN "User" u ON u.id = p."userId"
+    LEFT JOIN "DispoPost"  dp ON dp.id = c."dispoPostId"
+    LEFT JOIN "QuickMatch" qm ON qm.id = c."quickMatchId"
+    WHERE c.id = ${conversationId}
+  `;
+  if (rows.length === 0 || !rows.some((r) => r.p_user === userId)) {
+    throw new AppError(404, 'Conversation introuvable');
+  }
+
+  const first = rows[0];
+  let match: MatchContext | null = null;
+  if (first.dispoPostId && first.dp_when) {
+    const guestId = rows.find((r) => r.p_user !== first.dp_host)?.p_user ?? '';
+    match = {
+      source: 'dispo', sourceId: first.dispoPostId, when: first.dp_when,
+      court: first.dp_court ?? '', type: first.dp_type ?? '',
+      hostId: first.dp_host ?? '', guestId,
+    };
+  } else if (first.quickMatchId && first.qm_when) {
+    match = {
+      source: 'quick', sourceId: first.quickMatchId, when: first.qm_when,
+      court: first.qm_court ?? '', type: first.qm_type ?? '',
+      hostId: first.qm_host ?? '', guestId: first.qm_guest ?? '',
+    };
+  }
 
   return {
-    id: c.id,
-    participants: c.participants.map((p) => p.user),
-    match: buildContext(c),
+    id: first.id,
+    participants: rows.map((r) => ({
+      id: r.u_id, name: r.u_name, initials: r.u_initials, avatarUrl: r.u_avatar, level: r.u_level,
+    })),
+    match,
   };
 }
 
@@ -180,9 +292,9 @@ export async function listMessages(userId: string, conversationId: string, befor
 // ── Écriture ─────────────────────────────────────────────────────────────
 
 export async function sendMessage(userId: string, conversationId: string, body: string) {
-  await assertParticipant(userId, conversationId);
   const text = body.trim();
   if (!text) throw new AppError(400, 'Message vide');
+  const ids = await participantIdsOrThrow(userId, conversationId);
 
   const now = new Date();
   const [message] = await prisma.$transaction([
@@ -194,19 +306,14 @@ export async function sendMessage(userId: string, conversationId: string, body: 
     }),
   ]);
 
-  const parts = await prisma.conversationParticipant.findMany({
-    where: { conversationId },
-    select: { userId: true },
-  });
-  for (const p of parts) {
-    emitToUser(p.userId, 'message:new', { conversationId, message });
+  for (const id of ids) {
+    emitToUser(id, 'message:new', { conversationId, message });
   }
-
   return message;
 }
 
 export async function markRead(userId: string, conversationId: string) {
-  await assertParticipant(userId, conversationId);
+  const ids = await participantIdsOrThrow(userId, conversationId);
 
   const now = new Date();
   await prisma.$transaction([
@@ -220,14 +327,11 @@ export async function markRead(userId: string, conversationId: string) {
     }),
   ]);
 
-  const others = await prisma.conversationParticipant.findMany({
-    where: { conversationId, userId: { not: userId } },
-    select: { userId: true },
-  });
-  for (const o of others) {
-    emitToUser(o.userId, 'message:read', { conversationId, readerId: userId, readAt: now });
+  for (const id of ids) {
+    if (id !== userId) {
+      emitToUser(id, 'message:read', { conversationId, readerId: userId, readAt: now });
+    }
   }
-
   return { ok: true };
 }
 
