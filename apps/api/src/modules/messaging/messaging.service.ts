@@ -1,6 +1,43 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
-import { emitToUser } from '../../lib/socket.js';
+import { emitToUser, isUserInConversation } from '../../lib/socket.js';
+import { sendPushToUser } from '../../lib/webpush.js';
+import { sendMessageReceived } from '../mailer/mailer.service.js';
+
+// Anti-spam e-mail : au plus 1 e-mail « nouveau message » par (conversation, destinataire) / 15 min.
+const emailCooldown = new Map<string, number>();
+const EMAIL_COOLDOWN_MS = 15 * 60 * 1000;
+
+/**
+ * Prévient le destinataire d'un message qu'il n'a pas vu passer :
+ *  - push web s'il a un abonnement ;
+ *  - sinon e-mail (débounce) s'il est hors ligne.
+ */
+async function notifyRecipient(recipientId: string, conversationId: string, senderName: string, preview: string) {
+  if (isUserInConversation(recipientId, conversationId)) return; // il regarde la conv → rien
+
+  const url = `/messages/${conversationId}`;
+  sendPushToUser(recipientId, {
+    title: senderName,
+    body: preview.length > 120 ? `${preview.slice(0, 117)}…` : preview,
+    url,
+    tag: `conversation:${conversationId}`,
+  }).catch(() => {});
+
+  // Repli e-mail : seulement si aucun abonnement push ET hors ligne.
+  const key = `${conversationId}:${recipientId}`;
+  if ((emailCooldown.get(key) ?? 0) > Date.now() - EMAIL_COOLDOWN_MS) return;
+
+  const [subCount, user] = await Promise.all([
+    prisma.pushSubscription.count({ where: { userId: recipientId } }),
+    prisma.user.findUnique({ where: { id: recipientId }, select: { email: true, name: true, online: true } }),
+  ]);
+  if (subCount > 0 || !user?.email || user.online) return;
+
+  emailCooldown.set(key, Date.now());
+  const appUrl = `${process.env.CORS_ORIGIN ?? ''}${url}`;
+  sendMessageReceived({ to: user.email, recipientName: user.name, senderName, appUrl });
+}
 
 // ── Contexte « rappel du match » ───────────────────────────────────────────
 
@@ -297,17 +334,22 @@ export async function sendMessage(userId: string, conversationId: string, body: 
   const ids = await participantIdsOrThrow(userId, conversationId);
 
   const now = new Date();
-  const [message] = await prisma.$transaction([
+  const [message, , , sender] = await prisma.$transaction([
     prisma.message.create({ data: { conversationId, senderId: userId, body: text } }),
     prisma.conversation.update({ where: { id: conversationId }, data: { lastMessageAt: now } }),
     prisma.conversationParticipant.update({
       where: { conversationId_userId: { conversationId, userId } },
       data: { lastReadAt: now },
     }),
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true } }),
   ]);
 
+  const senderName = sender?.name ?? 'Un joueur';
   for (const id of ids) {
     emitToUser(id, 'message:new', { conversationId, message });
+    if (id !== userId) {
+      notifyRecipient(id, conversationId, senderName, text).catch(() => {});
+    }
   }
   return message;
 }

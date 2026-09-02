@@ -7,6 +7,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MessagesService } from '../../core/services/messages.service';
 import { CourtMapService } from '../../core/services/court-map.service';
+import { SocketService } from '../../core/services/socket.service';
 import { AuthStore } from '../../core/stores/auth.store';
 import type {
   ChatMessage, ConversationDetail, ConvParticipant,
@@ -199,6 +200,7 @@ export class ConversationComponent implements OnDestroy {
   private readonly route     = inject(ActivatedRoute);
   private readonly svc       = inject(MessagesService);
   private readonly courtMap  = inject(CourtMapService);
+  private readonly socket    = inject(SocketService);
   private readonly store     = inject(AuthStore);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -249,6 +251,7 @@ export class ConversationComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.svc.activeId.set(null);
+    this.socket.emit('conversation:leave');
   }
 
   typeLabel(t: string): string { return TYPE_LABELS[t] ?? t; }
@@ -263,6 +266,7 @@ export class ConversationComponent implements OnDestroy {
   private load(id: string): void {
     this.convId.set(id);
     this.svc.activeId.set(id);
+    this.socket.emit('conversation:enter', id);
     this.loading.set(true);
     this.detail.set(null);
     this.messages.set([]);

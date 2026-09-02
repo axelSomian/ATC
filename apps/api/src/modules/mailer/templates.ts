@@ -268,3 +268,24 @@ export function passwordResetTemplate(opts: {
     `),
   };
 }
+
+export function messageReceivedTemplate(opts: {
+  recipientName: string;
+  senderName: string;
+  appUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: subj(`Nouveau message de ${opts.senderName}`),
+    html: base('Nouveau message', `
+      ${h1('Vous avez un nouveau message')}
+      ${p(`Bonjour ${strong(esc(opts.recipientName))}, ${strong(esc(opts.senderName))} vous a écrit pour organiser votre match.`)}
+      <div style="margin:28px 0;text-align:center">
+        <a href="${esc(opts.appUrl)}"
+           style="display:inline-block;padding:14px 32px;background:${ACCENT};color:#fff;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:-0.01em">
+          Ouvrir la conversation
+        </a>
+      </div>
+      ${p(`Activez les notifications dans l'application pour être prévenu directement la prochaine fois.`)}
+    `),
+  };
+}

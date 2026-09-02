@@ -9,7 +9,8 @@ import rateLimit from 'express-rate-limit';
 import passport from 'passport';
 import { errorHandler } from './middleware/error.js';
 import './middleware/passport.js';
-import { setIo, handlePresence, resetPresence } from './lib/socket.js';
+import { setIo, handlePresence, resetPresence, setSocketConversation } from './lib/socket.js';
+import './lib/webpush.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import membersRoutes from './modules/members/members.routes.js';
 import disposRoutes from './modules/dispos/dispos.routes.js';
@@ -19,6 +20,7 @@ import quickMatchesRoutes from './modules/quick-matches/quick-matches.routes.js'
 import referenceRoutes from './modules/reference/reference.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
 import messagingRoutes from './modules/messaging/messaging.routes.js';
+import pushRoutes from './modules/push/push.routes.js';
 
 const app = express();
 // Derrière le proxy Render (et Vercel) : faire confiance au 1er hop pour
@@ -52,6 +54,12 @@ io.on('connection', (socket) => {
   const userId = socket.data.userId as string;
   socket.join(`user:${userId}`);
   handlePresence(io, socket);
+
+  // Conversation actuellement ouverte à l'écran (règle « push si hors conversation »).
+  socket.on('conversation:enter', (id: unknown) => {
+    setSocketConversation(socket.id, typeof id === 'string' ? id : null);
+  });
+  socket.on('conversation:leave', () => setSocketConversation(socket.id, null));
 });
 
 app.use(helmet());
@@ -94,6 +102,7 @@ app.use('/api/v1/matches', matchesRoutes);
 app.use('/api/v1/notifications', notificationsRoutes);
 app.use('/api/v1/quick-matches', quickMatchesRoutes);
 app.use('/api/v1/conversations', messagingRoutes);
+app.use('/api/v1/push', pushRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
 app.use(errorHandler);

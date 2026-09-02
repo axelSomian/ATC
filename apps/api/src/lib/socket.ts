@@ -15,6 +15,25 @@ export function emitToAll(event: string, data: unknown): void {
   _io?.emit(event, data);
 }
 
+// ── Conversation ouverte à l'écran (pour la règle « push si pas dans la conv ») ──
+
+const socketConversation = new Map<string, string>(); // socket.id -> conversationId
+
+export function setSocketConversation(socketId: string, conversationId: string | null): void {
+  if (conversationId) socketConversation.set(socketId, conversationId);
+  else socketConversation.delete(socketId);
+}
+
+/** true si l'utilisateur a un onglet ouvert ET focalisé sur cette conversation. */
+export function isUserInConversation(userId: string, conversationId: string): boolean {
+  if (!_io) return false;
+  for (const [, s] of _io.sockets.sockets) {
+    const uid = (s.data as { userId?: string }).userId;
+    if (uid === userId && socketConversation.get(s.id) === conversationId) return true;
+  }
+  return false;
+}
+
 // ── Présence (statut en ligne) ─────────────────────────────────────────────
 
 function socketCountForUser(io: Server, userId: string): number {
@@ -57,6 +76,7 @@ export function handlePresence(io: Server, socket: Socket): void {
   }
 
   socket.on('disconnect', () => {
+    setSocketConversation(socket.id, null);
     if (socketCountForUser(io, userId) === 0) {
       prisma.user.update({ where: { id: userId }, data: { online: false } }).catch(() => {});
       io.emit('member:offline', { userId });

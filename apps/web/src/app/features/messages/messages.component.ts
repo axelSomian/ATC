@@ -1,7 +1,8 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MessagesService } from '../../core/services/messages.service';
+import { PushService } from '../../core/services/push.service';
 import { AuthStore } from '../../core/stores/auth.store';
 
 @Component({
@@ -14,6 +15,18 @@ import { AuthStore } from '../../core/stores/auth.store';
         <h1>Messages</h1>
         <p class="text-muted">Organisez vos matchs avec vos adversaires.</p>
       </header>
+
+      @if (push.state() === 'default') {
+        <div class="push-banner">
+          <div>
+            <strong>Activer les notifications</strong>
+            <span>Soyez prévenu quand un adversaire vous écrit, même l'app fermée.</span>
+          </div>
+          <button class="btn btn-primary btn-sm" (click)="enablePush()" [disabled]="pushBusy()">
+            {{ pushBusy() ? '…' : 'Activer' }}
+          </button>
+        </div>
+      }
 
       @if (conversations().length === 0) {
         <div class="card empty-state">
@@ -77,6 +90,19 @@ import { AuthStore } from '../../core/stores/auth.store';
     .msg-head h1 { font-size: var(--text-2xl); font-weight: 700; margin: 0 0 var(--space-1); }
     .msg-head p { font-size: var(--text-sm); margin: 0; }
 
+    .push-banner {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      background: var(--color-accent-alpha);
+      border: 1px solid color-mix(in srgb, var(--color-accent) 25%, transparent);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-4);
+    }
+    .push-banner div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .push-banner strong { font-size: var(--text-sm); }
+    .push-banner span { font-size: var(--text-xs); color: var(--color-muted); }
+    .push-banner .btn { flex-shrink: 0; }
+
     .empty-state { text-align: center; padding: var(--space-10) var(--space-5); }
     .empty-icon { color: var(--color-accent); margin-bottom: var(--space-3); display: flex; justify-content: center; }
     .empty-title { font-weight: 600; margin: 0 0 var(--space-1); }
@@ -123,11 +149,18 @@ import { AuthStore } from '../../core/stores/auth.store';
 export class MessagesComponent {
   private readonly svc   = inject(MessagesService);
   private readonly store = inject(AuthStore);
+  readonly push = inject(PushService);
 
   readonly conversations = this.svc.conversations;
   readonly myId = computed(() => this.store.user()?.id ?? '');
+  readonly pushBusy = signal(false);
 
   constructor() {
     this.svc.refresh();
+  }
+
+  async enablePush(): Promise<void> {
+    this.pushBusy.set(true);
+    try { await this.push.enable(); } finally { this.pushBusy.set(false); }
   }
 }

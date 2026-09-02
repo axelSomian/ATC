@@ -61,3 +61,12 @@ services:
         sync: false
       - key: MAIL_FROM_NAME
         value: Abidjan Tennis Community
+      # Notifications push (Web Push / VAPID) — messagerie.
+      # Générer une paire : `npx web-push generate-vapid-keys`
+      # VAPID_PUBLIC_KEY doit être identique côté front (récupérée via GET /api/v1/push/vapid-public-key).
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:noreply@f6c89e91f7ad8528.maileroo.org

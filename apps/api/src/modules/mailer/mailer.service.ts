@@ -8,6 +8,7 @@ import {
   scoreConfirmedTemplate,
   scoreDisputedTemplate,
   passwordResetTemplate,
+  messageReceivedTemplate,
 } from './templates.js';
 
 function fire(to: string, name: string, subject: string, html: string, tag: string): void {
@@ -93,4 +94,14 @@ export function sendScoreDisputed(opts: {
 export function sendPasswordReset(to: string, name: string, resetUrl: string): void {
   const { subject, html } = passwordResetTemplate({ name, resetUrl });
   fire(to, name, subject, html, 'password_reset');
+}
+
+export function sendMessageReceived(opts: {
+  to: string;
+  recipientName: string;
+  senderName: string;
+  appUrl: string;
+}): void {
+  const { subject, html } = messageReceivedTemplate(opts);
+  fire(opts.to, opts.recipientName, subject, html, 'message_received');
 }
