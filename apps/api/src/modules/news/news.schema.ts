@@ -48,6 +48,18 @@ export const adminListQuerySchema = z.object({
   category: z.enum(CATEGORIES).optional(),
 });
 
+export const createFeedSchema = z.object({
+  url: z.string().url().max(500).refine((v) => /^https?:\/\//i.test(v), 'URL http(s) requise'),
+  label: z.string().trim().min(2).max(80),
+  autoPublish: z.boolean().default(false),
+});
+
+export const updateFeedSchema = z.object({
+  label: z.string().trim().min(2).max(80).optional(),
+  autoPublish: z.boolean().optional(),
+  active: z.boolean().optional(),
+});
+
 export type CreatePostDto = z.infer<typeof createPostSchema>;
 export type UpdatePostDto = z.infer<typeof updatePostSchema>;
 export type ListQueryDto = z.infer<typeof listQuerySchema>;

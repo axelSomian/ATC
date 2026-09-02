@@ -1,0 +1,23 @@
+name: Sync RSS Actualité
+
+# Agrège les flux RSS « Infos Tennis » toutes les 6 h.
+# La synchro tourne aussi en fetch-on-read côté API (cache 6 h) ; ce cron
+# garantit la fraîcheur même sans trafic et réveille Render à ces heures.
+
+on:
+  schedule:
+    - cron: '17 */6 * * *' # 00:17, 06:17, 12:17, 18:17 UTC
+  workflow_dispatch: {} # déclenchement manuel possible
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appeler l'endpoint de synchro
+        run: |
+          code=$(curl -sS -o /tmp/out.json -w '%{http_code}' \
+            --max-time 120 --retry 2 --retry-delay 30 \
+            -X POST "https://atc-api-ws9f.onrender.com/api/v1/news/rss/sync" \
+            -H "x-rss-token: ${{ secrets.RSS_SYNC_TOKEN }}")
+          echo "HTTP $code"; cat /tmp/out.json; echo
+          test "$code" = "200"

@@ -5,7 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NewsService } from '../../../core/services/news.service';
 import {
   POST_CATEGORIES, POST_STATUSES,
-  type AdminPost, type AdminPostPayload, type PostCategory, type PostStatus,
+  type AdminPost, type AdminPostPayload, type PostCategory, type PostStatus, type RssFeed,
 } from '../../../core/models/news.model';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -71,6 +71,16 @@ function localToIso(v: string): string | null {
     .np-gallery button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: none; background: var(--color-ink); color: #fff; cursor: pointer; font-size: 12px; line-height: 1; }
     .np-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; padding-top: var(--space-2); border-top: 1px solid var(--color-border-light); }
     .np-actions .spacer { flex: 1; }
+    .np-feed { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+      padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border-light); }
+    .np-feed-main { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 1px; }
+    .np-feed-label { font-size: var(--text-sm); font-weight: 600; }
+    .np-feed-url { font-size: var(--text-xs); color: var(--color-muted); word-break: break-all; }
+    .np-feed-sync { font-size: 10px; color: var(--color-muted); }
+    .np-feed-err { font-size: 10px; color: var(--color-error); }
+    .np-feed-add { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; margin-top: var(--space-3); }
+    .np-feed-add input { flex: 1; min-width: 140px; padding: 7px 10px; border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); font-size: var(--text-sm); font-family: var(--font-body); background: var(--color-surface); }
   `],
   template: `
     <div class="panel">
@@ -114,6 +124,42 @@ function localToIso(v: string): string | null {
             }
           </div>
         }
+
+        <!-- ── Flux RSS « Infos Tennis » ── -->
+        <div class="admin-card card" style="margin-top:var(--space-4)">
+          <div class="admin-card-head">
+            <strong>Flux RSS — Infos Tennis</strong>
+            <button class="btn btn-outline btn-sm" [disabled]="syncing()" (click)="syncFeeds()">
+              {{ syncing() ? 'Synchro…' : 'Synchroniser maintenant' }}
+            </button>
+          </div>
+          @if (syncMsg()) { <p class="form-msg" [class.err]="!syncOk()">{{ syncMsg() }}</p> }
+
+          @for (f of feeds(); track f.id) {
+            <div class="np-feed">
+              <div class="np-feed-main">
+                <span class="np-feed-label">{{ f.label }}</span>
+                <span class="np-feed-url">{{ f.url }}</span>
+                @if (f.lastError) { <span class="np-feed-err">⚠ {{ f.lastError }}</span> }
+                @else if (f.lastSyncAt) { <span class="np-feed-sync">synchro {{ f.lastSyncAt | date: 'd MMM, HH:mm' }}</span> }
+              </div>
+              <label class="np-check"><input type="checkbox" [checked]="f.autoPublish" (change)="toggleFeed(f, 'autoPublish', $any($event.target).checked)" /> auto-publier</label>
+              <label class="np-check"><input type="checkbox" [checked]="f.active" (change)="toggleFeed(f, 'active', $any($event.target).checked)" /> actif</label>
+              <button class="btn btn-ghost btn-sm" style="color:var(--color-error)" (click)="removeFeed(f)">Suppr.</button>
+            </div>
+          }
+
+          <div class="np-feed-add">
+            <input type="text" [(ngModel)]="newFeed.label" placeholder="Nom (ex : Tennis Majors)" />
+            <input type="text" [(ngModel)]="newFeed.url" placeholder="https://…/rss" />
+            <label class="np-check"><input type="checkbox" [(ngModel)]="newFeed.autoPublish" /> auto-publier</label>
+            <button class="btn btn-primary btn-sm" [disabled]="feedBusy()" (click)="addFeed()">Ajouter</button>
+          </div>
+          <p class="panel-hint" style="margin-top:var(--space-2)">
+            Les articles importés arrivent en <strong>brouillon</strong> (à valider ici) sauf si « auto-publier » est coché.
+            Seuls le titre, un extrait et le lien vers la source sont repris.
+          </p>
+        </div>
       } @else {
         <div class="admin-card card np-editor">
           <div class="admin-card-head">
@@ -274,6 +320,14 @@ export class NewsPanelComponent implements OnInit {
 
   draft: AdminPostPayload = emptyDraft();
 
+  // ── Flux RSS ──
+  readonly feeds = signal<RssFeed[]>([]);
+  readonly syncing = signal(false);
+  readonly feedBusy = signal(false);
+  readonly syncMsg = signal('');
+  readonly syncOk = signal(false);
+  newFeed = { url: '', label: '', autoPublish: false };
+
   readonly visible = computed(() => {
     const f = this.statusFilter();
     return f ? this.posts().filter((p) => p.status === f) : this.posts();
@@ -286,6 +340,67 @@ export class NewsPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.reload();
+    this.loadFeeds();
+  }
+
+  private loadFeeds(): void {
+    this.svc.listFeeds().subscribe({ next: (f) => this.feeds.set(f) });
+  }
+
+  addFeed(): void {
+    const url = this.newFeed.url.trim();
+    const label = this.newFeed.label.trim();
+    if (!/^https?:\/\//i.test(url) || label.length < 2) {
+      this.syncOk.set(false);
+      this.syncMsg.set('URL (http/https) et nom requis.');
+      return;
+    }
+    this.feedBusy.set(true);
+    this.svc.addFeed({ url, label, autoPublish: this.newFeed.autoPublish }).subscribe({
+      next: (f) => {
+        this.feeds.update((l) => [...l, f]);
+        this.newFeed = { url: '', label: '', autoPublish: false };
+        this.feedBusy.set(false);
+        this.syncMsg.set('');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.feedBusy.set(false);
+        this.syncOk.set(false);
+        this.syncMsg.set(err.error?.error ?? 'Ajout impossible.');
+      },
+    });
+  }
+
+  toggleFeed(f: RssFeed, key: 'autoPublish' | 'active', value: boolean): void {
+    this.svc.updateFeed(f.id, { [key]: value }).subscribe({
+      next: (upd) => this.feeds.update((l) => l.map((x) => (x.id === f.id ? upd : x))),
+    });
+  }
+
+  removeFeed(f: RssFeed): void {
+    if (!confirm(`Retirer le flux « ${f.label} » ? (les articles déjà importés restent)`)) return;
+    this.svc.removeFeed(f.id).subscribe({
+      next: () => this.feeds.update((l) => l.filter((x) => x.id !== f.id)),
+    });
+  }
+
+  syncFeeds(): void {
+    this.syncing.set(true);
+    this.syncMsg.set('');
+    this.svc.syncFeeds().subscribe({
+      next: (r) => {
+        this.syncing.set(false);
+        this.syncOk.set(true);
+        this.syncMsg.set(`${r.imported} article(s) importé(s) depuis ${r.feeds} flux.`);
+        this.loadFeeds();
+        this.reload();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.syncing.set(false);
+        this.syncOk.set(false);
+        this.syncMsg.set(err.error?.error ?? 'Synchro impossible.');
+      },
+    });
   }
 
   /** Aperçu grossier côté client (le rendu final assaini vient de l'API). */

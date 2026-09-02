@@ -74,6 +74,17 @@ export interface AdminPost {
   updatedAt: string;
 }
 
+export interface RssFeed {
+  id: string;
+  url: string;
+  label: string;
+  autoPublish: boolean;
+  active: boolean;
+  lastSyncAt: string | null;
+  lastError: string | null;
+  createdAt: string;
+}
+
 export interface AdminPostPayload {
   category: PostCategory;
   status: PostStatus;

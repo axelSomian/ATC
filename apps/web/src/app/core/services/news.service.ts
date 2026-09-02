@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type {
-  AdminPost, AdminPostPayload, PostCard, PostCategory, PostDetail, PostFeed, PostStatus,
+  AdminPost, AdminPostPayload, PostCard, PostCategory, PostDetail, PostFeed, PostStatus, RssFeed,
 } from '../models/news.model';
 
 const PUB = '/api/v1/news';
@@ -43,4 +43,15 @@ export class NewsService {
     fd.append('image', file);
     return this.http.post<{ url: string }>(`${ADM}/images?kind=${kind}`, fd);
   }
+
+  // ── Flux RSS ──
+  listFeeds() { return this.http.get<RssFeed[]>(`${ADM}/feeds`); }
+  addFeed(payload: { url: string; label: string; autoPublish: boolean }) {
+    return this.http.post<RssFeed>(`${ADM}/feeds`, payload);
+  }
+  updateFeed(id: string, payload: Partial<{ label: string; autoPublish: boolean; active: boolean }>) {
+    return this.http.patch<RssFeed>(`${ADM}/feeds/${id}`, payload);
+  }
+  removeFeed(id: string) { return this.http.delete<void>(`${ADM}/feeds/${id}`); }
+  syncFeeds() { return this.http.post<{ feeds: number; imported: number }>(`${ADM}/feeds/sync`, {}); }
 }

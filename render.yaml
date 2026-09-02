@@ -70,3 +70,7 @@ services:
         sync: false
       - key: VAPID_SUBJECT
         value: mailto:noreply@f6c89e91f7ad8528.maileroo.org
+      # Jeton partagé pour /api/v1/news/rss/sync (cron GitHub Actions).
+      # Même valeur que le secret RSS_SYNC_TOKEN du dépôt GitHub.
+      - key: RSS_SYNC_TOKEN
+        sync: false

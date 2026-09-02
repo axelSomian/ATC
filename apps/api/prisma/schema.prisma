@@ -260,6 +260,8 @@ model Post {
   featuredOrder   Int?      // ordre dans le carrousel « à la une »
   promoCode       String?   // partenariats
   source          String?   // infos_tennis : nom de la source (RSS ou saisi)
+  sourceUrl       String?   // infos_tennis : lien vers l'article d'origine
+  externalId      String?   @unique // guid RSS — dédupe des imports
   notifyOnPublish Boolean   @default(false)
   notifiedAt      DateTime? // anti double-envoi du push
   createdAt       DateTime  @default(now())
@@ -269,4 +271,17 @@ model Post {
   @@index([category, status, publishedAt])
   @@index([featured, featuredOrder])
   @@index([status, startsAt])
+}
+
+// Flux RSS agrégés dans la catégorie « Infos Tennis ». Gérés par un admin.
+// Synchro : fetch-on-read (cache 6 h) + cron GitHub Actions.
+model RssFeed {
+  id          String    @id @default(cuid())
+  url         String    @unique
+  label       String
+  autoPublish Boolean   @default(false) // sinon les articles arrivent en brouillon
+  active      Boolean   @default(true)
+  lastSyncAt  DateTime?
+  lastError   String?
+  createdAt   DateTime  @default(now())
 }
