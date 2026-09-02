@@ -4,13 +4,14 @@ import { ClubsPanelComponent } from './panels/clubs-panel.component';
 import { LevelsPanelComponent } from './panels/levels-panel.component';
 import { MembersPanelComponent } from './panels/members-panel.component';
 import { PushPanelComponent } from './panels/push-panel.component';
+import { NewsPanelComponent } from './panels/news-panel.component';
 
-type Tab = 'disputes' | 'clubs' | 'levels' | 'members' | 'push';
+type Tab = 'disputes' | 'clubs' | 'levels' | 'members' | 'push' | 'news';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [DisputesPanelComponent, ClubsPanelComponent, LevelsPanelComponent, MembersPanelComponent, PushPanelComponent],
+  imports: [DisputesPanelComponent, ClubsPanelComponent, LevelsPanelComponent, MembersPanelComponent, PushPanelComponent, NewsPanelComponent],
   template: `
     <div class="admin-page">
       <header class="admin-header">
@@ -24,6 +25,7 @@ type Tab = 'disputes' | 'clubs' | 'levels' | 'members' | 'push';
         <button class="tab-btn" [class.active]="tab() === 'levels'" (click)="tab.set('levels')">Niveaux</button>
         <button class="tab-btn" [class.active]="tab() === 'members'" (click)="tab.set('members')">Membres</button>
         <button class="tab-btn" [class.active]="tab() === 'push'" (click)="tab.set('push')">Notifications</button>
+        <button class="tab-btn" [class.active]="tab() === 'news'" (click)="tab.set('news')">Actualité</button>
       </nav>
 
       @switch (tab()) {
@@ -32,6 +34,7 @@ type Tab = 'disputes' | 'clubs' | 'levels' | 'members' | 'push';
         @case ('levels') { <app-levels-panel /> }
         @case ('members') { <app-members-panel /> }
         @case ('push') { <app-push-panel /> }
+        @case ('news') { <app-news-panel /> }
       }
     </div>
   `,

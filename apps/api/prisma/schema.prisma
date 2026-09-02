@@ -235,3 +235,38 @@ model PushSubscription {
 
   @@index([userId])
 }
+
+// Publications de la rubrique Actualité — éditées par un admin.
+// Un seul modèle couvre tournois, événements, partenariats, infos tennis et news ATC.
+// Visibilité calculée à la lecture (pas de tâche planifiée) :
+//   status = 'published'  OU  (status = 'scheduled' ET publishedAt <= now())
+model Post {
+  id              String    @id @default(cuid())
+  category        String    // 'tournoi' | 'evenement' | 'partenariat' | 'infos_tennis' | 'atc'
+  status          String    @default("draft") // 'draft' | 'scheduled' | 'published' | 'archived'
+  title           String
+  slug            String    @unique
+  summary         String
+  body            String    // markdown
+  coverImageUrl   String?
+  gallery         String[]  @default([]) // URLs Cloudinary
+  publishedAt     DateTime? // date de publication effective ou programmée
+  startsAt        DateTime? // événements : début
+  endsAt          DateTime? // événements : fin
+  location        String?
+  ctaLabel        String?
+  ctaUrl          String?   // https://… ou chemin interne (/matchs…)
+  featured        Boolean   @default(false)
+  featuredOrder   Int?      // ordre dans le carrousel « à la une »
+  promoCode       String?   // partenariats
+  source          String?   // infos_tennis : nom de la source (RSS ou saisi)
+  notifyOnPublish Boolean   @default(false)
+  notifiedAt      DateTime? // anti double-envoi du push
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([category, status, publishedAt])
+  @@index([featured, featuredOrder])
+  @@index([status, startsAt])
+}
