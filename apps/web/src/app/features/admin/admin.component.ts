@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { DisputesPanelComponent } from './panels/disputes-panel.component';
 import { ClubsPanelComponent } from './panels/clubs-panel.component';
 import { LevelsPanelComponent } from './panels/levels-panel.component';
@@ -42,4 +43,10 @@ type Tab = 'disputes' | 'clubs' | 'levels' | 'members' | 'push' | 'news';
 })
 export class AdminComponent {
   readonly tab = signal<Tab>('disputes');
+
+  constructor() {
+    const t = inject(ActivatedRoute).snapshot.queryParamMap.get('tab');
+    const valid: Tab[] = ['disputes', 'clubs', 'levels', 'members', 'push', 'news'];
+    if (t && (valid as string[]).includes(t)) this.tab.set(t as Tab);
+  }
 }
