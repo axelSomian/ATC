@@ -208,6 +208,7 @@
 | Onglet **Clubs** — CRUD | ✅ Terminé | create / update / delete (delete bloqué si des membres y sont rattachés → 409, désactiver plutôt) |
 | Onglet **Niveaux** — édition code/nom/profil/jeu | ✅ Terminé | `PATCH /admin/levels/:level` |
 | Onglet **Membres** — promouvoir / rétrograder admin | ✅ Terminé | `PATCH /admin/members/:id/role`, auto-rétrogradation interdite |
+| Onglet **Notifications** — push à tous les membres | ✅ Terminé (2026-09-02) | `GET /admin/push/stats` (nb appareils / membres), `POST /admin/push/broadcast` (titre 80, message 300, page cible). `sendBroadcast` par lots de 50, purge des abonnements morts |
 | Lien « Administration » dans la sidebar | ✅ Terminé | Visible uniquement si `isAdmin()` |
 
 **Admin actuel** : `guyaxelsomian@gmail.com` (Axel Somian).
