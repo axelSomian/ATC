@@ -55,8 +55,10 @@ self.addEventListener('notificationclick', (event) => {
     self.clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
+        // Fenêtre déjà ouverte → on la focalise et on la navigue vers la cible.
         for (const client of clientList) {
-          if (new URL(client.url).pathname === target && 'focus' in client) {
+          if ('focus' in client) {
+            if ('navigate' in client) client.navigate(target).catch(() => {});
             return client.focus();
           }
         }
