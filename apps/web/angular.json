@@ -28,6 +28,9 @@
               "src/favicon.ico",
               "src/favicon.svg",
               "src/apple-touch-icon.png",
+              "src/pwa-icon.svg",
+              "src/manifest.webmanifest",
+              "src/sw.js",
               "src/assets"
             ],
             "styles": [
@@ -102,6 +105,9 @@
               "src/favicon.ico",
               "src/favicon.svg",
               "src/apple-touch-icon.png",
+              "src/pwa-icon.svg",
+              "src/manifest.webmanifest",
+              "src/sw.js",
               "src/assets"
             ],
             "styles": [

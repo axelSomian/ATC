@@ -1,0 +1,19 @@
+{
+  "name": "Abidjan Tennis Community",
+  "short_name": "ATC",
+  "description": "La communauté tennis d'Abidjan : membres, annonces de match et organisation de rencontres.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1EBDF",
+  "theme_color": "#1F5A45",
+  "categories": ["sports", "social"],
+  "icons": [
+    { "src": "favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "pwa-icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "maskable" },
+    { "src": "apple-touch-icon.png", "type": "image/png", "sizes": "180x180", "purpose": "any" }
+  ]
+}

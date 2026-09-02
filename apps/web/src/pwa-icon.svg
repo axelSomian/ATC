@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Icône maskable : fond pleine zone (ATC Green), motif dans la zone sûre (80 %). -->
+  <rect width="512" height="512" fill="#1F5A45"/>
+  <circle cx="256" cy="256" r="176" fill="#F1EBDF"/>
+  <path d="M96 108a220 220 0 0 1 0 296" fill="none" stroke="#163F32" stroke-width="14" stroke-linecap="round"/>
+  <path d="M416 108a220 220 0 0 0 0 296" fill="none" stroke="#163F32" stroke-width="14" stroke-linecap="round"/>
+</svg>
