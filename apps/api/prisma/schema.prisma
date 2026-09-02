@@ -36,13 +36,15 @@ model User {
   ratingDelta     Int      @default(0)
   bestRanking     Int?
 
-  club                     Club?          @relation(fields: [clubId], references: [id])
-  matchesAsHost            Match[]        @relation("host")
-  matchesAsGuest           Match[]        @relation("guest")
+  club                     Club?                     @relation(fields: [clubId], references: [id])
+  matchesAsHost            Match[]                   @relation("host")
+  matchesAsGuest           Match[]                   @relation("guest")
   dispos                   DispoPost[]
   notifications            Notification[]
-  quickMatchesAsChallenger QuickMatch[]   @relation("quickMatchChallenger")
-  quickMatchesAsChallenged QuickMatch[]   @relation("quickMatchChallenged")
+  quickMatchesAsChallenger QuickMatch[]              @relation("quickMatchChallenger")
+  quickMatchesAsChallenged QuickMatch[]              @relation("quickMatchChallenged")
+  conversations            ConversationParticipant[]
+  messagesSent             Message[]
 
   @@index([rating, ratingGames])
   @@index([level, online])
@@ -101,6 +103,7 @@ model DispoPost {
   user      User           @relation(fields: [userId], references: [id])
   requests  MatchRequest[]
   match     Match?
+  conversation Conversation?
 
   @@index([userId])
   @@index([when, type])
@@ -130,6 +133,7 @@ model QuickMatch {
   challenger   User     @relation("quickMatchChallenger", fields: [challengerId], references: [id])
   challenged   User     @relation("quickMatchChallenged", fields: [challengedId], references: [id])
   match        Match?
+  conversation Conversation?
 
   @@index([challengerId, status])
   @@index([challengedId, status])
@@ -170,4 +174,49 @@ model Notification {
   user      User      @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt])
+}
+
+// ── Messagerie 1-to-1 entre joueurs (Sprint 8, Lot 1) ───────────────────────
+// Une conversation est créée automatiquement à l'acceptation d'une proposition
+// de match. Elle est rattachée à l'entité d'appariement (DispoPost OU QuickMatch),
+// en miroir du modèle Match — pas au modèle Match, qui n'existe qu'au score.
+model Conversation {
+  id            String   @id @default(cuid())
+  dispoPostId   String?  @unique
+  quickMatchId  String?  @unique
+  createdAt     DateTime @default(now())
+  lastMessageAt DateTime @default(now()) // tri de la liste des conversations
+
+  dispoPost    DispoPost?                @relation(fields: [dispoPostId], references: [id])
+  quickMatch   QuickMatch?               @relation(fields: [quickMatchId], references: [id])
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([lastMessageAt])
+}
+
+model ConversationParticipant {
+  conversationId String
+  userId         String
+  lastReadAt     DateTime @default(now()) // base du calcul des non-lus
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String // borné 1..2000 par Zod
+  createdAt      DateTime  @default(now())
+  readAt         DateTime? // 1-to-1 : posé quand le destinataire ouvre la conversation
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }

@@ -7,6 +7,16 @@
   @if (user()) {
     <div class="topbar-right">
 
+      <!-- Messages -->
+      <a routerLink="/messages" class="notif-bell" [class.has-unread]="messages.unreadTotal() > 0" aria-label="Messages">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        @if (messages.unreadTotal() > 0) {
+          <span class="notif-badge">{{ messages.unreadTotal() > 9 ? '9+' : messages.unreadTotal() }}</span>
+        }
+      </a>
+
       <!-- Cloche -->
       <div class="notif-bell-wrap">
         <button class="notif-bell" (click)="togglePanel()" [class.has-unread]="notifService.unreadCount() > 0" aria-label="Notifications">

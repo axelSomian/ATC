@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { AuthStore } from '../../core/stores/auth.store';
 import { NotificationsService } from '../../core/services/notifications.service';
+import { MessagesService } from '../../core/services/messages.service';
 import type { AppNotification } from '../../core/models/notification.model';
 
 @Component({
@@ -15,6 +16,7 @@ import type { AppNotification } from '../../core/models/notification.model';
 export class TopbarComponent {
   private readonly store   = inject(AuthStore);
   readonly notifService    = inject(NotificationsService);
+  readonly messages        = inject(MessagesService);
   readonly user            = this.store.user;
   readonly open            = signal(false);
 

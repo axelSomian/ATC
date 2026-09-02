@@ -6,6 +6,7 @@ import { MobileNavComponent } from '../mobile-nav/mobile-nav.component';
 import { CourtMapComponent } from '../../shared/court-map/court-map.component';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { PresenceService } from '../../core/services/presence.service';
+import { MessagesService } from '../../core/services/messages.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -29,12 +30,15 @@ import { PresenceService } from '../../core/services/presence.service';
 export class MainLayoutComponent implements OnDestroy {
   private readonly notifService = inject(NotificationsService);
   private readonly presence = inject(PresenceService);
+  private readonly messages = inject(MessagesService);
 
   constructor() {
     this.notifService.start();
     this.presence.start();
+    this.messages.start();
   }
   ngOnDestroy(): void {
+    this.messages.stop();
     this.notifService.stop();
     this.presence.stop();
   }

@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
+import { ensureConversationForQuick } from '../messaging/messaging.service.js';
 import { sendChallengeReceived, sendChallengeAccepted, sendChallengeDeclined } from '../mailer/mailer.service.js';
 import type { CreateQuickMatchDto } from './quick-matches.schema.js';
 
@@ -62,6 +63,11 @@ export async function respond(quickMatchId: string, userId: string, action: 'acc
     where: { id: quickMatchId },
     data: { status: action === 'accept' ? 'accepted' : 'declined' },
   });
+
+  if (action === 'accept') {
+    // Conversation privée entre les deux joueurs du défi.
+    ensureConversationForQuick(quickMatchId, qm.challengerId, qm.challengedId).catch(() => {});
+  }
 
   createNotification(qm.challengerId, action === 'accept' ? 'match_confirmed' : 'match_declined', {
     quickMatchId,

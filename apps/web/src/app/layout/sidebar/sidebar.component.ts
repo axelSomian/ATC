@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthStore } from '../../core/stores/auth.store';
 import { AuthService } from '../../core/services/auth.service';
+import { MessagesService } from '../../core/services/messages.service';
 
 interface NavItem {
   label: string;
@@ -31,6 +32,13 @@ interface NavItem {
             <span>{{ item.label }}</span>
           </a>
         }
+        <a routerLink="/messages" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon" [innerHTML]="messagesIcon"></span>
+          <span>Messages</span>
+          @if (messages.unreadTotal() > 0) {
+            <span class="nav-count">{{ messages.unreadTotal() > 9 ? '9+' : messages.unreadTotal() }}</span>
+          }
+        </a>
         @if (store.isAdmin()) {
           <a routerLink="/admin" routerLinkActive="active" class="nav-item">
             <span class="nav-icon" [innerHTML]="adminIcon"></span>
@@ -61,10 +69,14 @@ interface NavItem {
 export class SidebarComponent {
   private readonly authService = inject(AuthService);
   protected readonly store = inject(AuthStore);
+  readonly messages = inject(MessagesService);
   readonly user = this.store.user;
 
   readonly adminIcon =
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+
+  readonly messagesIcon =
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
 
   readonly navItems: NavItem[] = [
     {

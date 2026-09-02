@@ -149,7 +149,9 @@
 
 | Tâche | Priorité | Statut | Notes |
 |-------|----------|--------|-------|
-| Messagerie 1-to-1 | 🟡 Moyenne | 💡 Idée | Socket.IO, pas de modèle Prisma encore |
+| Socle PWA installable (prérequis push) | 🔴 Haute | ✅ Terminé | `manifest.webmanifest` (palette ATC, `display: standalone`), `pwa-icon.svg` maskable, `sw.js` minimal (aucun cache offline — juste `push` + `notificationclick`), enregistré en prod via `main.ts`. `index.html` : `<link rel=manifest>` + métas apple. `vercel.json` : `Cache-Control: no-cache` sur `/sw.js`. `environment*.ts` : `vapidPublicKey` (vide). Débloque le push iOS 16.4+ (app installée). Reste Lot 2 : clés VAPID, `PushSubscription`, `pushManager.subscribe`, envoi `web-push` côté API |
+| Messagerie 1-to-1 — Lot 1 (in-app) | 🔴 Haute | 🔍 À vérifier | **Codé, migration `20260902120000_messaging` pas encore appliquée.** Modèles `Conversation`/`ConversationParticipant`/`Message`. Module API `modules/messaging` (`GET /conversations`, `/conversations/:id`, `/:id/messages`, `POST /:id/messages` (rate-limit 30/min), `/:id/read`, `/unread-count`, `/by-source/:source/:sourceId`). ACL `assertParticipant` sur chaque route + chaque emit. Conversation créée à l'acceptation (`dispos.service.respondRequest` + `quick-matches.service.respond`). Socket : `message:new` / `message:read` / `conversation:new`. Front : `/messages` (liste) + `/messages/:id` (fil), `MessagesService` (signaux + badge non-lus), entrée sidebar + topbar avec badge, bouton « Discuter » sur les cartes À venir, rappel du match en tête (date/heure/lieu→carte). |
+| Messagerie 1-to-1 — Lot 2 (push) | 🟡 Moyenne | 📋 Backlog | Socle PWA ✅. Reste : clés VAPID, `PushSubscription`, `pushManager.subscribe()` + UI permission, envoi `web-push` côté API, règle « hors conversation » (présence socket par conversation), repli e-mail Maileroo débouncé |
 | Page communauté (news, événements) | 🟢 Basse | 💡 Idée | |
 | Carte des courts / joueurs | 🟢 Basse | 💡 Idée | Mapbox prévu dans la stack |
 | Classement & ELO des joueurs | 🟢 Basse | ✅ Terminé | Implémenté Sprint 6 |

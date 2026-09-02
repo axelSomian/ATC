@@ -49,6 +49,16 @@ export const routes: Routes = [
       { path: 'matchmaking', redirectTo: 'matchs', pathMatch: 'full' },
       { path: 'my-matches', redirectTo: 'matchs', pathMatch: 'full' },
       {
+        path: 'messages',
+        loadComponent: () =>
+          import('./features/messages/messages.component').then((m) => m.MessagesComponent),
+      },
+      {
+        path: 'messages/:id',
+        loadComponent: () =>
+          import('./features/messages/conversation.component').then((m) => m.ConversationComponent),
+      },
+      {
         path: 'notifications',
         loadComponent: () =>
           import('./features/notifications/notifications.component').then((m) => m.NotificationsComponent),

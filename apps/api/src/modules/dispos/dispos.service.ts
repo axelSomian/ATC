@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import type { CreateDispoDto, DisposQueryDto } from './dispos.schema.js';
 import { createNotification } from '../notifications/notifications.service.js';
+import { ensureConversationForDispo } from '../messaging/messaging.service.js';
 import { emitToAll } from '../../lib/socket.js';
 
 const USER_SELECT = {
@@ -228,6 +229,11 @@ export async function respondRequest(
     where: { id: reqId },
     data: { status: action === 'accept' ? 'accepted' : 'declined' },
   });
+
+  if (action === 'accept') {
+    // Conversation privée entre l'organisateur et le joueur accepté.
+    ensureConversationForDispo(dispoPostId, dispo.userId, req.requesterId).catch(() => {});
+  }
 
   createNotification(
     req.requesterId,

@@ -87,6 +87,25 @@
   transition: opacity var(--transition);
 }
 
+.nav-count {
+  margin-left: auto;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  background: var(--color-sage);
+  color: var(--color-deep-forest);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-item.active .nav-count {
+  background: #fff;
+}
+
 /* ── Footer ── */
 .sidebar-footer {
   display: flex;
