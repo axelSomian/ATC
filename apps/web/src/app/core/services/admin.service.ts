@@ -4,9 +4,12 @@ import type {
   AdminClub,
   AdminLevel,
   AdminMember,
+  BroadcastPushPayload,
+  BroadcastPushResult,
   ClubPayload,
   DisputedMatch,
   LevelPayload,
+  PushStats,
 } from '../models/admin.model';
 import type { UserRole } from '../models/user.model';
 
@@ -49,6 +52,14 @@ export class AdminService {
   }
   resolveMatch(id: string, body: { winnerRole: 'host' | 'guest'; scoreHost?: string; scoreGuest?: string }) {
     return this.http.post(`${API}/matches/${id}/resolve`, body);
+  }
+
+  /* ── Notifications push ── */
+  getPushStats() {
+    return this.http.get<PushStats>(`${API}/push/stats`);
+  }
+  broadcastPush(payload: BroadcastPushPayload) {
+    return this.http.post<BroadcastPushResult>(`${API}/push/broadcast`, payload);
   }
 
   /* ── Membres ── */

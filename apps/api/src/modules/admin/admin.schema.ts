@@ -85,8 +85,18 @@ export const setRoleSchema = z.object({
   role: z.enum(['member', 'admin']),
 });
 
+export const broadcastPushSchema = z.object({
+  title: z.string().trim().min(1).max(80),
+  body: z.string().trim().min(1).max(300),
+  url: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? '/' : v),
+    z.string().trim().max(200).regex(/^\//, 'Le lien doit commencer par /').default('/'),
+  ),
+});
+
 export type CreateClubDto = z.infer<typeof createClubSchema>;
 export type UpdateClubDto = z.infer<typeof updateClubSchema>;
 export type UpdateLevelDto = z.infer<typeof updateLevelSchema>;
 export type ResolveMatchDto = z.infer<typeof resolveMatchSchema>;
 export type SetRoleDto = z.infer<typeof setRoleSchema>;
+export type BroadcastPushDto = z.infer<typeof broadcastPushSchema>;

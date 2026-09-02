@@ -3,12 +3,14 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { applyEloUpdate } from '../matches/matches.service.js';
+import { sendBroadcast, pushStats } from '../../lib/webpush.js';
 import type {
   CreateClubDto,
   UpdateClubDto,
   UpdateLevelDto,
   ResolveMatchDto,
   SetRoleDto,
+  BroadcastPushDto,
 } from './admin.schema.js';
 
 /* ─────────────────────────── Clubs ─────────────────────────── */
@@ -161,6 +163,16 @@ export function listMembersForAdmin() {
       club: { select: { id: true, name: true } },
     },
   });
+}
+
+/* ─────────────────────────── Notifications push ─────────────────────────── */
+
+export function getPushStats() {
+  return pushStats();
+}
+
+export async function broadcastPush(dto: BroadcastPushDto) {
+  return sendBroadcast({ title: dto.title, body: dto.body, url: dto.url, tag: 'atc-annonce' });
 }
 
 export async function setMemberRole(targetId: string, adminId: string, dto: SetRoleDto) {

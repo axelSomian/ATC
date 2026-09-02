@@ -66,3 +66,20 @@ export interface AdminMember {
 
 export type ClubPayload = Partial<Omit<AdminClub, 'id' | 'createdAt'>>;
 export type LevelPayload = Partial<Pick<AdminLevel, 'code' | 'nom' | 'profil' | 'jeu'>>;
+
+export interface PushStats {
+  subscriptions: number;
+  users: number;
+}
+
+export interface BroadcastPushPayload {
+  title: string;
+  body: string;
+  url?: string;
+}
+
+export interface BroadcastPushResult {
+  subscriptions: number;
+  sent: number;
+  failed: number;
+}

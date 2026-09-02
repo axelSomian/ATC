@@ -9,6 +9,7 @@ import {
   updateLevelSchema,
   resolveMatchSchema,
   setRoleSchema,
+  broadcastPushSchema,
 } from './admin.schema.js';
 import {
   listAllClubs,
@@ -22,6 +23,8 @@ import {
   resolveMatch,
   listMembersForAdmin,
   setMemberRole,
+  getPushStats,
+  broadcastPush,
 } from './admin.service.js';
 
 const router = Router();
@@ -123,6 +126,24 @@ router.post('/matches/:id/resolve', async (req, res, next) => {
   try {
     const dto = resolveMatchSchema.parse(req.body);
     res.json(await resolveMatch(req.params.id, dto));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ── Notifications push (annonce à tous) ── */
+router.get('/push/stats', async (_req, res, next) => {
+  try {
+    res.json(await getPushStats());
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/push/broadcast', async (req, res, next) => {
+  try {
+    const dto = broadcastPushSchema.parse(req.body);
+    res.json(await broadcastPush(dto));
   } catch (err) {
     next(err);
   }
