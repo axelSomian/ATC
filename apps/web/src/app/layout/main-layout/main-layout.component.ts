@@ -4,6 +4,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { TopbarComponent } from '../topbar/topbar.component';
 import { MobileNavComponent } from '../mobile-nav/mobile-nav.component';
 import { CourtMapComponent } from '../../shared/court-map/court-map.component';
+import { PushPromptComponent } from '../push-prompt/push-prompt.component';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { PresenceService } from '../../core/services/presence.service';
 import { MessagesService } from '../../core/services/messages.service';
@@ -12,7 +13,7 @@ import { PushService } from '../../core/services/push.service';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, TopbarComponent, MobileNavComponent, CourtMapComponent],
+  imports: [RouterOutlet, SidebarComponent, TopbarComponent, MobileNavComponent, CourtMapComponent, PushPromptComponent],
   template: `
     <div class="layout">
       <app-topbar />
@@ -24,6 +25,7 @@ import { PushService } from '../../core/services/push.service';
       </div>
       <app-mobile-nav />
       <app-court-map />
+      <app-push-prompt />
     </div>
   `,
   styleUrl: './main-layout.component.css',

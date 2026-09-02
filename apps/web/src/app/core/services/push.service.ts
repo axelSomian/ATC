@@ -15,6 +15,8 @@ export class PushService {
   private readonly http = inject(HttpClient);
 
   readonly state = signal<PushState>('default');
+  /** true une fois que init() a fini de déterminer l'état. */
+  readonly ready = signal(false);
   private vapidKey = '';
 
   /** Registration du service worker, ou null (dev sans SW, ou SW pas encore actif). */
@@ -30,31 +32,35 @@ export class PushService {
 
   /** À appeler au démarrage (après login). Détecte l'état sans rien demander. */
   async init(): Promise<void> {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-      this.state.set('unsupported');
-      return;
-    }
-    if (!(await this.swReady())) {
-      this.state.set('disabled'); // pas de service worker (ex. dev)
-      return;
-    }
-
     try {
-      const { key, enabled } = await firstValueFrom(
-        this.http.get<{ key: string; enabled: boolean }>(`${API}/vapid-public-key`),
-      );
-      if (!enabled || !key) { this.state.set('disabled'); return; }
-      this.vapidKey = key;
-    } catch {
-      this.state.set('disabled');
-      return;
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        this.state.set('unsupported');
+        return;
+      }
+      if (!(await this.swReady())) {
+        this.state.set('disabled'); // pas de service worker (ex. dev)
+        return;
+      }
+
+      try {
+        const { key, enabled } = await firstValueFrom(
+          this.http.get<{ key: string; enabled: boolean }>(`${API}/vapid-public-key`),
+        );
+        if (!enabled || !key) { this.state.set('disabled'); return; }
+        this.vapidKey = key;
+      } catch {
+        this.state.set('disabled');
+        return;
+      }
+
+      const perm = Notification.permission;
+      this.state.set(perm === 'granted' ? 'granted' : perm === 'denied' ? 'denied' : 'default');
+
+      // Si déjà autorisé, s'assurer que l'abonnement est bien enregistré côté serveur.
+      if (perm === 'granted') this.subscribe().catch(() => {});
+    } finally {
+      this.ready.set(true);
     }
-
-    const perm = Notification.permission;
-    this.state.set(perm === 'granted' ? 'granted' : perm === 'denied' ? 'denied' : 'default');
-
-    // Si déjà autorisé, s'assurer que l'abonnement est bien enregistré côté serveur.
-    if (perm === 'granted') this.subscribe().catch(() => {});
   }
 
   /** Demande la permission puis abonne l'appareil. */
