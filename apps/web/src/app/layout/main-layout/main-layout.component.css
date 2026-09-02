@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari : suit la barre d'outils qui se replie */
   background: var(--color-bg);
 }
 
@@ -31,7 +32,8 @@
 
   .layout-content {
     padding: 20px 16px;
-    padding-bottom: calc(var(--bottom-nav-height) + 20px);
+    /* hauteur réelle de la bottom-nav = --bottom-nav-height + safe-area (home indicator) */
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 24px);
     background-size: 240px 368px;
   }
 }

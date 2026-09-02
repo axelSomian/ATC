@@ -40,7 +40,7 @@ const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
       z-index: 300;
       left: 50%;
       transform: translateX(-50%);
-      bottom: calc(var(--bottom-nav-height) + 12px);
+      bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
       width: calc(100% - 24px);
       max-width: 420px;
       display: flex;
