@@ -251,7 +251,7 @@ export class ConversationComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.svc.activeId.set(null);
-    this.socket.emit('conversation:leave');
+    this.socket.leaveConversation();
   }
 
   typeLabel(t: string): string { return TYPE_LABELS[t] ?? t; }
@@ -266,7 +266,7 @@ export class ConversationComponent implements OnDestroy {
   private load(id: string): void {
     this.convId.set(id);
     this.svc.activeId.set(id);
-    this.socket.emit('conversation:enter', id);
+    this.socket.enterConversation(id);
     this.loading.set(true);
     this.detail.set(null);
     this.messages.set([]);

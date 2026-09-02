@@ -17,10 +17,25 @@ export class PushService {
   readonly state = signal<PushState>('default');
   private vapidKey = '';
 
+  /** Registration du service worker, ou null (dev sans SW, ou SW pas encore actif). */
+  private async swReady(): Promise<ServiceWorkerRegistration | null> {
+    if (!('serviceWorker' in navigator)) return null;
+    const existing = await navigator.serviceWorker.getRegistration();
+    if (existing?.active) return existing;
+    return Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<null>((r) => setTimeout(() => r(null), 3000)),
+    ]);
+  }
+
   /** À appeler au démarrage (après login). Détecte l'état sans rien demander. */
   async init(): Promise<void> {
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       this.state.set('unsupported');
+      return;
+    }
+    if (!(await this.swReady())) {
+      this.state.set('disabled'); // pas de service worker (ex. dev)
       return;
     }
 
@@ -52,7 +67,8 @@ export class PushService {
   }
 
   private async subscribe(): Promise<boolean> {
-    const reg = await navigator.serviceWorker.ready;
+    const reg = await this.swReady();
+    if (!reg) return false;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
       sub = await reg.pushManager.subscribe({
@@ -65,7 +81,8 @@ export class PushService {
   }
 
   async disable(): Promise<void> {
-    const reg = await navigator.serviceWorker.ready;
+    const reg = await this.swReady();
+    if (!reg) return;
     const sub = await reg.pushManager.getSubscription();
     if (sub) {
       await firstValueFrom(this.http.post(`${API}/unsubscribe`, { endpoint: sub.endpoint })).catch(() => {});

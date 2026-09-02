@@ -10,6 +10,8 @@ export class SocketService implements OnDestroy {
   private socket: Socket | null = null;
   /** Handlers ré-appliqués à chaque (re)connexion. */
   private readonly handlers = new Map<string, (data: unknown) => void>();
+  /** Conversation ouverte à l'écran — ré-émise à chaque reconnexion. */
+  private currentConversation: string | null = null;
 
   connect(): void {
     if (this.socket) return; // déjà connecté ou en cours
@@ -27,11 +29,27 @@ export class SocketService implements OnDestroy {
     for (const [event, handler] of this.handlers) {
       this.socket.on(event, handler);
     }
+
+    // À chaque (re)connexion, resignaler la conversation ouverte (le serveur
+    // suit ça par socket.id, qui change à la reconnexion).
+    this.socket.on('connect', () => {
+      if (this.currentConversation) this.socket?.emit('conversation:enter', this.currentConversation);
+    });
   }
 
   disconnect(): void {
     this.socket?.disconnect();
     this.socket = null;
+  }
+
+  enterConversation(conversationId: string): void {
+    this.currentConversation = conversationId;
+    this.socket?.emit('conversation:enter', conversationId);
+  }
+
+  leaveConversation(): void {
+    this.currentConversation = null;
+    this.socket?.emit('conversation:leave');
   }
 
   on<T>(event: string, handler: (data: T) => void): void {

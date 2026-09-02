@@ -17,22 +17,23 @@ async function notifyRecipient(recipientId: string, conversationId: string, send
   if (isUserInConversation(recipientId, conversationId)) return; // il regarde la conv → rien
 
   const url = `/messages/${conversationId}`;
-  sendPushToUser(recipientId, {
+  const pushed = await sendPushToUser(recipientId, {
     title: senderName,
     body: preview.length > 120 ? `${preview.slice(0, 117)}…` : preview,
     url,
     tag: `conversation:${conversationId}`,
-  }).catch(() => {});
+  });
+  if (pushed > 0) return; // push délivré → pas d'e-mail
 
-  // Repli e-mail : seulement si aucun abonnement push ET hors ligne.
+  // Repli e-mail : hors ligne, débounce 15 min.
   const key = `${conversationId}:${recipientId}`;
   if ((emailCooldown.get(key) ?? 0) > Date.now() - EMAIL_COOLDOWN_MS) return;
 
-  const [subCount, user] = await Promise.all([
-    prisma.pushSubscription.count({ where: { userId: recipientId } }),
-    prisma.user.findUnique({ where: { id: recipientId }, select: { email: true, name: true, online: true } }),
-  ]);
-  if (subCount > 0 || !user?.email || user.online) return;
+  const user = await prisma.user.findUnique({
+    where: { id: recipientId },
+    select: { email: true, name: true, online: true },
+  });
+  if (!user?.email || user.online) return;
 
   emailCooldown.set(key, Date.now());
   const appUrl = `${process.env.CORS_ORIGIN ?? ''}${url}`;

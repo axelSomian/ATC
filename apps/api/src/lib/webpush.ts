@@ -24,28 +24,32 @@ export interface PushPayload {
 /**
  * Envoie une notification push à tous les appareils enregistrés d'un utilisateur.
  * Nettoie au passage les abonnements morts (404/410).
+ * @returns nombre d'appareils effectivement notifiés (0 = aucun / push désactivé).
  */
-export async function sendPushToUser(userId: string, payload: PushPayload): Promise<void> {
-  if (!pushEnabled) return;
+export async function sendPushToUser(userId: string, payload: PushPayload): Promise<number> {
+  if (!pushEnabled) return 0;
 
   const subs = await prisma.pushSubscription.findMany({ where: { userId } });
-  if (subs.length === 0) return;
+  if (subs.length === 0) return 0;
 
   const data = JSON.stringify(payload);
 
-  await Promise.all(
+  const results = await Promise.all(
     subs.map(async (s) => {
       try {
         await webpush.sendNotification(
           { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
           data,
         );
+        return true;
       } catch (err) {
         const code = (err as { statusCode?: number }).statusCode;
         if (code === 404 || code === 410) {
           await prisma.pushSubscription.delete({ where: { id: s.id } }).catch(() => {});
         }
+        return false;
       }
     }),
   );
+  return results.filter(Boolean).length;
 }
