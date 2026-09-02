@@ -39,12 +39,25 @@ function localToIso(v: string): string | null {
   styles: [`
     .np-list { display: flex; flex-direction: column; gap: var(--space-2); }
     .np-row {
-      display: flex; align-items: center; gap: var(--space-3);
-      padding: var(--space-3); border: 1px solid var(--color-border-light);
-      border-radius: var(--radius-md); background: var(--color-surface); cursor: pointer;
-      text-align: left; width: 100%; font: inherit; color: var(--color-ink);
+      display: flex; align-items: stretch; gap: 0;
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-md); background: var(--color-surface);
+      overflow: hidden;
     }
     .np-row:hover { border-color: var(--color-accent); }
+    .np-fav {
+      flex-shrink: 0; width: 40px; border: none; border-right: 1px solid var(--color-border-light);
+      background: transparent; cursor: pointer; font-size: 16px; color: var(--color-border);
+    }
+    .np-fav:hover:not(:disabled) { color: var(--color-sand-beige); background: var(--color-cream); }
+    .np-fav.on { color: var(--color-accent); }
+    .np-fav:disabled { cursor: not-allowed; opacity: 0.4; }
+    .np-fav-tag { color: var(--color-accent); font-weight: 700; }
+    .np-row-open {
+      flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-3); background: transparent; border: none; cursor: pointer;
+      text-align: left; font: inherit; color: var(--color-ink);
+    }
     .np-thumb { width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--color-cream); }
     .np-row-main { flex: 1; min-width: 0; }
     .np-row-title { font-weight: 600; font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -108,19 +121,26 @@ function localToIso(v: string): string | null {
         } @else {
           <div class="np-list">
             @for (p of visible(); track p.id) {
-              <button class="np-row" (click)="edit(p)">
-                <img class="np-thumb" [src]="p.coverImageUrl || placeholder" alt="" />
-                <div class="np-row-main">
-                  <div class="np-row-title">
-                    @if (p.featured) { <span class="np-star">★</span> } {{ p.title }}
+              <div class="np-row">
+                <button
+                  class="np-fav"
+                  [class.on]="p.featured"
+                  [disabled]="favBusy() === p.id"
+                  [title]="p.featured ? 'Retirer de la une' : 'Mettre à la une'"
+                  (click)="toggleFeatured(p)">★</button>
+                <button class="np-row-open" (click)="edit(p)">
+                  <img class="np-thumb" [src]="p.coverImageUrl || placeholder" alt="" />
+                  <div class="np-row-main">
+                    <div class="np-row-title">{{ p.title }}</div>
+                    <div class="np-row-meta">
+                      <span class="np-badge" [class]="p.status">{{ statusLabel(p.status) }}</span>
+                      <span>{{ categoryLabel(p.category) }}</span>
+                      @if (p.featured) { <span class="np-fav-tag">À la une</span> }
+                      @if (p.publishedAt) { <span>{{ p.publishedAt | date: 'd MMM y, HH:mm' }}</span> }
+                    </div>
                   </div>
-                  <div class="np-row-meta">
-                    <span class="np-badge" [class]="p.status">{{ statusLabel(p.status) }}</span>
-                    <span>{{ categoryLabel(p.category) }}</span>
-                    @if (p.publishedAt) { <span>{{ p.publishedAt | date: 'd MMM y, HH:mm' }}</span> }
-                  </div>
-                </div>
-              </button>
+                </button>
+              </div>
             }
           </div>
         }
@@ -321,6 +341,7 @@ export class NewsPanelComponent implements OnInit {
   draft: AdminPostPayload = emptyDraft();
 
   // ── Flux RSS ──
+  readonly favBusy = signal<string | null>(null);
   readonly feeds = signal<RssFeed[]>([]);
   readonly syncing = signal(false);
   readonly feedBusy = signal(false);
@@ -345,6 +366,19 @@ export class NewsPanelComponent implements OnInit {
 
   private loadFeeds(): void {
     this.svc.listFeeds().subscribe({ next: (f) => this.feeds.set(f) });
+  }
+
+  /** Mettre / retirer de la une directement depuis la liste. */
+  toggleFeatured(p: AdminPost): void {
+    if (this.favBusy()) return;
+    this.favBusy.set(p.id);
+    this.svc.adminUpdate(p.id, { featured: !p.featured }).subscribe({
+      next: (upd) => {
+        this.posts.update((l) => l.map((x) => (x.id === p.id ? upd : x)));
+        this.favBusy.set(null);
+      },
+      error: () => this.favBusy.set(null),
+    });
   }
 
   addFeed(): void {
