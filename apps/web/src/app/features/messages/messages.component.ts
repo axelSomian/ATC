@@ -44,6 +44,12 @@ import { AuthStore } from '../../core/stores/auth.store';
                     <span class="conv-name">{{ c.otherUser?.name ?? 'Joueur' }}</span>
                     <span class="conv-time">{{ c.lastMessageAt | date: 'd MMM' }}</span>
                   </div>
+                  @if (c.match) {
+                    <div class="conv-match">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      {{ c.match.when | date: 'EEE d MMM' }} · {{ c.match.court }}
+                    </div>
+                  }
                   <div class="conv-bottom">
                     <span class="conv-preview">
                       @if (c.lastMessage) {
@@ -89,6 +95,14 @@ import { AuthStore } from '../../core/stores/auth.store';
     .conv-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
     .conv-name { font-weight: 600; font-size: var(--text-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .conv-time { font-size: var(--text-xs); color: var(--color-muted); flex-shrink: 0; }
+
+    .conv-match {
+      display: flex; align-items: center; gap: 5px;
+      margin-top: 2px;
+      font-size: var(--text-xs); color: var(--color-accent);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .conv-match svg { flex-shrink: 0; opacity: 0.75; }
 
     .conv-bottom { display: flex; align-items: center; gap: var(--space-2); margin-top: 2px; }
     .conv-preview {
