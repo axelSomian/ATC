@@ -150,7 +150,7 @@
 | Tâche | Priorité | Statut | Notes |
 |-------|----------|--------|-------|
 | Socle PWA installable (prérequis push) | 🔴 Haute | ✅ Terminé | `manifest.webmanifest` (palette ATC, `display: standalone`), `pwa-icon.svg` maskable, `sw.js` minimal (aucun cache offline — juste `push` + `notificationclick`), enregistré en prod via `main.ts`. `index.html` : `<link rel=manifest>` + métas apple. `vercel.json` : `Cache-Control: no-cache` sur `/sw.js`. `environment*.ts` : `vapidPublicKey` (vide). Débloque le push iOS 16.4+ (app installée). Reste Lot 2 : clés VAPID, `PushSubscription`, `pushManager.subscribe`, envoi `web-push` côté API |
-| Messagerie 1-to-1 — Lot 1 (in-app) | 🔴 Haute | 🔍 À vérifier | **Codé, migration `20260902120000_messaging` pas encore appliquée.** Modèles `Conversation`/`ConversationParticipant`/`Message`. Module API `modules/messaging` (`GET /conversations`, `/conversations/:id`, `/:id/messages`, `POST /:id/messages` (rate-limit 30/min), `/:id/read`, `/unread-count`, `/by-source/:source/:sourceId`). ACL `assertParticipant` sur chaque route + chaque emit. Conversation créée à l'acceptation (`dispos.service.respondRequest` + `quick-matches.service.respond`). Socket : `message:new` / `message:read` / `conversation:new`. Front : `/messages` (liste) + `/messages/:id` (fil), `MessagesService` (signaux + badge non-lus), entrée sidebar + topbar avec badge, bouton « Discuter » sur les cartes À venir, rappel du match en tête (date/heure/lieu→carte). |
+| Messagerie 1-to-1 — Lot 1 (in-app) | 🔴 Haute | ✅ En prod (2026-09-02) | Modèles `Conversation`/`ConversationParticipant`/`Message` (migration `20260902120000_messaging`). Module API `modules/messaging` (`GET /conversations`, `/conversations/:id`, `/:id/messages`, `POST /:id/messages` rate-limit 30/min, `/:id/read`, `/unread-count`, `/by-source/:source/:sourceId`). ACL sur chaque route + chaque emit. Conversation créée à l'acceptation (dispo + quick-match). Socket : `message:new` / `message:read` / `conversation:new` (callbacks ramenés dans `NgZone` — sinon pas de détection de changement). Front : `/messages` + `/messages/:id`, `MessagesService`, badge sidebar + topbar, bouton « Discuter », rappel du match en tête ET sur chaque ligne du feed (1 conversation par match ⇒ plusieurs convs possibles avec le même joueur). Perf : `listConversations`/`getConversation` en 1 requête SQL (LATERAL) au lieu de 5. Tests unitaires du module : encore à écrire. |
 | Messagerie 1-to-1 — Lot 2 (push) | 🟡 Moyenne | 📋 Backlog | Socle PWA ✅. Reste : clés VAPID, `PushSubscription`, `pushManager.subscribe()` + UI permission, envoi `web-push` côté API, règle « hors conversation » (présence socket par conversation), repli e-mail Maileroo débouncé |
 | Page communauté (news, événements) | 🟢 Basse | 💡 Idée | |
 | Carte des courts / joueurs | 🟢 Basse | 💡 Idée | Mapbox prévu dans la stack |
@@ -239,7 +239,7 @@
 | Aucun test métier, aucune CI | 🔴 Haute | 📋 À faire — les 2 builds ont déjà cassé |
 | Rate-limiting seulement sur auth ; contournable derrière Cloudflare/CGNAT | 🟠 Moyenne | 📋 Backlog (déplacer au niveau Cloudflare) |
 | Pas de sanitization HTML sur `bio` / `note` en **stockage** (l'affichage Angular échappe ; les e-mails échappent depuis sess. 7) | 🟢 Basse | 📋 Backlog |
-| Perf : endpoints DB plafonnent ~15 req/s (Render↔Neon sur 2 continents) | 🟡 Moyenne | 📋 Co-localiser + cacher `/clubs` `/levels` |
+| Perf : endpoints DB plafonnent ~15 req/s (Render↔Neon sur 2 continents) | 🟡 Moyenne | ✅ Co-localisé 2026-09-02 : Neon migré us-east-2 → eu-central-1 (même région que Render Frankfurt). `/clubs` ~750→~300 ms. Reste : cache mémoire `/clubs` `/levels`. NB pooler Neon du nouveau projet cassé → endpoint DIRECT partout |
 | Photos d'illustration (accueil + héros auth) à remplacer par de vraies photos ATC | 🟢 Basse | 📋 PO — remplacement sans code |
 | Clubs sans `lat`/`lng` → pas de carte sur la fiche ni sur les matchs | 🟢 Basse | 📋 L'admin pose la position sur carte dans l'onglet Clubs |
 
@@ -250,7 +250,7 @@
 > **Consolider avant d'ajouter des features** — le produit est déployé et le temps réel
 > est en place, mais il n'y a aucun filet.
 > 1. **CI GitHub Actions** (lint + test + build sur PR) — priorité n°1, les builds ont déjà cassé
-> 2. **Perf** : co-localiser Render et Neon (même région) + cache mémoire/CDN sur `/clubs` et `/levels`
+> 2. **Perf** : ~~co-localiser Render et Neon~~ ✅ fait (eu-central-1, 2026-09-02) — reste cache mémoire/CDN sur `/clubs` et `/levels`
 > 3. **Sanitization** de `bio` / `note` à l'entrée (Zod + strip HTML)
 > 4. **Auto-validation 48h** des scores (cron ou check à la connexion) — sinon l'ELO se fige
 > 5. **Matchs limbes >7 jours** — décider : fenêtre élargie ou onglet "À scorer"
