@@ -57,7 +57,7 @@
 | Créer une annonce de dispo (DispoPost) | ✅ Terminé | |
 | Supprimer sa propre annonce | ✅ Terminé | |
 | Demander à rejoindre une annonce | ✅ Terminé | Bouton "Rejoindre" → statut en attente en temps réel |
-| Accepter / refuser une demande | ✅ Terminé | UI dans onglet "Mes annonces" avec liste des demandeurs |
+| Accepter / refuser une demande | ✅ Terminé | UI dans onglet "Mes annonces" avec liste des demandeurs. Modèle **1 invité par annonce** : accepter une demande refuse les autres (toutes notifiées `match_declined`). **Changer d'adversaire** (sept. 2026) : « Choisir à la place » sur une demande refusée / « Retirer » sur l'accepté → confirmation, l'ancien reçoit `match_spot_reassigned`, sa conversation est supprimée, une conversation neuve est ouverte avec le nouveau |
 | Retrait de l'annonce du feed après acceptation | ✅ Terminé | Filtre `requests: { none: { status: 'accepted' } }` |
 | Ruban créateur (nb demandes en attente) | ✅ Terminé | Banner orange + badge sur l'onglet |
 | Ruban accepté (match confirmé) | ✅ Terminé | Banner vert avec lien vers Mes matchs |

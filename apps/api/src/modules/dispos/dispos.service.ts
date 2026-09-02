@@ -218,28 +218,56 @@ export async function respondRequest(
   const req = await prisma.matchRequest.findUnique({ where: { id: reqId } });
   if (!req || req.dispoPostId !== dispoPostId) throw new AppError(404, 'Demande introuvable');
 
-  if (action === 'accept') {
-    await prisma.matchRequest.updateMany({
-      where: { dispoPostId, id: { not: reqId } },
-      data: { status: 'declined' },
-    });
+  const when  = dispo.when.toISOString();
+  const court = dispo.court;
+
+  if (action === 'decline') {
+    const updated = await prisma.matchRequest.update({ where: { id: reqId }, data: { status: 'declined' } });
+    // Si on retire un invité déjà retenu, sa conversation n'a plus lieu d'être.
+    if (req.status === 'accepted') {
+      await prisma.conversation.delete({ where: { dispoPostId } }).catch(() => {});
+    }
+    createNotification(req.requesterId, 'match_declined', { dispoId: dispoPostId, when, court }).catch(() => {});
+    return updated;
   }
 
-  const updated = await prisma.matchRequest.update({
-    where: { id: reqId },
-    data: { status: action === 'accept' ? 'accepted' : 'declined' },
+  // ── action === 'accept' ──────────────────────────────────────────────────
+  if (req.status === 'accepted') return req; // idempotent : déjà l'invité retenu
+
+  // Un joueur était déjà retenu (autre que celui-ci) → il perd sa place.
+  const previous = await prisma.matchRequest.findFirst({
+    where: { dispoPostId, status: 'accepted', id: { not: reqId } },
+    select: { requesterId: true },
   });
 
-  if (action === 'accept') {
-    // Conversation privée entre l'organisateur et le joueur accepté.
-    ensureConversationForDispo(dispoPostId, dispo.userId, req.requesterId).catch(() => {});
+  // Les autres demandes encore en attente sont refusées d'office.
+  const autoDeclined = await prisma.matchRequest.findMany({
+    where: { dispoPostId, id: { not: reqId }, status: 'pending' },
+    select: { requesterId: true },
+  });
+
+  const [, updated] = await prisma.$transaction([
+    prisma.matchRequest.updateMany({
+      where: { dispoPostId, id: { not: reqId } },
+      data: { status: 'declined' },
+    }),
+    prisma.matchRequest.update({ where: { id: reqId }, data: { status: 'accepted' } }),
+  ]);
+
+  // Remplacement d'adversaire : la conversation repart de zéro (l'ancien invité
+  // ne doit pas voir les échanges avec le nouveau) et l'ancien est prévenu.
+  if (previous && previous.requesterId !== req.requesterId) {
+    await prisma.conversation.delete({ where: { dispoPostId } }).catch(() => {});
+    createNotification(previous.requesterId, 'match_spot_reassigned', { dispoId: dispoPostId, when, court }).catch(() => {});
   }
 
-  createNotification(
-    req.requesterId,
-    action === 'accept' ? 'match_confirmed' : 'match_declined',
-    { dispoId: dispoPostId, when: dispo!.when.toISOString(), court: dispo!.court },
-  ).catch(() => {});
+  // Conversation privée organisateur ↔ invité retenu.
+  ensureConversationForDispo(dispoPostId, dispo.userId, req.requesterId).catch(() => {});
+
+  createNotification(req.requesterId, 'match_confirmed', { dispoId: dispoPostId, when, court }).catch(() => {});
+  for (const d of autoDeclined) {
+    createNotification(d.requesterId, 'match_declined', { dispoId: dispoPostId, when, court }).catch(() => {});
+  }
 
   return updated;
 }

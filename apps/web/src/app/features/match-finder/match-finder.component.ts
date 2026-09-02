@@ -219,12 +219,24 @@ export class MatchFinderComponent implements OnInit, OnDestroy {
   }
 
   acceptRequest(dispo: DispoPost, reqId: string): void {
+    // Un autre joueur est déjà retenu → confirmation avant de le remplacer.
+    const current = dispo.requests.find(r => r.status === 'accepted' && r.id !== reqId);
+    if (current) {
+      const oldName = current.requester?.name ?? 'ce joueur';
+      const newName = dispo.requests.find(r => r.id === reqId)?.requester?.name ?? 'ce joueur';
+      if (!confirm(`Remplacer ${oldName} par ${newName} ?\n${oldName} sera prévenu et perdra sa place pour ce match.`)) return;
+    }
     this.disposService.accept(dispo.id, reqId).subscribe({
-      next: updated => this.updateRequest(dispo.id, updated),
+      next: () => this.applyAccept(dispo.id, reqId),
     });
   }
 
   declineRequest(dispo: DispoPost, reqId: string): void {
+    const target = dispo.requests.find(r => r.id === reqId);
+    if (target?.status === 'accepted') {
+      const name = target.requester?.name ?? 'ce joueur';
+      if (!confirm(`Retirer ${name} de ce match ?\n${name} sera prévenu et la conversation sera fermée.`)) return;
+    }
     this.disposService.decline(dispo.id, reqId).subscribe({
       next: updated => this.updateRequest(dispo.id, updated),
     });
@@ -241,6 +253,21 @@ export class MatchFinderComponent implements OnInit, OnDestroy {
     this.dispos.update(update);
   }
 
+  /** Accepter une demande refuse toutes les autres de la même annonce (miroir du backend). */
+  private applyAccept(dispoId: string, reqId: string): void {
+    const update = (list: DispoPost[]) => list.map(d =>
+      d.id !== dispoId ? d : {
+        ...d,
+        requests: d.requests.map(r => ({
+          ...r,
+          status: (r.id === reqId ? 'accepted' : 'declined') as 'accepted' | 'declined',
+        })),
+      }
+    );
+    this.myDispos.update(update);
+    this.dispos.update(update);
+  }
+
   myRequestStatus(dispo: DispoPost): 'pending' | 'accepted' | 'declined' | null {
     return dispo.requests.find(r => r.requesterId === this.currentUserId())?.status ?? null;
   }
@@ -249,6 +276,10 @@ export class MatchFinderComponent implements OnInit, OnDestroy {
 
   pendingCount(dispo: DispoPost): number {
     return dispo.requests.filter(r => r.status === 'pending').length;
+  }
+
+  hasAccepted(dispo: DispoPost): boolean {
+    return dispo.requests.some(r => r.status === 'accepted');
   }
 
   formatDuration(min: number): string {

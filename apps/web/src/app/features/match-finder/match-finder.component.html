@@ -278,13 +278,17 @@
                         }
                       </div>
                       <div class="request-actions">
-                        @if (r.status === 'pending') {
+                        @if (r.status === 'accepted') {
+                          <span class="status-badge status-accepted">Accepté ✓</span>
+                          <button class="btn btn-sm btn-secondary" (click)="declineRequest(d, r.id)">Retirer</button>
+                        } @else if (r.status === 'pending') {
                           <button class="btn btn-sm btn-primary" (click)="acceptRequest(d, r.id)">Accepter</button>
                           <button class="btn btn-sm btn-secondary" (click)="declineRequest(d, r.id)">Refuser</button>
-                        } @else if (r.status === 'accepted') {
-                          <span class="status-badge status-accepted">Accepté ✓</span>
                         } @else {
                           <span class="status-badge status-declined">Refusé</span>
+                          @if (hasAccepted(d)) {
+                            <button class="btn btn-sm btn-secondary" (click)="acceptRequest(d, r.id)">Choisir à la place</button>
+                          }
                         }
                       </div>
                     </div>

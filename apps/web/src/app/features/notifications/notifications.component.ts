@@ -24,6 +24,7 @@ export class NotificationsComponent {
       case 'match_request':      return 'request';
       case 'match_confirmed':    return 'confirmed';
       case 'match_declined':     return 'declined';
+      case 'match_spot_reassigned': return 'declined';
       case 'score_to_validate':  return 'request';
       case 'score_confirmed':    return 'confirmed';
       case 'score_disputed':     return 'declined';

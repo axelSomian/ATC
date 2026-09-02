@@ -14,6 +14,8 @@ function pushContent(type: string, p: Record<string, unknown>): { title: string;
       return { title: 'Match confirmé', body: 'Votre demande a été acceptée', url: `${MATCHS}?vue=mes-matchs&tab=upcoming` };
     case 'match_declined':
       return { title: 'Demande refusée', body: "Votre demande n'a pas été retenue", url: `${MATCHS}?vue=trouver&tab=mine` };
+    case 'match_spot_reassigned':
+      return { title: 'Place réattribuée', body: "L'organisateur a retenu un autre joueur pour ce match", url: `${MATCHS}?vue=trouver&tab=mine` };
     case 'quick_match_request':
       return { title: 'Nouveau défi', body: `${name ?? 'Un joueur'} vous défie à un match`, url: `${MATCHS}?vue=mes-matchs&tab=challenges` };
     case 'score_to_validate':

@@ -41,6 +41,7 @@ export class NotificationsService {
         this.router.navigate(['/matchs'], { queryParams: { vue: 'trouver', tab: 'mine', focus: p.dispoId ?? null } });
         break;
       case 'match_declined':
+      case 'match_spot_reassigned':
         this.router.navigate(['/matchs'], { queryParams: { vue: 'trouver', tab: 'mine' } });
         break;
       case 'match_confirmed':
@@ -89,6 +90,8 @@ export class NotificationsService {
         return `Votre demande pour le ${when} à ${court} a été acceptée ✓`;
       case 'match_declined':
         return `Votre demande pour le ${when} à ${court} a été refusée`;
+      case 'match_spot_reassigned':
+        return `Match du ${when} à ${court} : l'organisateur a retenu un autre joueur`;
       case 'quick_match_request':
         return `${payload.challengerName ?? 'Un joueur'} vous défie à un match le ${when} à ${court}`;
       case 'score_to_validate':
