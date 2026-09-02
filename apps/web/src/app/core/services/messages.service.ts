@@ -94,27 +94,27 @@ export class MessagesService {
   }
 
   private applyIncoming(ev: MessageNewEvent): void {
+    const list = this.conversations();
+    const idx = list.findIndex((c) => c.id === ev.conversationId);
+    if (idx === -1) {
+      // conversation encore inconnue du client (jamais chargée) → on recharge la liste
+      this.refresh();
+      return;
+    }
+
     const isMine = ev.message.senderId === this.myId;
     const isActive = this.activeId() === ev.conversationId;
-
-    this.conversations.update((list) => {
-      const idx = list.findIndex((c) => c.id === ev.conversationId);
-      if (idx === -1) {
-        this.refresh();
-        return list;
-      }
-      const conv = list[idx];
-      const updated: ConversationSummary = {
-        ...conv,
-        lastMessage: {
-          body: ev.message.body,
-          createdAt: ev.message.createdAt,
-          senderId: ev.message.senderId,
-        },
-        lastMessageAt: ev.message.createdAt,
-        unread: isMine || isActive ? conv.unread : conv.unread + 1,
-      };
-      return [updated, ...list.slice(0, idx), ...list.slice(idx + 1)];
-    });
+    const conv = list[idx];
+    const updated: ConversationSummary = {
+      ...conv,
+      lastMessage: {
+        body: ev.message.body,
+        createdAt: ev.message.createdAt,
+        senderId: ev.message.senderId,
+      },
+      lastMessageAt: ev.message.createdAt,
+      unread: isMine || isActive ? conv.unread : conv.unread + 1,
+    };
+    this.conversations.set([updated, ...list.slice(0, idx), ...list.slice(idx + 1)]);
   }
 }

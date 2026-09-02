@@ -236,7 +236,7 @@ export class ConversationComponent implements OnDestroy {
       this.mergeMessage(ev.message);
       if (ev.message.senderId !== this.meId()) this.svc.markRead(this.convId());
       this.scrollSoon();
-    });
+    }, { allowSignalWrites: true });
 
     effect(() => {
       const ev = this.svc.readEvent();
@@ -244,7 +244,7 @@ export class ConversationComponent implements OnDestroy {
       this.messages.update((list) =>
         list.map((m) => (m.senderId === this.meId() && !m.readAt ? { ...m, readAt: ev.readAt } : m)),
       );
-    });
+    }, { allowSignalWrites: true });
   }
 
   ngOnDestroy(): void {

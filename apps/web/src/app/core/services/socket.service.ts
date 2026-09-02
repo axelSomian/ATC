@@ -1,4 +1,4 @@
-import { Injectable, inject, OnDestroy } from '@angular/core';
+import { Injectable, NgZone, inject, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { AuthStore } from '../stores/auth.store';
 import { environment } from '../../../environments/environment';
@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class SocketService implements OnDestroy {
   private readonly authStore = inject(AuthStore);
+  private readonly zone = inject(NgZone);
   private socket: Socket | null = null;
   /** Handlers ré-appliqués à chaque (re)connexion. */
   private readonly handlers = new Map<string, (data: unknown) => void>();
@@ -34,7 +35,9 @@ export class SocketService implements OnDestroy {
   }
 
   on<T>(event: string, handler: (data: T) => void): void {
-    const h = handler as (data: unknown) => void;
+    // Les callbacks Socket.IO arrivent hors de la zone Angular : on les y ramène
+    // pour que les mises à jour de signaux déclenchent bien la détection de changements.
+    const h = (data: unknown) => this.zone.run(() => (handler as (d: unknown) => void)(data));
     this.handlers.set(event, h);
     this.socket?.on(event, h);
   }
