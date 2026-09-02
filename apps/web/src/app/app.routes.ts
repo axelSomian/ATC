@@ -49,6 +49,21 @@ export const routes: Routes = [
       { path: 'matchmaking', redirectTo: 'matchs', pathMatch: 'full' },
       { path: 'my-matches', redirectTo: 'matchs', pathMatch: 'full' },
       {
+        path: 'actualite',
+        loadComponent: () =>
+          import('./features/news/news.component').then((m) => m.NewsComponent),
+      },
+      {
+        path: 'actualite/evenements',
+        loadComponent: () =>
+          import('./features/news/events.component').then((m) => m.NewsEventsComponent),
+      },
+      {
+        path: 'actualite/:slug',
+        loadComponent: () =>
+          import('./features/news/news-detail.component').then((m) => m.NewsDetailComponent),
+      },
+      {
         path: 'messages',
         loadComponent: () =>
           import('./features/messages/messages.component').then((m) => m.MessagesComponent),

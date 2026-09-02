@@ -28,7 +28,7 @@
         [queryParams]="w.query ?? null"
         class="widget"
         [attr.data-tone]="w.tone"
-        [style.background-image]="'url(/assets/img/w/' + w.img + '.webp)'"
+        [style.background-image]="w.img ? 'url(/assets/img/w/' + w.img + '.webp)' : null"
       >
         <span class="widget-icon" [innerHTML]="w.icon"></span>
         <span class="widget-text">
