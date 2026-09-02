@@ -46,6 +46,9 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
         const code = (err as { statusCode?: number }).statusCode;
         if (code === 404 || code === 410) {
           await prisma.pushSubscription.delete({ where: { id: s.id } }).catch(() => {});
+        } else {
+          console.warn(`[webpush] échec envoi (${code ?? '?'}) endpoint=${s.endpoint.slice(0, 60)}…`,
+            (err as { body?: string }).body ?? (err as Error).message);
         }
         return false;
       }

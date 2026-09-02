@@ -247,6 +247,15 @@ export class ConversationComponent implements OnDestroy {
         list.map((m) => (m.senderId === this.meId() && !m.readAt ? { ...m, readAt: ev.readAt } : m)),
       );
     }, { allowSignalWrites: true });
+
+    // Sur mobile / PWA : mettre l'app en arrière-plan ne détruit pas le composant.
+    // On signale « je ne regarde plus » pour que les push repartent.
+    const onVisibility = () => {
+      if (document.hidden) this.socket.leaveConversation();
+      else if (this.convId()) this.socket.enterConversation(this.convId());
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    this.destroyRef.onDestroy(() => document.removeEventListener('visibilitychange', onVisibility));
   }
 
   ngOnDestroy(): void {
