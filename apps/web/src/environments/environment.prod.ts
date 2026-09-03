@@ -11,4 +11,6 @@ export const environment = {
   // Clé publique VAPID pour les notifications push (messagerie — Lot 2).
   // Vide = pas d'abonnement push, on s'appuie sur le badge in-app + l'e-mail.
   vapidPublicKey: '',
+  // DSN Sentry (clé publique client, non secrète). Vide = suivi d'erreurs désactivé.
+  sentryDsn: '',
 };

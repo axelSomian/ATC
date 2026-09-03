@@ -3,6 +3,7 @@ import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { sendScoreToValidate, sendScoreConfirmed, sendScoreDisputed } from '../mailer/mailer.service.js';
 import { computeElo, MIN_GAMES_TO_MOVE_LEVEL } from './elo.js';
+import { bg } from '../../lib/bg.js';
 import type { RecordMatchDto, ValidateMatchDto, MyMatchesQueryDto } from './matches.schema.js';
 
 const PLAYER_SELECT = {
@@ -248,7 +249,7 @@ export async function validateMatch(matchId: string, userId: string, dto: Valida
   });
 
   if (dto.action === 'confirm') {
-    applyEloUpdate(match.hostId, match.guestId, match.winnerId).catch(() => {});
+    bg(applyEloUpdate(match.hostId, match.guestId, match.winnerId), 'elo.update', { matchId: match.id });
   }
 
   if (match.recordedBy) {

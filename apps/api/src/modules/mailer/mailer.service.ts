@@ -1,4 +1,6 @@
 import { sendEmail } from '../../lib/mailer.js';
+import { log } from '../../lib/logger.js';
+import { captureError } from '../../lib/sentry.js';
 import {
   welcomeTemplate,
   challengeReceivedTemplate,
@@ -12,7 +14,13 @@ import {
 } from './templates.js';
 
 function fire(to: string, name: string, subject: string, html: string, tag: string): void {
-  sendEmail({ address: to, display_name: name }, subject, html, { type: tag }).catch(() => {});
+  sendEmail({ address: to, display_name: name }, subject, html, { type: tag }).then(
+    () => log.info('email.sent', { tag, to }),
+    (err) => {
+      log.warn('email.failed', { tag, to, err });
+      captureError(err, { email: tag, to });
+    },
+  );
 }
 
 export function sendWelcome(to: string, name: string): void {

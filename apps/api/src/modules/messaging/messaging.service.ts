@@ -3,6 +3,7 @@ import { AppError } from '../../middleware/error.js';
 import { emitToUser, isUserInConversation } from '../../lib/socket.js';
 import { sendPushToUser } from '../../lib/webpush.js';
 import { sendMessageReceived } from '../mailer/mailer.service.js';
+import { bg } from '../../lib/bg.js';
 
 // Anti-spam e-mail : au plus 1 e-mail « nouveau message » par (conversation, destinataire) / 15 min.
 const emailCooldown = new Map<string, number>();
@@ -349,7 +350,7 @@ export async function sendMessage(userId: string, conversationId: string, body: 
   for (const id of ids) {
     emitToUser(id, 'message:new', { conversationId, message });
     if (id !== userId) {
-      notifyRecipient(id, conversationId, senderName, text).catch(() => {});
+      bg(notifyRecipient(id, conversationId, senderName, text), 'notify.message', { conversationId, recipientId: id });
     }
   }
   return message;

@@ -1,6 +1,8 @@
 import { prisma } from '../../lib/prisma.js';
 import { emitToUser } from '../../lib/socket.js';
 import { sendPushToUser } from '../../lib/webpush.js';
+import { bg } from '../../lib/bg.js';
+import { log } from '../../lib/logger.js';
 
 const MATCHS = '/matchs';
 
@@ -36,13 +38,20 @@ export async function createNotification(
   type: string,
   payload: Record<string, unknown>,
 ) {
-  const notif = await prisma.notification.create({ data: { userId, type, payload: payload as object } });
+  let notif;
+  try {
+    notif = await prisma.notification.create({ data: { userId, type, payload: payload as object } });
+  } catch (err) {
+    log.error('notification.create.failed', { userId, type, err });
+    throw err;
+  }
   emitToUser(userId, 'notification:new', notif);
+  log.info('notification.created', { userId, type, id: notif.id });
 
   const c = pushContent(type, payload);
   if (c) {
     const ref = payload['dispoId'] ?? payload['quickMatchId'] ?? payload['matchId'] ?? '';
-    sendPushToUser(userId, { ...c, tag: `notif:${type}:${ref}` }).catch(() => {});
+    bg(sendPushToUser(userId, { ...c, tag: `notif:${type}:${ref}` }), 'push.notification', { userId, type });
   }
 
   return notif;

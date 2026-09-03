@@ -230,6 +230,15 @@
 
 ---
 
+## Observabilité (session 8, 2026-09-03) ✅ socle
+
+- **Log structuré** (`lib/logger.ts`, zéro dépendance) : 1 ligne JSON par événement vers stdout/stderr, niveau via `LOG_LEVEL` (défaut `info` en prod).
+- **Log de requête** (`middleware/request-log.ts`) : 1 ligne par requête HTTP à sa fin — `method, path, status, ms, userId, ip, reqId`. `reqId` renvoyé en en-tête `x-request-id` + dans le corps des 500 (un membre le donne pour retrouver la trace).
+- **Gestionnaire d'erreurs** (`middleware/error.ts`) : AppError 4xx → `warn` ; 5xx / erreurs non prévues → `error` + stack + Sentry. Rejets non gérés + `uncaughtException` tracés.
+- **Sentry** (`lib/sentry.ts` back, `core/observability.ts` front) : **inerte tant que `SENTRY_DSN` (Render) / `sentryDsn` (`environment*.ts`) sont vides**. Front : `ErrorHandler` Sentry + intercepteur HTTP (`error-log.interceptor`) qui remonte les 5xx / erreurs réseau.
+- **`lib/bg.ts`** : helper `bg(promise, label, ctx)` pour les « fire-and-forget » — trace l'échec au lieu de l'avaler. Appliqué aux push de notification, notify messagerie, e-mails (`mailer.service`), synchro RSS, mises à jour ELO.
+- **À configurer** : créer un projet Sentry (Node + Angular), poser `SENTRY_DSN` sur Render et le DSN client dans `environment.prod.ts`. Optionnel : log drain Render → Better Stack/Axiom pour la recherche + rétention.
+
 ## Bugs connus / Dette technique
 
 | Problème | Sévérité | Statut |

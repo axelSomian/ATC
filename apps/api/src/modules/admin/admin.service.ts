@@ -4,6 +4,7 @@ import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { applyEloUpdate } from '../matches/matches.service.js';
 import { sendBroadcast, pushStats } from '../../lib/webpush.js';
+import { bg } from '../../lib/bg.js';
 import type {
   CreateClubDto,
   UpdateClubDto,
@@ -132,7 +133,7 @@ export async function resolveMatch(matchId: string, dto: ResolveMatchDto) {
   });
 
   // Le litige n'a jamais déclenché l'ELO — on l'applique maintenant.
-  applyEloUpdate(match.hostId, match.guestId, winnerId).catch(() => {});
+  bg(applyEloUpdate(match.hostId, match.guestId, winnerId), 'elo.update.dispute', { matchId: match.id });
 
   for (const userId of [match.hostId, match.guestId]) {
     createNotification(userId, 'score_resolved', {

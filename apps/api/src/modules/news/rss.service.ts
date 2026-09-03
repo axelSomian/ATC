@@ -2,6 +2,8 @@ import Parser from 'rss-parser';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
+import { log } from '../../lib/logger.js';
+import { captureError } from '../../lib/sentry.js';
 
 const MAX_AGE_DAYS = 14;
 const MAX_PER_FEED = 5;
@@ -84,6 +86,7 @@ export async function syncFeed(feed: { id: string; url: string; label: string; a
   try {
     parsed = await parser.parseURL(feed.url);
   } catch (err) {
+    log.warn('rss.feed.fetch_failed', { feed: feed.label, url: feed.url, err });
     await prisma.rssFeed.update({
       where: { id: feed.id },
       data: { lastSyncAt: new Date(), lastError: (err as Error).message.slice(0, 300) },
@@ -142,6 +145,7 @@ export async function syncAllFeeds(): Promise<{ feeds: number; imported: number 
   const feeds = await prisma.rssFeed.findMany({ where: { active: true } });
   let imported = 0;
   for (const f of feeds) imported += await syncFeed(f);
+  log.info('rss.sync.done', { feeds: feeds.length, imported });
   return { feeds: feeds.length, imported };
 }
 
@@ -149,5 +153,8 @@ export async function syncAllFeeds(): Promise<{ feeds: number; imported: number 
 export function maybeSync(): void {
   if (Date.now() - lastSyncAttempt < SYNC_TTL_MS) return;
   lastSyncAttempt = Date.now();
-  syncAllFeeds().catch(() => {});
+  syncAllFeeds().catch((err) => {
+    log.error('rss.sync.failed', { err });
+    captureError(err, { job: 'rss.maybeSync' });
+  });
 }

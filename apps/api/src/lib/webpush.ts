@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import { prisma } from './prisma.js';
+import { log } from './logger.js';
 
 const PUBLIC = process.env.VAPID_PUBLIC_KEY;
 const PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -52,11 +53,13 @@ async function deliver(
     const code = (err as { statusCode?: number }).statusCode;
     if (code === 404 || code === 410) {
       await prisma.pushSubscription.delete({ where: { id: s.id } }).catch(() => {});
+      log.info('push.subscription.pruned', { code });
     } else {
-      console.warn(
-        `[webpush] échec envoi (${code ?? '?'}) endpoint=${s.endpoint.slice(0, 60)}…`,
-        (err as { body?: string }).body ?? (err as Error).message,
-      );
+      log.warn('push.deliver.failed', {
+        code: code ?? null,
+        endpoint: s.endpoint.slice(0, 60),
+        detail: (err as { body?: string }).body ?? (err as Error).message,
+      });
     }
     return false;
   }

@@ -74,3 +74,9 @@ services:
       # Même valeur que le secret RSS_SYNC_TOKEN du dépôt GitHub.
       - key: RSS_SYNC_TOKEN
         sync: false
+      # Suivi d'erreurs Sentry (projet Node). Vide/absent = désactivé.
+      - key: SENTRY_DSN
+        sync: false
+      # info (défaut prod) | debug | warn | error
+      - key: LOG_LEVEL
+        value: info

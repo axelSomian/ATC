@@ -1,3 +1,4 @@
+import './lib/sentry.js'; // init Sentry avant tout le reste
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -7,6 +8,9 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 import passport from 'passport';
+import { log } from './lib/logger.js';
+import { captureError } from './lib/sentry.js';
+import { requestLog } from './middleware/request-log.js';
 import { errorHandler } from './middleware/error.js';
 import './middleware/passport.js';
 import { setIo, handlePresence, resetPresence, setSocketConversation } from './lib/socket.js';
@@ -51,6 +55,10 @@ io.use((socket, next) => {
   }
 });
 
+io.engine.on('connection_error', (err: { code: number; message: string }) => {
+  log.warn('socket.connection_error', { code: err.code, message: err.message });
+});
+
 io.on('connection', (socket) => {
   const userId = socket.data.userId as string;
   socket.join(`user:${userId}`);
@@ -73,6 +81,7 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
+app.use(requestLog);
 
 const loginLimiter = rateLimit({
   windowMs: 60_000,
@@ -122,8 +131,17 @@ app.use('/api/v1/admin', adminRoutes);
 
 app.use(errorHandler);
 
+process.on('unhandledRejection', (reason) => {
+  log.error('process.unhandledRejection', { err: reason instanceof Error ? reason : new Error(String(reason)) });
+  captureError(reason, { kind: 'unhandledRejection' });
+});
+process.on('uncaughtException', (err) => {
+  log.error('process.uncaughtException', { err });
+  captureError(err, { kind: 'uncaughtException' });
+});
+
 const PORT = process.env.PORT ?? 3000;
 httpServer.listen(PORT, () => {
-  console.log(`[API] Serveur démarré sur http://localhost:${PORT}`);
+  log.info('api.started', { port: Number(PORT), env: process.env.NODE_ENV ?? 'development' });
   resetPresence();
 });
