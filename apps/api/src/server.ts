@@ -115,6 +115,8 @@ app.use('/api/v1/auth/google', loginLimiter);
 app.use('/api/v1/auth/signup', signupLimiter);
 app.use('/api/v1/auth/forgot-password', resetLimiter);
 app.use('/api/v1/auth/reset-password', resetLimiter);
+app.use('/api/v1/auth/verify-email', resetLimiter);
+app.use('/api/v1/auth/resend-verification', resetLimiter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1', referenceRoutes);
 app.use('/api/v1/members', membersRoutes);

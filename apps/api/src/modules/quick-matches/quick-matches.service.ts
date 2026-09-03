@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { ensureConversationForQuick } from '../messaging/messaging.service.js';
+import { assertEmailVerifiedForPublish } from '../auth/auth.service.js';
 import { sendChallengeReceived, sendChallengeAccepted, sendChallengeDeclined } from '../mailer/mailer.service.js';
 import type { CreateQuickMatchDto } from './quick-matches.schema.js';
 
@@ -12,6 +13,8 @@ export async function challenge(challengerId: string, dto: CreateQuickMatchDto) 
   if (challengerId === dto.challengedId) {
     throw new AppError(400, 'Vous ne pouvez pas vous défier vous-même');
   }
+
+  await assertEmailVerifiedForPublish(challengerId);
 
   const challenged = await prisma.user.findUnique({ where: { id: dto.challengedId }, select: USER_SEL_MAIL });
   if (!challenged) throw new AppError(404, 'Membre introuvable');

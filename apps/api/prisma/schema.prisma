@@ -30,6 +30,7 @@ model User {
   preferredTimes  String[]
   joinedAt        DateTime @default(now())
   online          Boolean  @default(false)
+  emailVerified   Boolean  @default(false) // e-mail confirmé (Google = true d'office)
   role            String   @default("member") // 'member' | 'admin'
   rating          Int      @default(1000)
   ratingGames     Int      @default(0)
@@ -47,6 +48,7 @@ model User {
   messagesSent             Message[]
   pushSubscriptions        PushSubscription[]
   passwordResetTokens      PasswordResetToken[]
+  emailVerificationTokens  EmailVerificationToken[]
 
   @@index([rating, ratingGames])
   @@index([level, online])
@@ -288,6 +290,19 @@ model RssFeed {
 // Jetons de réinitialisation de mot de passe. On ne stocke que le SHA-256 du
 // jeton (comme un mot de passe) ; usage unique ; expiration 30 min.
 model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model EmailVerificationToken {
   id        String    @id @default(cuid())
   userId    String
   tokenHash String    @unique

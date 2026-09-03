@@ -56,6 +56,7 @@ export interface UserMe extends UserProfile {
   email: string;
   phone?: string | null;
   role: UserRole;
+  emailVerified: boolean;
 }
 
 export type UserRole = 'member' | 'admin';
@@ -67,6 +68,7 @@ export interface AuthUser {
   initials: string;
   level: number;
   role: UserRole;
+  emailVerified: boolean;
 }
 
 export interface LoginResponse {

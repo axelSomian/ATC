@@ -10,6 +10,7 @@ import {
   scoreConfirmedTemplate,
   scoreDisputedTemplate,
   passwordResetTemplate,
+  verifyEmailTemplate,
   messageReceivedTemplate,
 } from './templates.js';
 
@@ -102,6 +103,11 @@ export function sendScoreDisputed(opts: {
 export function sendPasswordReset(to: string, name: string, resetUrl: string): void {
   const { subject, html } = passwordResetTemplate({ name, resetUrl });
   fire(to, name, subject, html, 'password_reset');
+}
+
+export function sendVerifyEmail(to: string, name: string, verifyUrl: string): void {
+  const { subject, html } = verifyEmailTemplate({ name, verifyUrl });
+  fire(to, name, subject, html, 'verify_email');
 }
 
 export function sendMessageReceived(opts: {

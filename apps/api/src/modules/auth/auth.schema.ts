@@ -30,6 +30,10 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8, 'Minimum 8 caractères'),
 });
 
+export const verifyEmailSchema = z.object({
+  token: z.string().min(20).max(200),
+});
+
 export const updateProfileSchema = z.object({
   name: z.string().min(2).max(50).optional(),
   phone: phoneField.optional().nullable(),

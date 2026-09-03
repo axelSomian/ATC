@@ -63,6 +63,18 @@ export class AuthService {
       .pipe(tap((res) => this.store.setAuth(res.user, res.accessToken)));
   }
 
+  /** Confirme l'adresse via le lien reçu par e-mail (route publique). */
+  verifyEmail(token: string) {
+    return this.http.post<{ verified: boolean }>(`${API}/auth/verify-email`, { token });
+  }
+
+  /** Renvoie l'e-mail de confirmation (membre connecté). */
+  resendVerification() {
+    return this.http.post<{ sent?: boolean; alreadyVerified?: boolean }>(
+      `${API}/auth/resend-verification`, {},
+    );
+  }
+
   logout() {
     return this.http.post(`${API}/auth/logout`, {}, { withCredentials: true }).pipe(
       tap(() => {

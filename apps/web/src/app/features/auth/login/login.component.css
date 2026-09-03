@@ -139,6 +139,11 @@
   font-size: var(--text-sm);
   font-weight: 500;
 }
+.form-alert--ok {
+  background: rgba(47, 107, 79, 0.08);
+  border-color: rgba(47, 107, 79, 0.22);
+  color: var(--color-positive);
+}
 
 .auth-divider {
   display: flex;

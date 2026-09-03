@@ -5,6 +5,7 @@ import { TopbarComponent } from '../topbar/topbar.component';
 import { MobileNavComponent } from '../mobile-nav/mobile-nav.component';
 import { CourtMapComponent } from '../../shared/court-map/court-map.component';
 import { PushPromptComponent } from '../push-prompt/push-prompt.component';
+import { VerifyBannerComponent } from '../verify-banner/verify-banner.component';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { PresenceService } from '../../core/services/presence.service';
 import { MessagesService } from '../../core/services/messages.service';
@@ -13,10 +14,11 @@ import { PushService } from '../../core/services/push.service';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, TopbarComponent, MobileNavComponent, CourtMapComponent, PushPromptComponent],
+  imports: [RouterOutlet, SidebarComponent, TopbarComponent, MobileNavComponent, CourtMapComponent, PushPromptComponent, VerifyBannerComponent],
   template: `
     <div class="layout">
       <app-topbar />
+      <app-verify-banner />
       <div class="layout-body">
         <app-sidebar />
         <main class="layout-content">

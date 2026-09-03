@@ -6,10 +6,13 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { initialRating } from '../matches/elo.js';
 import { assertValidClub } from '../reference/reference.service.js';
-import { sendWelcome, sendPasswordReset } from '../mailer/mailer.service.js';
+import { sendWelcome, sendPasswordReset, sendVerifyEmail } from '../mailer/mailer.service.js';
 import type { SignupDto, LoginDto, GoogleAuthDto } from './auth.schema.js';
 
 const RESET_TTL_MS = 30 * 60 * 1000;
+const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
+/** Délai de grâce : au-delà, un compte non vérifié ne peut plus publier. */
+const VERIFY_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
 const sha256 = (v: string) => crypto.createHash('sha256').update(v).digest('hex');
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
@@ -27,6 +30,7 @@ interface AuthUserRow {
   initials: string;
   level: number;
   role: string;
+  emailVerified: boolean;
 }
 
 function authUserResponse(u: AuthUserRow) {
@@ -37,6 +41,7 @@ function authUserResponse(u: AuthUserRow) {
     initials: u.initials,
     level: u.level,
     role: u.role,
+    emailVerified: u.emailVerified,
   };
 }
 
@@ -94,13 +99,81 @@ export async function signup(dto: SignupDto) {
       initials,
       rating: initialRating(dto.level),
     },
-    select: { id: true, name: true, email: true, initials: true, level: true, role: true },
+    select: { id: true, name: true, email: true, initials: true, level: true, role: true, emailVerified: true },
   });
 
-  sendWelcome(user.email, user.name);
+  // Un seul e-mail à l'inscription : la confirmation d'adresse (fait aussi office de bienvenue).
+  await issueEmailVerification(user.id, user.email, user.name);
 
   const tokens = generateTokens(user.id);
   return { user, ...tokens };
+}
+
+/** Invalide les jetons de vérif en cours et en émet un neuf (e-mail avec lien). */
+async function issueEmailVerification(userId: string, email: string, name: string) {
+  await prisma.emailVerificationToken.updateMany({
+    where: { userId, usedAt: null },
+    data: { usedAt: new Date() },
+  });
+
+  const raw = crypto.randomBytes(32).toString('hex');
+  await prisma.emailVerificationToken.create({
+    data: { userId, tokenHash: sha256(raw), expiresAt: new Date(Date.now() + VERIFY_TTL_MS) },
+  });
+
+  const base = (process.env.CORS_ORIGIN ?? '').replace(/\/$/, '');
+  sendVerifyEmail(email, name, `${base}/auth/verify-email?token=${raw}`);
+}
+
+/** Confirme l'adresse à partir du lien reçu par e-mail. */
+export async function verifyEmail(token: string) {
+  const row = await prisma.emailVerificationToken.findUnique({
+    where: { tokenHash: sha256(token) },
+  });
+  if (!row || row.usedAt || row.expiresAt.getTime() < Date.now()) {
+    throw new AppError(400, 'Lien invalide ou expiré. Demandez un nouvel e-mail de confirmation.');
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: row.userId }, data: { emailVerified: true } }),
+    prisma.emailVerificationToken.updateMany({
+      where: { userId: row.userId, usedAt: null },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+
+  return { verified: true };
+}
+
+/** Renvoie un e-mail de confirmation (route authentifiée, rate-limitée). */
+export async function resendVerification(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, name: true, emailVerified: true },
+  });
+  if (!user) throw new AppError(404, 'Utilisateur introuvable');
+  if (user.emailVerified) return { alreadyVerified: true };
+
+  await issueEmailVerification(userId, user.email, user.name);
+  return { sent: true };
+}
+
+/**
+ * À appeler avant toute action de publication (annonce, défi). Passe le délai
+ * de grâce, un compte dont l'e-mail n'est pas confirmé est bloqué.
+ */
+export async function assertEmailVerifiedForPublish(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { emailVerified: true, joinedAt: true },
+  });
+  if (!user) throw new AppError(404, 'Utilisateur introuvable');
+  if (user.emailVerified) return;
+  if (Date.now() - user.joinedAt.getTime() < VERIFY_GRACE_MS) return;
+  throw new AppError(
+    403,
+    "Confirmez votre adresse e-mail pour publier. Vérifiez vos spams, ou demandez un renvoi du lien depuis votre profil.",
+  );
 }
 
 export async function login(dto: LoginDto) {
@@ -151,7 +224,8 @@ export async function loginWithGoogle(dto: GoogleAuthDto) {
     if (byEmail) {
       user = await prisma.user.update({
         where: { id: byEmail.id },
-        data: { googleId, avatarUrl: byEmail.avatarUrl ?? picture },
+        // Google a prouvé la possession de l'adresse → on confirme l'e-mail.
+        data: { googleId, avatarUrl: byEmail.avatarUrl ?? picture, emailVerified: true },
       });
     }
   }
@@ -169,6 +243,7 @@ export async function loginWithGoogle(dto: GoogleAuthDto) {
         avatarUrl: picture,
         level: 1,
         rating: initialRating(1),
+        emailVerified: true, // adresse déjà vérifiée par Google
       },
     });
     sendWelcome(user.email, user.name);
@@ -228,7 +303,8 @@ export async function resetPassword(token: string, password: string) {
 
   const passwordHash = await bcrypt.hash(password, 12);
   await prisma.$transaction([
-    prisma.user.update({ where: { id: row.userId }, data: { passwordHash } }),
+    // Recevoir le lien de réinit prouve aussi la possession de l'adresse.
+    prisma.user.update({ where: { id: row.userId }, data: { passwordHash, emailVerified: true } }),
     prisma.passwordResetToken.updateMany({
       where: { userId: row.userId, usedAt: null },
       data: { usedAt: new Date() },
@@ -259,6 +335,7 @@ export async function getMe(userId: string) {
       joinedAt: true,
       online: true,
       role: true,
+      emailVerified: true,
       club: { select: { id: true, slug: true, name: true, zone: true, location: true } },
     },
   });

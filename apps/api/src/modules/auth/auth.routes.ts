@@ -3,10 +3,11 @@ import { ZodError } from 'zod';
 import {
   signup, login, loginWithGoogle, refresh, getMe,
   requestPasswordReset, resetPassword,
+  verifyEmail, resendVerification,
 } from './auth.service.js';
 import {
   signupSchema, loginSchema, googleAuthSchema,
-  forgotPasswordSchema, resetPasswordSchema,
+  forgotPasswordSchema, resetPasswordSchema, verifyEmailSchema,
 } from './auth.schema.js';
 import { authenticate } from '../../middleware/passport.js';
 import { AppError } from '../../middleware/error.js';
@@ -67,6 +68,25 @@ router.post('/reset-password', async (req, res, next) => {
     const result = await resetPassword(token, password);
     res.cookie('refreshToken', result.refreshToken, cookieOptions());
     res.json({ user: result.user, accessToken: result.accessToken });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/verify-email', async (req, res, next) => {
+  try {
+    const { token } = verifyEmailSchema.parse(req.body);
+    const result = await verifyEmail(token);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/resend-verification', authenticate, async (req, res, next) => {
+  try {
+    const result = await resendVerification((req.user as { id: string }).id);
+    res.json(result);
   } catch (err) {
     next(err);
   }

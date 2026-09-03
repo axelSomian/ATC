@@ -3,6 +3,7 @@ import { AppError } from '../../middleware/error.js';
 import type { CreateDispoDto, DisposQueryDto } from './dispos.schema.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { ensureConversationForDispo } from '../messaging/messaging.service.js';
+import { assertEmailVerifiedForPublish } from '../auth/auth.service.js';
 import { emitToAll } from '../../lib/socket.js';
 
 const USER_SELECT = {
@@ -73,6 +74,7 @@ export async function getMyDispos(userId: string) {
 }
 
 export async function createDispo(userId: string, dto: CreateDispoDto) {
+  await assertEmailVerifiedForPublish(userId);
   const dispo = await prisma.dispoPost.create({
     data: { ...dto, userId, when: new Date(dto.when) },
     select: DISPO_SELECT,

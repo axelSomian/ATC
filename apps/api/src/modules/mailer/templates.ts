@@ -269,6 +269,28 @@ export function passwordResetTemplate(opts: {
   };
 }
 
+export function verifyEmailTemplate(opts: {
+  name: string;
+  verifyUrl: string;
+}): { subject: string; html: string } {
+  const safeUrl = encodeURI(opts.verifyUrl);
+  return {
+    subject: 'Confirmez votre adresse e-mail — ATC',
+    html: base('Confirmez votre adresse', `
+      ${h1(`Bienvenue, ${esc(opts.name)} !`)}
+      ${p(`Votre compte sur la plateforme d'${strong('Abidjan Tennis Community')} est créé. Confirmez votre adresse e-mail pour recevoir les notifications de match et sécuriser votre compte.`)}
+      <div style="margin:28px 0;text-align:center">
+        <a href="${esc(safeUrl)}"
+           style="display:inline-block;padding:14px 32px;background:${ACCENT};color:#fff;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:-0.01em">
+          Confirmer mon adresse
+        </a>
+      </div>
+      ${p(`Ce lien est valable <strong style="color:${INK}">24 heures</strong>. Sans confirmation, la publication d'annonces sera limitée au bout de 7 jours.`)}
+      ${p(`Si vous n'êtes pas à l'origine de cette inscription, ignorez cet e-mail.`)}
+    `),
+  };
+}
+
 export function messageReceivedTemplate(opts: {
   recipientName: string;
   senderName: string;
