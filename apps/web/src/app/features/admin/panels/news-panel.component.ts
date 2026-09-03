@@ -10,6 +10,13 @@ import {
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+/** États proposés dans l'éditeur (Archivé se pilote via la barre d'action). */
+const EDITOR_STATUSES: { value: PostStatus; label: string; hint: string }[] = [
+  { value: 'draft', label: 'Brouillon', hint: 'Visible de vous seul.' },
+  { value: 'scheduled', label: 'Programmé', hint: 'Publié automatiquement à la date choisie.' },
+  { value: 'published', label: 'Publié', hint: 'Visible de tous les membres, maintenant.' },
+];
+
 function emptyDraft(): AdminPostPayload {
   return {
     category: 'atc', status: 'draft', title: '', summary: '', body: '',
@@ -37,12 +44,35 @@ function localToIso(v: string): string | null {
   imports: [FormsModule, DatePipe],
   styleUrl: '../admin-shared.css',
   styles: [`
+    /* ── Bascule Publications / Sources RSS ── */
+    .np-switch { display: inline-flex; padding: 3px; gap: 3px; background: var(--color-cream); border-radius: var(--radius-lg); }
+    .np-switch button {
+      border: none; background: transparent; cursor: pointer; font: inherit;
+      font-size: var(--text-sm); font-weight: 600; color: var(--color-muted);
+      padding: 6px 16px; border-radius: var(--radius-md);
+    }
+    .np-switch button.on { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+    .np-toolbar { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+    .np-toolbar .spacer { flex: 1; }
+    .np-search {
+      min-width: 180px; padding: 7px 12px; border: 1px solid var(--color-border);
+      border-radius: var(--radius-full); font-size: var(--text-sm); font-family: var(--font-body);
+      background: var(--color-surface); color: var(--color-ink);
+    }
+    .np-filters { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+    .np-chip {
+      padding: 4px 11px; border: 1px solid var(--color-border); border-radius: var(--radius-full);
+      background: transparent; font-size: var(--text-xs); cursor: pointer; color: var(--color-muted);
+    }
+    .np-chip.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+
+    /* ── Liste ── */
     .np-list { display: flex; flex-direction: column; gap: var(--space-2); }
     .np-row {
-      display: flex; align-items: stretch; gap: 0;
-      border: 1px solid var(--color-border-light);
-      border-radius: var(--radius-md); background: var(--color-surface);
-      overflow: hidden;
+      display: flex; align-items: stretch;
+      border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+      background: var(--color-surface); overflow: hidden;
     }
     .np-row:hover { border-color: var(--color-accent); }
     .np-fav {
@@ -52,7 +82,6 @@ function localToIso(v: string): string | null {
     .np-fav:hover:not(:disabled) { color: var(--color-sand-beige); background: var(--color-cream); }
     .np-fav.on { color: var(--color-accent); }
     .np-fav:disabled { cursor: not-allowed; opacity: 0.4; }
-    .np-fav-tag { color: var(--color-accent); font-weight: 700; }
     .np-row-open {
       flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-3);
       padding: var(--space-3); background: transparent; border: none; cursor: pointer;
@@ -61,32 +90,114 @@ function localToIso(v: string): string | null {
     .np-thumb { width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--color-cream); }
     .np-row-main { flex: 1; min-width: 0; }
     .np-row-title { font-weight: 600; font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .np-row-meta { font-size: var(--text-xs); color: var(--color-muted); display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: 2px; }
+    .np-row-meta { font-size: var(--text-xs); color: var(--color-muted); display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: 2px; align-items: center; }
     .np-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 6px; border-radius: var(--radius-full); }
     .np-badge.draft { background: var(--color-cream); color: var(--color-muted); }
     .np-badge.scheduled { background: #E8DFC8; color: var(--color-warning); }
     .np-badge.published { background: var(--color-accent-alpha); color: var(--color-accent); }
     .np-badge.archived { background: var(--color-cream); color: var(--color-ink-light); text-decoration: line-through; }
-    .np-star { color: var(--color-accent); }
-    .np-filters { display: flex; gap: var(--space-1); flex-wrap: wrap; }
-    .np-chip { padding: 4px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-full); background: transparent; font-size: var(--text-xs); cursor: pointer; color: var(--color-muted); }
-    .np-chip.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
-    .np-editor { display: flex; flex-direction: column; gap: var(--space-3); }
+    .np-fav-tag { color: var(--color-accent); font-weight: 700; }
+
+    /* ── Éditeur ── */
+    .np-editor { display: flex; flex-direction: column; gap: var(--space-4); }
+    .np-editor-head { display: flex; align-items: center; gap: var(--space-3); }
+    .np-editor-head h2 { margin: 0; font-size: var(--text-lg); }
+    .np-back { background: transparent; border: none; cursor: pointer; font: inherit; color: var(--color-muted); font-size: var(--text-sm); padding: 4px 0; }
+    .np-back:hover { color: var(--color-ink); }
+
+    .np-section {
+      border: 1px solid var(--color-border-light); border-radius: var(--radius-lg);
+      background: var(--color-surface); padding: var(--space-4);
+      display: flex; flex-direction: column; gap: var(--space-3);
+    }
+    .np-section > h3 {
+      margin: 0; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--color-muted); font-weight: 700;
+    }
+    details.np-section > summary {
+      list-style: none; cursor: pointer; font-size: var(--text-xs); text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--color-muted); font-weight: 700;
+      display: flex; align-items: center; gap: var(--space-2);
+    }
+    details.np-section > summary::-webkit-details-marker { display: none; }
+    details.np-section > summary::before { content: '▸'; font-size: 10px; }
+    details.np-section[open] > summary { margin-bottom: var(--space-3); }
+    details.np-section[open] > summary::before { content: '▾'; }
+
+    .np-field { display: flex; flex-direction: column; gap: 5px; }
+    .np-field > label { font-size: var(--text-xs); color: var(--color-muted); font-weight: 600; }
+    .np-field input, .np-field textarea, .np-field select {
+      width: 100%; padding: 8px 11px; border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); font-size: var(--text-sm); font-family: var(--font-body);
+      background: var(--color-surface); color: var(--color-ink);
+    }
+    .np-field textarea { resize: vertical; }
     .np-2col { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
     @media (max-width: 640px) { .np-2col { grid-template-columns: 1fr; } }
+
+    /* corps + aperçu côte à côte */
+    .np-body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: start; }
+    @media (max-width: 860px) { .np-body-grid { grid-template-columns: 1fr; } }
+    .np-body-grid textarea { min-height: 260px; line-height: 1.5; }
+    .np-preview {
+      border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4); background: var(--color-cream);
+      font-size: var(--text-sm); line-height: 1.65; min-height: 260px; overflow-wrap: anywhere;
+    }
+    .np-preview:empty::before { content: 'L\\'aperçu s\\'affiche ici.'; color: var(--color-muted); }
+    .np-preview :is(h1,h2,h3,h4) { margin: 0.7em 0 0.3em; line-height: 1.25; }
+    .np-preview h1 { font-size: 1.35em; }
+    .np-preview h2 { font-size: 1.18em; }
+    .np-preview h3 { font-size: 1.05em; }
+    .np-preview p { margin: 0 0 0.7em; }
+    .np-preview ul, .np-preview ol { margin: 0 0 0.7em; padding-left: 1.3em; }
+    .np-preview a { color: var(--color-accent); }
+    .np-preview img { border-radius: var(--radius-sm); max-width: 100%; }
+
+    /* statut segmenté */
+    .np-status { display: flex; gap: 0; border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; width: fit-content; max-width: 100%; }
+    .np-status button {
+      border: none; background: var(--color-surface); cursor: pointer; font: inherit;
+      font-size: var(--text-sm); font-weight: 600; color: var(--color-muted);
+      padding: 8px 18px; border-right: 1px solid var(--color-border);
+    }
+    .np-status button:last-child { border-right: none; }
+    .np-status button.on { background: var(--color-accent); color: #fff; }
+    .np-status-hint { font-size: var(--text-xs); color: var(--color-muted); }
+    .np-archived-note {
+      display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;
+      font-size: var(--text-sm); color: var(--color-ink-light);
+      background: var(--color-cream); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
+    }
+
     .np-check { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
-    .np-preview { border: 1px dashed var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); background: var(--color-surface); font-size: var(--text-sm); line-height: 1.6; }
-    .np-preview :is(h1,h2,h3,h4) { margin: 0.6em 0 0.3em; line-height: 1.25; }
-    .np-preview img { border-radius: var(--radius-sm); }
+
+    /* images */
     .np-gallery { display: flex; gap: var(--space-2); flex-wrap: wrap; }
     .np-gallery figure { position: relative; margin: 0; }
-    .np-gallery img { width: 84px; height: 84px; object-fit: cover; border-radius: var(--radius-sm); }
-    .np-gallery button { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: none; background: var(--color-ink); color: #fff; cursor: pointer; font-size: 12px; line-height: 1; }
-    .np-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; padding-top: var(--space-2); border-top: 1px solid var(--color-border-light); }
-    .np-actions .spacer { flex: 1; }
+    .np-gallery img { width: 96px; height: 72px; object-fit: cover; border-radius: var(--radius-sm); }
+    .np-cover img { width: 100%; max-width: 320px; height: auto; aspect-ratio: 16/9; object-fit: cover; border-radius: var(--radius-md); }
+    .np-gallery button, .np-cover button {
+      position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
+      border: none; background: var(--color-ink); color: #fff; cursor: pointer; font-size: 12px; line-height: 1;
+    }
+    .np-cover { position: relative; width: fit-content; }
+    .np-file { font-size: var(--text-xs); color: var(--color-muted); }
+
+    /* barre d'action collante */
+    .np-actionbar {
+      position: sticky; bottom: 0; z-index: 2;
+      display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center;
+      padding: var(--space-3); margin: 0 calc(-1 * var(--space-1));
+      background: var(--color-bg); border-top: 1px solid var(--color-border);
+    }
+    .np-actionbar .spacer { flex: 1; }
+
+    /* ── Sources RSS ── */
     .np-feed { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
-      padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border-light); }
-    .np-feed-main { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 1px; }
+      padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border-light); }
+    .np-feed:last-of-type { border-bottom: none; }
+    .np-feed-main { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 2px; }
     .np-feed-label { font-size: var(--text-sm); font-weight: 600; }
     .np-feed-url { font-size: var(--text-xs); color: var(--color-muted); word-break: break-all; }
     .np-feed-sync { font-size: 10px; color: var(--color-muted); }
@@ -97,226 +208,271 @@ function localToIso(v: string): string | null {
   `],
   template: `
     <div class="panel">
-      <p class="panel-hint">
-        Rubrique <strong>Actualité</strong> : tournois, événements, partenariats, infos tennis et news ATC.
-        Un post « Programmé » devient visible automatiquement à sa date (pas besoin d'action).
-        Le corps s'écrit en <strong>Markdown</strong> (#&nbsp;titre, **gras**, listes, [lien](url)).
-      </p>
+      <!-- ═══ ÉDITEUR (écran dédié) ═══ -->
+      @if (editing()) {
+        <div class="np-editor">
+          <div class="np-editor-head">
+            <button class="np-back" (click)="cancel()">← Publications</button>
+          </div>
+          <h2 style="margin:0">{{ editingId() ? 'Modifier l\\'article' : 'Nouvel article' }}</h2>
 
-      @if (!editing()) {
-        <div class="row-actions">
-          <button class="btn btn-primary btn-sm" (click)="newPost()">Nouvelle publication</button>
-        </div>
-        <div class="np-filters">
-          <button class="np-chip" [class.active]="statusFilter() === null" (click)="setFilter(null)">Toutes</button>
-          @for (s of statuses; track s.value) {
-            <button class="np-chip" [class.active]="statusFilter() === s.value" (click)="setFilter(s.value)">{{ s.label }}</button>
-          }
-        </div>
-
-        @if (loading()) {
-          <p class="panel-loading">Chargement…</p>
-        } @else if (visible().length === 0) {
-          <p class="panel-empty">Aucune publication.</p>
-        } @else {
-          <div class="np-list">
-            @for (p of visible(); track p.id) {
-              <div class="np-row">
-                <button
-                  class="np-fav"
-                  [class.on]="p.featured"
-                  [disabled]="favBusy() === p.id"
-                  [title]="p.featured ? 'Retirer de la une' : 'Mettre à la une'"
-                  (click)="toggleFeatured(p)">★</button>
-                <button class="np-row-open" (click)="edit(p)">
-                  <img class="np-thumb" [src]="p.coverImageUrl || placeholder" alt="" />
-                  <div class="np-row-main">
-                    <div class="np-row-title">{{ p.title }}</div>
-                    <div class="np-row-meta">
-                      <span class="np-badge" [class]="p.status">{{ statusLabel(p.status) }}</span>
-                      <span>{{ categoryLabel(p.category) }}</span>
-                      @if (p.featured) { <span class="np-fav-tag">À la une</span> }
-                      @if (p.publishedAt) { <span>{{ p.publishedAt | date: 'd MMM y, HH:mm' }}</span> }
-                    </div>
-                  </div>
-                </button>
+          <!-- 1. Contenu -->
+          <div class="np-section">
+            <h3>Contenu</h3>
+            <div class="np-2col">
+              <div class="np-field">
+                <label>Catégorie</label>
+                <select [(ngModel)]="draft.category">
+                  @for (c of categories; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
+                </select>
               </div>
+              <div class="np-field">
+                <label>Titre</label>
+                <input type="text" [(ngModel)]="draft.title" placeholder="Titre de l'article" />
+              </div>
+            </div>
+
+            <div class="np-field">
+              <label>Résumé <span style="font-weight:400">— affiché sur les cartes du feed</span></label>
+              <textarea rows="2" [(ngModel)]="draft.summary" placeholder="1 à 2 phrases d'accroche"></textarea>
+            </div>
+
+            <div class="np-field">
+              <label>Contenu <span style="font-weight:400">— Markdown : # titre, **gras**, - liste, [lien](url)</span></label>
+              <div class="np-body-grid">
+                <textarea [(ngModel)]="draft.body" placeholder="# Titre&#10;&#10;Votre texte…"></textarea>
+                <div class="np-preview" [innerHTML]="preview()"></div>
+              </div>
+            </div>
+
+            <div class="np-field">
+              <label>Image de couverture</label>
+              @if (draft.coverImageUrl) {
+                <div class="np-cover">
+                  <img [src]="draft.coverImageUrl" alt="" />
+                  <button type="button" (click)="draft.coverImageUrl = null">×</button>
+                </div>
+              }
+              <input class="np-file" type="file" accept="image/*" (change)="upload($event, 'cover')" [disabled]="uploadBusy()" />
+            </div>
+          </div>
+
+          <!-- 2. Diffusion -->
+          <div class="np-section">
+            <h3>Diffusion</h3>
+
+            @if (draft.status === 'archived') {
+              <div class="np-archived-note">
+                <span>Cet article est archivé (invisible du public).</span>
+                <button class="btn btn-outline btn-sm" (click)="setStatus('published')">Le republier</button>
+              </div>
+            } @else {
+              <div class="np-field">
+                <label>Statut</label>
+                <div class="np-status">
+                  @for (s of editorStatuses; track s.value) {
+                    <button type="button" [class.on]="draft.status === s.value" (click)="setStatus(s.value)">{{ s.label }}</button>
+                  }
+                </div>
+                <span class="np-status-hint">{{ statusHint() }}</span>
+              </div>
+
+              @if (draft.status === 'scheduled') {
+                <div class="np-field" style="max-width:280px">
+                  <label>Date de publication</label>
+                  <input type="datetime-local" [ngModel]="publishedLocal()" (ngModelChange)="draft.publishedAt = toIso($event)" />
+                </div>
+              }
             }
-          </div>
-        }
 
-        <!-- ── Flux RSS « Infos Tennis » ── -->
-        <div class="admin-card card" style="margin-top:var(--space-4)">
-          <div class="admin-card-head">
-            <strong>Flux RSS — Infos Tennis</strong>
-            <button class="btn btn-outline btn-sm" [disabled]="syncing()" (click)="syncFeeds()">
-              {{ syncing() ? 'Synchro…' : 'Synchroniser maintenant' }}
-            </button>
-          </div>
-          @if (syncMsg()) { <p class="form-msg" [class.err]="!syncOk()">{{ syncMsg() }}</p> }
-
-          @for (f of feeds(); track f.id) {
-            <div class="np-feed">
-              <div class="np-feed-main">
-                <span class="np-feed-label">{{ f.label }}</span>
-                <span class="np-feed-url">{{ f.url }}</span>
-                @if (f.lastError) { <span class="np-feed-err">⚠ {{ f.lastError }}</span> }
-                @else if (f.lastSyncAt) { <span class="np-feed-sync">synchro {{ f.lastSyncAt | date: 'd MMM, HH:mm' }}</span> }
-              </div>
-              <label class="np-check"><input type="checkbox" [checked]="f.autoPublish" (change)="toggleFeed(f, 'autoPublish', $any($event.target).checked)" /> auto-publier</label>
-              <label class="np-check"><input type="checkbox" [checked]="f.active" (change)="toggleFeed(f, 'active', $any($event.target).checked)" /> actif</label>
-              <button class="btn btn-ghost btn-sm" style="color:var(--color-error)" (click)="removeFeed(f)">Suppr.</button>
-            </div>
-          }
-
-          <div class="np-feed-add">
-            <input type="text" [(ngModel)]="newFeed.label" placeholder="Nom (ex : Tennis Majors)" />
-            <input type="text" [(ngModel)]="newFeed.url" placeholder="https://…/rss" />
-            <label class="np-check"><input type="checkbox" [(ngModel)]="newFeed.autoPublish" /> auto-publier</label>
-            <button class="btn btn-primary btn-sm" [disabled]="feedBusy()" (click)="addFeed()">Ajouter</button>
-          </div>
-          <p class="panel-hint" style="margin-top:var(--space-2)">
-            Les articles importés arrivent en <strong>brouillon</strong> (à valider ici) sauf si « auto-publier » est coché.
-            Seuls le titre, un extrait et le lien vers la source sont repris.
-          </p>
-        </div>
-      } @else {
-        <div class="admin-card card np-editor">
-          <div class="admin-card-head">
-            <strong>{{ editingId() ? 'Modifier la publication' : 'Nouvelle publication' }}</strong>
-            <button class="btn btn-ghost btn-sm" (click)="cancel()">← Retour</button>
-          </div>
-
-          <div class="np-2col">
-            <div>
-              <label class="field-block-label">Catégorie</label>
-              <select [(ngModel)]="draft.category">
-                @for (c of categories; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
-              </select>
-            </div>
-            <div>
-              <label class="field-block-label">Statut</label>
-              <select [(ngModel)]="draft.status">
-                @for (s of statuses; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
-              </select>
-            </div>
-          </div>
-
-          <label class="field-block-label">Titre</label>
-          <input type="text" [(ngModel)]="draft.title" placeholder="Titre de l'actualité" />
-
-          <label class="field-block-label">Résumé (affiché sur les cartes)</label>
-          <textarea rows="2" [(ngModel)]="draft.summary" placeholder="1 à 2 phrases"></textarea>
-
-          <label class="field-block-label">Contenu (Markdown)</label>
-          <textarea rows="10" [(ngModel)]="draft.body" placeholder="# Titre&#10;&#10;Texte, **gras**, - listes, [lien](https://…)"></textarea>
-          @if (draft.body) {
-            <details>
-              <summary style="font-size:var(--text-xs);color:var(--color-muted);cursor:pointer">Aperçu</summary>
-              <div class="np-preview" [innerHTML]="preview()"></div>
-            </details>
-          }
-
-          <label class="field-block-label">Image de couverture</label>
-          @if (draft.coverImageUrl) {
-            <div class="np-gallery">
-              <figure>
-                <img [src]="draft.coverImageUrl" alt="" />
-                <button type="button" (click)="draft.coverImageUrl = null">×</button>
-              </figure>
-            </div>
-          }
-          <input type="file" accept="image/*" (change)="upload($event, 'cover')" [disabled]="uploadBusy()" />
-
-          <label class="field-block-label">Galerie (optionnel)</label>
-          @if (draft.gallery.length) {
-            <div class="np-gallery">
-              @for (g of draft.gallery; track g) {
-                <figure><img [src]="g" alt="" /><button type="button" (click)="removeGallery(g)">×</button></figure>
+            <div class="np-2col">
+              <label class="np-check">
+                <input type="checkbox" [(ngModel)]="draft.featured" /> Mettre à la une (carrousel d'accueil)
+              </label>
+              @if (draft.featured) {
+                <div class="np-field">
+                  <label>Ordre à la une <span style="font-weight:400">(0 = en premier)</span></label>
+                  <input type="number" [(ngModel)]="draft.featuredOrder" min="0" placeholder="0" />
+                </div>
               }
             </div>
-          }
-          <input type="file" accept="image/*" (change)="upload($event, 'gallery')" [disabled]="uploadBusy()" />
 
-          <div class="np-2col">
-            <div>
-              <label class="field-block-label">Date de publication @if (draft.status === 'scheduled') { <em>(programmation)</em> }</label>
-              <input type="datetime-local" [ngModel]="publishedLocal()" (ngModelChange)="draft.publishedAt = toIso($event)" />
-            </div>
-            <div>
-              <label class="field-block-label">Lieu (événement)</label>
-              <input type="text" [(ngModel)]="draft.location" placeholder="Club, ville" />
-            </div>
+            <label class="np-check">
+              <input type="checkbox" [(ngModel)]="draft.notifyOnPublish" /> Notifier tous les membres (push) à la publication
+            </label>
           </div>
 
-          @if (draft.category === 'evenement' || draft.category === 'tournoi') {
+          <!-- 3. Détails (repliable) -->
+          <details class="np-section" [open]="detailsOpen()" (toggle)="detailsOpen.set($any($event.target).open)">
+            <summary>Détails complémentaires</summary>
+
             <div class="np-2col">
-              <div>
-                <label class="field-block-label">Début</label>
-                <input type="datetime-local" [ngModel]="startsLocal()" (ngModelChange)="draft.startsAt = toIso($event)" />
+              <div class="np-field">
+                <label>Lieu</label>
+                <input type="text" [(ngModel)]="draft.location" placeholder="Club, ville" />
               </div>
-              <div>
-                <label class="field-block-label">Fin</label>
+              @if (draft.category === 'evenement' || draft.category === 'tournoi') {
+                <div class="np-field">
+                  <label>Début</label>
+                  <input type="datetime-local" [ngModel]="startsLocal()" (ngModelChange)="draft.startsAt = toIso($event)" />
+                </div>
+              }
+            </div>
+
+            @if (draft.category === 'evenement' || draft.category === 'tournoi') {
+              <div class="np-field" style="max-width:280px">
+                <label>Fin</label>
                 <input type="datetime-local" [ngModel]="endsLocal()" (ngModelChange)="draft.endsAt = toIso($event)" />
               </div>
-            </div>
-          }
+            }
 
-          <div class="np-2col">
-            <div>
-              <label class="field-block-label">Libellé du bouton (CTA)</label>
-              <input type="text" [(ngModel)]="draft.ctaLabel" placeholder="En savoir plus" />
-            </div>
-            <div>
-              <label class="field-block-label">Lien du CTA</label>
-              <input type="text" [(ngModel)]="draft.ctaUrl" placeholder="https://… ou /matchs" />
-            </div>
-          </div>
-
-          @if (draft.category === 'partenariat') {
             <div class="np-2col">
-              <div>
-                <label class="field-block-label">Code promo</label>
+              <div class="np-field">
+                <label>Libellé du bouton (CTA)</label>
+                <input type="text" [(ngModel)]="draft.ctaLabel" placeholder="En savoir plus" />
+              </div>
+              <div class="np-field">
+                <label>Lien du bouton</label>
+                <input type="text" [(ngModel)]="draft.ctaUrl" placeholder="https://… ou /matchs" />
+              </div>
+            </div>
+
+            @if (draft.category === 'partenariat') {
+              <div class="np-field" style="max-width:280px">
+                <label>Code promo</label>
                 <input type="text" [(ngModel)]="draft.promoCode" placeholder="ATC20" />
               </div>
-            </div>
-          }
-          @if (draft.category === 'infos_tennis') {
-            <div>
-              <label class="field-block-label">Source</label>
-              <input type="text" [(ngModel)]="draft.source" placeholder="RFI, L'Équipe, ATP…" />
-            </div>
-          }
-
-          <div class="np-2col">
-            <label class="np-check"><input type="checkbox" [(ngModel)]="draft.featured" /> À la une (carrousel)</label>
-            @if (draft.featured) {
-              <div>
-                <label class="field-block-label">Ordre à la une</label>
-                <input type="number" [(ngModel)]="draft.featuredOrder" min="0" placeholder="0 = en premier" />
+            }
+            @if (draft.category === 'infos_tennis') {
+              <div class="np-field" style="max-width:280px">
+                <label>Source</label>
+                <input type="text" [(ngModel)]="draft.source" placeholder="RFI, L'Équipe, ATP…" />
               </div>
             }
-          </div>
-          <label class="np-check"><input type="checkbox" [(ngModel)]="draft.notifyOnPublish" /> Notifier tous les membres (push) à la publication</label>
 
-          @if (msg()) { <p class="form-msg" [class.err]="!ok()">{{ msg() }}</p> }
+            <div class="np-field">
+              <label>Galerie photos</label>
+              @if (draft.gallery.length) {
+                <div class="np-gallery">
+                  @for (g of draft.gallery; track g) {
+                    <figure><img [src]="g" alt="" /><button type="button" (click)="removeGallery(g)">×</button></figure>
+                  }
+                </div>
+              }
+              <input class="np-file" type="file" accept="image/*" (change)="upload($event, 'gallery')" [disabled]="uploadBusy()" />
+            </div>
+          </details>
 
-          <div class="np-actions">
+          @if (msg()) { <p class="form-msg" [class.err]="!ok()" [class.ok]="ok()">{{ msg() }}</p> }
+
+          <div class="np-actionbar">
             <button class="btn btn-primary btn-sm" [disabled]="busy()" (click)="save()">
               {{ busy() ? 'Enregistrement…' : 'Enregistrer' }}
             </button>
+            @if (editingId() && draft.status === 'published') {
+              <button class="btn btn-ghost btn-sm" [disabled]="busy()" (click)="quickStatus('archived')">Archiver</button>
+            }
+            <span class="spacer"></span>
             @if (editingId()) {
               <button class="btn btn-ghost btn-sm" style="color:var(--color-error)" [disabled]="busy()" (click)="remove()">Supprimer</button>
             }
-            <span class="spacer"></span>
-            @if (draft.status !== 'published') {
-              <button class="btn btn-outline btn-sm" [disabled]="busy()" (click)="quickStatus('published')">Publier maintenant</button>
-            }
-            @if (draft.status === 'published') {
-              <button class="btn btn-outline btn-sm" [disabled]="busy()" (click)="quickStatus('archived')">Archiver</button>
-            }
           </div>
         </div>
+      } @else {
+        <!-- ═══ GESTION ═══ -->
+        <div class="np-switch">
+          <button [class.on]="mode() === 'publications'" (click)="mode.set('publications')">Publications</button>
+          <button [class.on]="mode() === 'feeds'" (click)="mode.set('feeds')">Sources RSS</button>
+        </div>
+
+        @if (mode() === 'publications') {
+          <p class="panel-hint">
+            Les articles déjà créés. Un « Programmé » devient visible tout seul à sa date.
+            Cliquez sur une ligne pour l'ouvrir, ou <strong>Nouvel article</strong> pour en créer un.
+          </p>
+
+          <div class="np-toolbar">
+            <button class="btn btn-primary btn-sm" (click)="newPost()">Nouvel article</button>
+            <span class="spacer"></span>
+            <input class="np-search" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Rechercher…" />
+          </div>
+          <div class="np-filters">
+            <button class="np-chip" [class.active]="statusFilter() === null" (click)="statusFilter.set(null)">Tous</button>
+            @for (s of statuses; track s.value) {
+              <button class="np-chip" [class.active]="statusFilter() === s.value" (click)="statusFilter.set(s.value)">{{ s.label }}</button>
+            }
+          </div>
+
+          @if (loading()) {
+            <p class="panel-loading">Chargement…</p>
+          } @else if (visible().length === 0) {
+            <p class="panel-empty">Aucun article{{ statusFilter() || search() ? ' pour ce filtre' : '' }}.</p>
+          } @else {
+            <div class="np-list">
+              @for (p of visible(); track p.id) {
+                <div class="np-row">
+                  <button
+                    class="np-fav" [class.on]="p.featured" [disabled]="favBusy() === p.id"
+                    [title]="p.featured ? 'Retirer de la une' : 'Mettre à la une'"
+                    (click)="toggleFeatured(p)">★</button>
+                  <button class="np-row-open" (click)="edit(p)">
+                    <img class="np-thumb" [src]="p.coverImageUrl || placeholder" alt="" />
+                    <div class="np-row-main">
+                      <div class="np-row-title">{{ p.title }}</div>
+                      <div class="np-row-meta">
+                        <span class="np-badge" [class]="p.status">{{ statusLabel(p.status) }}</span>
+                        <span>{{ categoryLabel(p.category) }}</span>
+                        @if (p.featured) { <span class="np-fav-tag">À la une</span> }
+                        @if (p.publishedAt) { <span>{{ p.publishedAt | date: 'd MMM y, HH:mm' }}</span> }
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        } @else {
+          <!-- ── Sources RSS ── -->
+          <p class="panel-hint">
+            Flux « Infos Tennis » agrégés automatiquement. Les articles importés arrivent en
+            <strong>brouillon</strong> (à valider dans Publications) sauf si « auto-publier » est coché.
+            Seuls le titre, un extrait et le lien vers la source sont repris.
+          </p>
+
+          <div class="admin-card card">
+            <div class="admin-card-head">
+              <strong>Flux configurés</strong>
+              <button class="btn btn-outline btn-sm" [disabled]="syncing()" (click)="syncFeeds()">
+                {{ syncing() ? 'Synchro…' : 'Synchroniser maintenant' }}
+              </button>
+            </div>
+            @if (syncMsg()) { <p class="form-msg" [class.err]="!syncOk()" [class.ok]="syncOk()">{{ syncMsg() }}</p> }
+
+            @if (feeds().length === 0) {
+              <p class="panel-empty">Aucun flux. Ajoutez-en un ci-dessous.</p>
+            }
+            @for (f of feeds(); track f.id) {
+              <div class="np-feed">
+                <div class="np-feed-main">
+                  <span class="np-feed-label">{{ f.label }}</span>
+                  <span class="np-feed-url">{{ f.url }}</span>
+                  @if (f.lastError) { <span class="np-feed-err">⚠ {{ f.lastError }}</span> }
+                  @else if (f.lastSyncAt) { <span class="np-feed-sync">synchro {{ f.lastSyncAt | date: 'd MMM, HH:mm' }}</span> }
+                </div>
+                <label class="np-check"><input type="checkbox" [checked]="f.autoPublish" (change)="toggleFeed(f, 'autoPublish', $any($event.target).checked)" /> auto-publier</label>
+                <label class="np-check"><input type="checkbox" [checked]="f.active" (change)="toggleFeed(f, 'active', $any($event.target).checked)" /> actif</label>
+                <button class="btn btn-ghost btn-sm" style="color:var(--color-error)" (click)="removeFeed(f)">Suppr.</button>
+              </div>
+            }
+
+            <div class="np-feed-add">
+              <input type="text" [(ngModel)]="newFeed.label" placeholder="Nom (ex : Tennis Majors)" />
+              <input type="text" [(ngModel)]="newFeed.url" placeholder="https://…/rss" />
+              <label class="np-check"><input type="checkbox" [(ngModel)]="newFeed.autoPublish" /> auto-publier</label>
+              <button class="btn btn-primary btn-sm" [disabled]="feedBusy()" (click)="addFeed()">Ajouter</button>
+            </div>
+          </div>
+        }
       }
     </div>
   `,
@@ -326,13 +482,17 @@ export class NewsPanelComponent implements OnInit {
 
   readonly categories = POST_CATEGORIES;
   readonly statuses = POST_STATUSES;
+  readonly editorStatuses = EDITOR_STATUSES;
   readonly placeholder = '/assets/img/w/w-annonce.webp';
 
+  readonly mode = signal<'publications' | 'feeds'>('publications');
   readonly posts = signal<AdminPost[]>([]);
   readonly loading = signal(true);
   readonly statusFilter = signal<PostStatus | null>(null);
+  readonly search = signal('');
   readonly editing = signal(false);
   readonly editingId = signal<string | null>(null);
+  readonly detailsOpen = signal(false);
   readonly busy = signal(false);
   readonly uploadBusy = signal(false);
   readonly msg = signal('');
@@ -351,13 +511,27 @@ export class NewsPanelComponent implements OnInit {
 
   readonly visible = computed(() => {
     const f = this.statusFilter();
-    return f ? this.posts().filter((p) => p.status === f) : this.posts();
+    const q = this.search().trim().toLowerCase();
+    return this.posts().filter((p) => {
+      if (f && p.status !== f) return false;
+      if (q && !`${p.title} ${p.summary}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
   });
 
   readonly publishedLocal = () => isoToLocal(this.draft.publishedAt);
   readonly startsLocal = () => isoToLocal(this.draft.startsAt);
   readonly endsLocal = () => isoToLocal(this.draft.endsAt);
   readonly toIso = (v: string) => localToIso(v);
+
+  statusHint(): string {
+    return EDITOR_STATUSES.find((s) => s.value === this.draft.status)?.hint ?? '';
+  }
+
+  hasDetails(): boolean {
+    const d = this.draft;
+    return Boolean(d.location || d.startsAt || d.endsAt || d.ctaLabel || d.ctaUrl || d.promoCode || d.source || d.gallery.length);
+  }
 
   ngOnInit(): void {
     this.reload();
@@ -366,6 +540,11 @@ export class NewsPanelComponent implements OnInit {
 
   private loadFeeds(): void {
     this.svc.listFeeds().subscribe({ next: (f) => this.feeds.set(f) });
+  }
+
+  setStatus(s: PostStatus): void {
+    this.draft.status = s;
+    if (s !== 'scheduled') this.draft.publishedAt = null;
   }
 
   /** Mettre / retirer de la une directement depuis la liste. */
@@ -439,16 +618,47 @@ export class NewsPanelComponent implements OnInit {
 
   /** Aperçu grossier côté client (le rendu final assaini vient de l'API). */
   preview(): string {
-    const html = (this.draft.body ?? '')
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/^### (.*)$/gm, '<h4>$1</h4>')
-      .replace(/^## (.*)$/gm, '<h3>$1</h3>')
-      .replace(/^# (.*)$/gm, '<h2>$1</h2>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\[(.+?)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-      .replace(/\n{2,}/g, '</p><p>')
-      .replace(/\n/g, '<br>');
-    return `<p>${html}</p>`;
+    const src = (this.draft.body ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const lines = src.split('\n');
+    const out: string[] = [];
+    let para: string[] = [];
+    let list: 'ul' | 'ol' | null = null;
+
+    const flushPara = () => {
+      if (para.length) { out.push(`<p>${inline(para.join(' '))}</p>`); para = []; }
+    };
+    const flushList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+    const inline = (s: string) =>
+      s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*(?!\s)([^*]+?)\*/g, '$1<em>$2</em>')
+        .replace(/\[(.+?)\]\((https?:\/\/[^)]+|\/[^)]*)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+    for (const raw of lines) {
+      const line = raw.trimEnd();
+      const h = /^(#{1,4})\s+(.*)$/.exec(line);
+      const li = /^[-*]\s+(.*)$/.exec(line);
+      const oli = /^\d+\.\s+(.*)$/.exec(line);
+      if (h) {
+        flushPara(); flushList();
+        const lvl = h[1].length + 1;
+        out.push(`<h${lvl}>${inline(h[2])}</h${lvl}>`);
+      } else if (li) {
+        flushPara();
+        if (list !== 'ul') { flushList(); out.push('<ul>'); list = 'ul'; }
+        out.push(`<li>${inline(li[1])}</li>`);
+      } else if (oli) {
+        flushPara();
+        if (list !== 'ol') { flushList(); out.push('<ol>'); list = 'ol'; }
+        out.push(`<li>${inline(oli[1])}</li>`);
+      } else if (line.trim() === '') {
+        flushPara(); flushList();
+      } else {
+        flushList();
+        para.push(line);
+      }
+    }
+    flushPara(); flushList();
+    return out.join('');
   }
 
   private reload(): void {
@@ -459,14 +669,13 @@ export class NewsPanelComponent implements OnInit {
     });
   }
 
-  setFilter(s: PostStatus | null): void { this.statusFilter.set(s); }
-
   categoryLabel(c: PostCategory): string { return this.categories.find((x) => x.value === c)?.label ?? c; }
   statusLabel(s: PostStatus): string { return this.statuses.find((x) => x.value === s)?.label ?? s; }
 
   newPost(): void {
     this.draft = emptyDraft();
     this.editingId.set(null);
+    this.detailsOpen.set(false);
     this.msg.set('');
     this.editing.set(true);
   }
@@ -484,6 +693,7 @@ export class NewsPanelComponent implements OnInit {
           source: full.source, notifyOnPublish: full.notifyOnPublish,
         };
         this.editingId.set(full.id);
+        this.detailsOpen.set(this.hasDetails());
         this.msg.set('');
         this.editing.set(true);
       },
@@ -515,7 +725,7 @@ export class NewsPanelComponent implements OnInit {
       return;
     }
     if (p.status === 'scheduled' && !p.publishedAt) {
-      this.fail('Une publication programmée doit avoir une date de publication.');
+      this.fail('Un article programmé doit avoir une date de publication.');
       return;
     }
     this.busy.set(true);
@@ -543,7 +753,7 @@ export class NewsPanelComponent implements OnInit {
 
   remove(): void {
     const id = this.editingId();
-    if (!id || !confirm('Supprimer définitivement cette publication ?')) return;
+    if (!id || !confirm('Supprimer définitivement cet article ?')) return;
     this.busy.set(true);
     this.svc.adminRemove(id).subscribe({
       next: () => { this.busy.set(false); this.editing.set(false); this.reload(); },
