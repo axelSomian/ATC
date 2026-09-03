@@ -225,7 +225,7 @@
 | `loginWithGoogle` accepte `email_verified !== true` (`undefined` passe) | 🟢 Basse | 📋 À faire — exiger `=== true` |
 | Intercepteur front ajoute `Authorization` à **toutes** les requêtes `HttpClient` (OK aujourd'hui, tout est relatif) | 🟢 Basse | 📋 À faire — restreindre à `/api/` |
 | Access token en `localStorage` (`atc_token`) | ⚪️ Info | Compromis standard SPA ; refresh token bien en cookie `HttpOnly` |
-| Aucun parcours « mot de passe oublié » (comptes e-mail **et** Google-only) | 🟡 Moyenne | 📋 À décider produit — `passwordResetTemplate` est du code mort (pas de route/token) |
+| ~~Aucun parcours « mot de passe oublié »~~ | 🔴 Haute | ✅ Fait (2026-09-03) | Modèle `PasswordResetToken` (SHA-256 du jeton, usage unique, exp. 30 min ; migration `20260903090000_password_reset`). `POST /auth/forgot-password` (réponse identique que l'e-mail existe ou non, n'envoie qu'aux comptes avec `passwordHash`) + `POST /auth/reset-password` (applique + ouvre une session). Rate-limit 5 / 15 min sur les deux. Front : `/auth/forgot-password`, `/auth/reset-password?token=`, lien sous le champ mot de passe du login. Sessions existantes non révoquées (JWT stateless) — à traiter avec la rotation de refresh token. |
 | Bon : contrôles de propriété sur toutes les mutations, `/admin/*` derrière `requireAdmin`, Zod partout, zéro SQL brut, bcrypt 12, refresh `HttpOnly`+`secure`, double validation des scores | — | ✅ |
 
 ---

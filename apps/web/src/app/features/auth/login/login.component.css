@@ -230,3 +230,10 @@
   .auth-visual { padding-left: 18px; padding-right: 18px; }
   .auth-panel { padding-left: 16px; padding-right: 16px; }
 }
+
+/* Lien « mot de passe oublié » sous le champ */
+.forgot-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: var(--text-xs);
+}

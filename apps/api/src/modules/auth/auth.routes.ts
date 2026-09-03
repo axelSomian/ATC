@@ -1,7 +1,13 @@
 import { Router } from 'express';
 import { ZodError } from 'zod';
-import { signup, login, loginWithGoogle, refresh, getMe } from './auth.service.js';
-import { signupSchema, loginSchema, googleAuthSchema } from './auth.schema.js';
+import {
+  signup, login, loginWithGoogle, refresh, getMe,
+  requestPasswordReset, resetPassword,
+} from './auth.service.js';
+import {
+  signupSchema, loginSchema, googleAuthSchema,
+  forgotPasswordSchema, resetPasswordSchema,
+} from './auth.schema.js';
 import { authenticate } from '../../middleware/passport.js';
 import { AppError } from '../../middleware/error.js';
 
@@ -39,6 +45,28 @@ router.post('/google', async (req, res, next) => {
       accessToken: result.accessToken,
       isNew: result.isNew,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const { email } = forgotPasswordSchema.parse(req.body);
+    await requestPasswordReset(email);
+    // Réponse identique que l'e-mail existe ou non.
+    res.json({ message: "Si un compte existe pour cette adresse, un e-mail vient d'être envoyé." });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/reset-password', async (req, res, next) => {
+  try {
+    const { token, password } = resetPasswordSchema.parse(req.body);
+    const result = await resetPassword(token, password);
+    res.cookie('refreshToken', result.refreshToken, cookieOptions());
+    res.json({ user: result.user, accessToken: result.accessToken });
   } catch (err) {
     next(err);
   }

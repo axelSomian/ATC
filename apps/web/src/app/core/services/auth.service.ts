@@ -53,6 +53,16 @@ export class AuthService {
       .pipe(tap((res) => this.store.updateToken(res.accessToken)));
   }
 
+  forgotPassword(email: string) {
+    return this.http.post<{ message: string }>(`${API}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, password: string) {
+    return this.http
+      .post<LoginResponse>(`${API}/auth/reset-password`, { token, password }, { withCredentials: true })
+      .pipe(tap((res) => this.store.setAuth(res.user, res.accessToken)));
+  }
+
   logout() {
     return this.http.post(`${API}/auth/logout`, {}, { withCredentials: true }).pipe(
       tap(() => {

@@ -90,11 +90,22 @@ const signupLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Mot de passe oublié : anti-bombardement d'e-mails.
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  max: 5,
+  message: { error: 'Trop de demandes, réessayez dans quelques minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/v1/auth/login', loginLimiter);
 app.use('/api/v1/auth/google', loginLimiter);
 app.use('/api/v1/auth/signup', signupLimiter);
+app.use('/api/v1/auth/forgot-password', resetLimiter);
+app.use('/api/v1/auth/reset-password', resetLimiter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1', referenceRoutes);
 app.use('/api/v1/members', membersRoutes);

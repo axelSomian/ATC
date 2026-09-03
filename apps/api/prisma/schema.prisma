@@ -46,6 +46,7 @@ model User {
   conversations            ConversationParticipant[]
   messagesSent             Message[]
   pushSubscriptions        PushSubscription[]
+  passwordResetTokens      PasswordResetToken[]
 
   @@index([rating, ratingGames])
   @@index([level, online])
@@ -284,4 +285,19 @@ model RssFeed {
   lastSyncAt  DateTime?
   lastError   String?
   createdAt   DateTime  @default(now())
+}
+
+// Jetons de réinitialisation de mot de passe. On ne stocke que le SHA-256 du
+// jeton (comme un mot de passe) ; usage unique ; expiration 30 min.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

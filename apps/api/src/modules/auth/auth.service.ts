@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
@@ -5,8 +6,11 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { initialRating } from '../matches/elo.js';
 import { assertValidClub } from '../reference/reference.service.js';
-import { sendWelcome } from '../mailer/mailer.service.js';
+import { sendWelcome, sendPasswordReset } from '../mailer/mailer.service.js';
 import type { SignupDto, LoginDto, GoogleAuthDto } from './auth.schema.js';
+
+const RESET_TTL_MS = 30 * 60 * 1000;
+const sha256 = (v: string) => crypto.createHash('sha256').update(v).digest('hex');
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
@@ -186,6 +190,53 @@ export async function refresh(token: string) {
   if (!user) throw new AppError(401, 'Utilisateur introuvable');
 
   return generateTokens(user.id);
+}
+
+/**
+ * Demande de réinitialisation. Répond toujours sans erreur (on ne révèle pas
+ * si l'e-mail existe). N'envoie que si le compte existe ET a un mot de passe
+ * (les comptes Google n'en ont pas).
+ */
+export async function requestPasswordReset(email: string) {
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  if (!user?.passwordHash) return;
+
+  // Un seul jeton actif à la fois.
+  await prisma.passwordResetToken.updateMany({
+    where: { userId: user.id, usedAt: null },
+    data: { usedAt: new Date() },
+  });
+
+  const raw = crypto.randomBytes(32).toString('hex');
+  await prisma.passwordResetToken.create({
+    data: { userId: user.id, tokenHash: sha256(raw), expiresAt: new Date(Date.now() + RESET_TTL_MS) },
+  });
+
+  const base = (process.env.CORS_ORIGIN ?? '').replace(/\/$/, '');
+  sendPasswordReset(user.email, user.name, `${base}/auth/reset-password?token=${raw}`);
+}
+
+/** Applique le nouveau mot de passe et ouvre une session (comme un login). */
+export async function resetPassword(token: string, password: string) {
+  const row = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash: sha256(token) },
+    include: { user: true },
+  });
+  if (!row || row.usedAt || row.expiresAt.getTime() < Date.now()) {
+    throw new AppError(400, 'Lien invalide ou expiré. Refaites une demande.');
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: row.userId }, data: { passwordHash } }),
+    prisma.passwordResetToken.updateMany({
+      where: { userId: row.userId, usedAt: null },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+
+  const tokens = generateTokens(row.userId);
+  return { user: authUserResponse(row.user), ...tokens };
 }
 
 export async function getMe(userId: string) {

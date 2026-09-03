@@ -21,6 +21,15 @@ export const googleAuthSchema = z.object({
   credential: z.string().min(20, 'Jeton Google manquant'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(20).max(200),
+  password: z.string().min(8, 'Minimum 8 caractères'),
+});
+
 export const updateProfileSchema = z.object({
   name: z.string().min(2).max(50).optional(),
   phone: phoneField.optional().nullable(),
@@ -38,3 +47,5 @@ export type SignupDto = z.infer<typeof signupSchema>;
 export type LoginDto = z.infer<typeof loginSchema>;
 export type GoogleAuthDto = z.infer<typeof googleAuthSchema>;
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;
+export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;
