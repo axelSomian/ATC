@@ -55,39 +55,86 @@ export interface MatchContext {
 
 // ── Création (appelée à l'acceptation d'une proposition de match) ───────────
 
-async function ensureConversation(
-  link: { dispoPostId?: string; quickMatchId?: string },
-  userA: string,
-  userB: string,
-) {
-  const where = link.dispoPostId
-    ? { dispoPostId: link.dispoPostId }
-    : { quickMatchId: link.quickMatchId! };
+/** Clé métier d'une conversation : les deux userId triés, joints par ':'. */
+const pairKeyOf = (a: string, b: string) => [a, b].sort().join(':');
 
-  const existing = await prisma.conversation.findUnique({ where });
+/**
+ * Garantit qu'une conversation existe entre deux joueurs.
+ * 1 conversation = 1 relation : si elle existe déjà, on la réutilise telle
+ * quelle (historique conservé) ; on n'en crée jamais une seconde pour la paire.
+ */
+async function ensureConversation(userA: string, userB: string) {
+  const pairKey = pairKeyOf(userA, userB);
+
+  const existing = await prisma.conversation.findUnique({ where: { pairKey } });
   if (existing) return existing;
 
   try {
     const conv = await prisma.conversation.create({
-      data: { ...link, participants: { create: [{ userId: userA }, { userId: userB }] } },
+      data: { pairKey, participants: { create: [{ userId: userA }, { userId: userB }] } },
     });
     emitToUser(userA, 'conversation:new', { id: conv.id });
     emitToUser(userB, 'conversation:new', { id: conv.id });
     return conv;
   } catch {
     // Course entre deux acceptations concurrentes : la contrainte unique a joué, on relit.
-    return prisma.conversation.findUnique({ where });
+    return prisma.conversation.findUnique({ where: { pairKey } });
   }
 }
 
 /** Hook depuis dispos.service : à l'acceptation d'une demande sur une annonce. */
-export function ensureConversationForDispo(dispoPostId: string, hostId: string, guestId: string) {
-  return ensureConversation({ dispoPostId }, hostId, guestId);
+export function ensureConversationForDispo(hostId: string, guestId: string) {
+  return ensureConversation(hostId, guestId);
 }
 
 /** Hook depuis quick-matches.service : à l'acceptation d'un défi direct. */
-export function ensureConversationForQuick(quickMatchId: string, challengerId: string, challengedId: string) {
-  return ensureConversation({ quickMatchId }, challengerId, challengedId);
+export function ensureConversationForQuick(challengerId: string, challengedId: string) {
+  return ensureConversation(challengerId, challengedId);
+}
+
+/**
+ * « Rappel du match » d'une conversation : le dernier match accepté entre les
+ * deux joueurs (annonce ou défi direct). Calculé à la lecture — la conversation
+ * n'est plus rattachée à un match précis.
+ */
+interface MatchCtxRow {
+  source: 'dispo' | 'quick';
+  source_id: string;
+  mwhen: Date;
+  mcourt: string;
+  mtype: string;
+  host_id: string;
+  guest_id: string;
+}
+
+async function latestMatchContext(userA: string, userB: string): Promise<MatchContext | null> {
+  const rows = await prisma.$queryRaw<MatchCtxRow[]>`
+    SELECT * FROM (
+      SELECT 'dispo' AS source, dp.id AS source_id, dp."when" AS mwhen,
+             dp.court AS mcourt, dp.type AS mtype,
+             dp."userId" AS host_id, mr."requesterId" AS guest_id
+      FROM "DispoPost" dp
+      JOIN "MatchRequest" mr ON mr."dispoPostId" = dp.id AND mr.status = 'accepted'
+      WHERE (dp."userId" = ${userA} AND mr."requesterId" = ${userB})
+         OR (dp."userId" = ${userB} AND mr."requesterId" = ${userA})
+      UNION ALL
+      SELECT 'quick' AS source, qm.id, qm."when", qm.court, qm.type,
+             qm."challengerId" AS host_id, qm."challengedId" AS guest_id
+      FROM "QuickMatch" qm
+      WHERE qm.status = 'accepted'
+        AND ((qm."challengerId" = ${userA} AND qm."challengedId" = ${userB})
+          OR (qm."challengerId" = ${userB} AND qm."challengedId" = ${userA}))
+    ) mm
+    ORDER BY mm.mwhen DESC
+    LIMIT 1
+  `;
+  const r = rows[0];
+  if (!r) return null;
+  return {
+    source: r.source, sourceId: r.source_id, when: r.mwhen,
+    court: r.mcourt ?? '', type: r.mtype ?? '',
+    hostId: r.host_id ?? '', guestId: r.guest_id ?? '',
+  };
 }
 
 // ── Contrôle d'accès ──────────────────────────────────────────────────────
@@ -117,8 +164,6 @@ async function participantIdsOrThrow(userId: string, conversationId: string): Pr
 interface ConvListRow {
   id: string;
   lastMessageAt: Date;
-  dispoPostId: string | null;
-  quickMatchId: string | null;
   other_id: string | null;
   other_name: string | null;
   other_initials: string | null;
@@ -128,15 +173,13 @@ interface ConvListRow {
   last_created: Date | null;
   last_sender: string | null;
   unread: number;
-  dp_host: string | null;
-  dp_when: Date | null;
-  dp_court: string | null;
-  dp_type: string | null;
-  qm_host: string | null;
-  qm_guest: string | null;
-  qm_when: Date | null;
-  qm_court: string | null;
-  qm_type: string | null;
+  m_source: 'dispo' | 'quick' | null;
+  m_source_id: string | null;
+  m_when: Date | null;
+  m_court: string | null;
+  m_type: string | null;
+  m_host: string | null;
+  m_guest: string | null;
 }
 
 /**
@@ -147,7 +190,7 @@ interface ConvListRow {
 export async function listConversations(userId: string) {
   const rows = await prisma.$queryRaw<ConvListRow[]>`
     SELECT
-      c.id, c."lastMessageAt", c."dispoPostId", c."quickMatchId",
+      c.id, c."lastMessageAt",
       ou.id            AS other_id,
       ou.name          AS other_name,
       ou.initials      AS other_initials,
@@ -157,15 +200,13 @@ export async function listConversations(userId: string) {
       lm."createdAt"   AS last_created,
       lm."senderId"    AS last_sender,
       COALESCE(uc.cnt, 0)::int AS unread,
-      dp."userId"      AS dp_host,
-      dp."when"        AS dp_when,
-      dp.court         AS dp_court,
-      dp.type          AS dp_type,
-      qm."challengerId" AS qm_host,
-      qm."challengedId" AS qm_guest,
-      qm."when"        AS qm_when,
-      qm.court         AS qm_court,
-      qm.type          AS qm_type
+      mc.source        AS m_source,
+      mc.source_id     AS m_source_id,
+      mc.mwhen         AS m_when,
+      mc.mcourt        AS m_court,
+      mc.mtype         AS m_type,
+      mc.host_id       AS m_host,
+      mc.guest_id      AS m_guest
     FROM "Conversation" c
     JOIN "ConversationParticipant" me
       ON me."conversationId" = c.id AND me."userId" = ${userId}
@@ -190,26 +231,37 @@ export async function listConversations(userId: string) {
         AND m."senderId" <> ${userId}
         AND m."createdAt" > me."lastReadAt"
     ) uc ON true
-    LEFT JOIN "DispoPost"  dp ON dp.id = c."dispoPostId"
-    LEFT JOIN "QuickMatch" qm ON qm.id = c."quickMatchId"
+    LEFT JOIN LATERAL (
+      SELECT * FROM (
+        SELECT 'dispo' AS source, dp.id AS source_id, dp."when" AS mwhen,
+               dp.court AS mcourt, dp.type AS mtype,
+               dp."userId" AS host_id, mr."requesterId" AS guest_id
+        FROM "DispoPost" dp
+        JOIN "MatchRequest" mr ON mr."dispoPostId" = dp.id AND mr.status = 'accepted'
+        WHERE (dp."userId" = ${userId} AND mr."requesterId" = other."userId")
+           OR (dp."userId" = other."userId" AND mr."requesterId" = ${userId})
+        UNION ALL
+        SELECT 'quick' AS source, qm.id, qm."when", qm.court, qm.type,
+               qm."challengerId" AS host_id, qm."challengedId" AS guest_id
+        FROM "QuickMatch" qm
+        WHERE qm.status = 'accepted'
+          AND ((qm."challengerId" = ${userId} AND qm."challengedId" = other."userId")
+            OR (qm."challengerId" = other."userId" AND qm."challengedId" = ${userId}))
+      ) mm
+      ORDER BY mm.mwhen DESC
+      LIMIT 1
+    ) mc ON true
     ORDER BY c."lastMessageAt" DESC
   `;
 
   return rows.map((r) => {
-    let match: MatchContext | null = null;
-    if (r.dispoPostId && r.dp_when) {
-      match = {
-        source: 'dispo', sourceId: r.dispoPostId, when: r.dp_when,
-        court: r.dp_court ?? '', type: r.dp_type ?? '',
-        hostId: r.dp_host ?? '', guestId: r.other_id ?? '',
-      };
-    } else if (r.quickMatchId && r.qm_when) {
-      match = {
-        source: 'quick', sourceId: r.quickMatchId, when: r.qm_when,
-        court: r.qm_court ?? '', type: r.qm_type ?? '',
-        hostId: r.qm_host ?? '', guestId: r.qm_guest ?? '',
-      };
-    }
+    const match: MatchContext | null = r.m_source && r.m_when
+      ? {
+          source: r.m_source, sourceId: r.m_source_id ?? '', when: r.m_when,
+          court: r.m_court ?? '', type: r.m_type ?? '',
+          hostId: r.m_host ?? '', guestId: r.m_guest ?? '',
+        }
+      : null;
 
     return {
       id: r.id,
@@ -244,68 +296,35 @@ export async function getUnreadTotal(userId: string) {
 }
 
 interface ConvDetailRow {
-  id: string;
-  dispoPostId: string | null;
-  quickMatchId: string | null;
   p_user: string;
   u_id: string;
   u_name: string;
   u_initials: string;
   u_avatar: string | null;
   u_level: number;
-  dp_host: string | null;
-  dp_when: Date | null;
-  dp_court: string | null;
-  dp_type: string | null;
-  qm_host: string | null;
-  qm_guest: string | null;
-  qm_when: Date | null;
-  qm_court: string | null;
-  qm_type: string | null;
 }
 
 export async function getConversation(userId: string, conversationId: string) {
-  // Une seule requête : participants (2 lignes) + contexte match.
   const rows = await prisma.$queryRaw<ConvDetailRow[]>`
-    SELECT c.id, c."dispoPostId", c."quickMatchId",
-      p."userId"     AS p_user,
+    SELECT p."userId"     AS p_user,
       u.id           AS u_id,
       u.name         AS u_name,
       u.initials     AS u_initials,
       u."avatarUrl"  AS u_avatar,
-      u.level        AS u_level,
-      dp."userId"    AS dp_host, dp."when" AS dp_when, dp.court AS dp_court, dp.type AS dp_type,
-      qm."challengerId" AS qm_host, qm."challengedId" AS qm_guest, qm."when" AS qm_when, qm.court AS qm_court, qm.type AS qm_type
-    FROM "Conversation" c
-    JOIN "ConversationParticipant" p ON p."conversationId" = c.id
+      u.level        AS u_level
+    FROM "ConversationParticipant" p
     JOIN "User" u ON u.id = p."userId"
-    LEFT JOIN "DispoPost"  dp ON dp.id = c."dispoPostId"
-    LEFT JOIN "QuickMatch" qm ON qm.id = c."quickMatchId"
-    WHERE c.id = ${conversationId}
+    WHERE p."conversationId" = ${conversationId}
   `;
   if (rows.length === 0 || !rows.some((r) => r.p_user === userId)) {
     throw new AppError(404, 'Conversation introuvable');
   }
 
-  const first = rows[0];
-  let match: MatchContext | null = null;
-  if (first.dispoPostId && first.dp_when) {
-    const guestId = rows.find((r) => r.p_user !== first.dp_host)?.p_user ?? '';
-    match = {
-      source: 'dispo', sourceId: first.dispoPostId, when: first.dp_when,
-      court: first.dp_court ?? '', type: first.dp_type ?? '',
-      hostId: first.dp_host ?? '', guestId,
-    };
-  } else if (first.quickMatchId && first.qm_when) {
-    match = {
-      source: 'quick', sourceId: first.quickMatchId, when: first.qm_when,
-      court: first.qm_court ?? '', type: first.qm_type ?? '',
-      hostId: first.qm_host ?? '', guestId: first.qm_guest ?? '',
-    };
-  }
+  const otherId = rows.find((r) => r.p_user !== userId)?.p_user;
+  const match = otherId ? await latestMatchContext(userId, otherId) : null;
 
   return {
-    id: first.id,
+    id: conversationId,
     participants: rows.map((r) => ({
       id: r.u_id, name: r.u_name, initials: r.u_initials, avatarUrl: r.u_avatar, level: r.u_level,
     })),
@@ -397,13 +416,13 @@ export async function getConversationBySource(
     const guestId = dispo.requests[0]?.requesterId;
     if (!guestId) throw new AppError(400, 'Aucun adversaire confirmé pour ce match');
     if (userId !== dispo.userId && userId !== guestId) throw new AppError(403, 'Non autorisé');
-    conv = await ensureConversation({ dispoPostId: sourceId }, dispo.userId, guestId);
+    conv = await ensureConversation(dispo.userId, guestId);
   } else {
     const qm = await prisma.quickMatch.findUnique({ where: { id: sourceId } });
     if (!qm) throw new AppError(404, 'Match rapide introuvable');
     if (qm.status !== 'accepted') throw new AppError(400, "Le défi n'a pas encore été accepté");
     if (userId !== qm.challengerId && userId !== qm.challengedId) throw new AppError(403, 'Non autorisé');
-    conv = await ensureConversation({ quickMatchId: sourceId }, qm.challengerId, qm.challengedId);
+    conv = await ensureConversation(qm.challengerId, qm.challengedId);
   }
 
   if (!conv) throw new AppError(500, 'Conversation indisponible');

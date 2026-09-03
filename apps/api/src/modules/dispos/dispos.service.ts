@@ -223,10 +223,8 @@ export async function respondRequest(
 
   if (action === 'decline') {
     const updated = await prisma.matchRequest.update({ where: { id: reqId }, data: { status: 'declined' } });
-    // Si on retire un invité déjà retenu, sa conversation n'a plus lieu d'être.
-    if (req.status === 'accepted') {
-      await prisma.conversation.delete({ where: { dispoPostId } }).catch(() => {});
-    }
+    // La conversation avec cet invité (s'il en existe une) est conservée :
+    // 1 conversation = 1 relation entre 2 joueurs, pas 1 par match.
     createNotification(req.requesterId, 'match_declined', { dispoId: dispoPostId, when, court }).catch(() => {});
     return updated;
   }
@@ -254,15 +252,15 @@ export async function respondRequest(
     prisma.matchRequest.update({ where: { id: reqId }, data: { status: 'accepted' } }),
   ]);
 
-  // Remplacement d'adversaire : la conversation repart de zéro (l'ancien invité
-  // ne doit pas voir les échanges avec le nouveau) et l'ancien est prévenu.
+  // Remplacement d'adversaire : l'ancien invité est prévenu. Sa conversation avec
+  // l'organisateur est conservée (relation entre 2 joueurs) ; les échanges avec le
+  // nouvel invité vivent dans une conversation distincte, il n'y a donc rien à isoler.
   if (previous && previous.requesterId !== req.requesterId) {
-    await prisma.conversation.delete({ where: { dispoPostId } }).catch(() => {});
     createNotification(previous.requesterId, 'match_spot_reassigned', { dispoId: dispoPostId, when, court }).catch(() => {});
   }
 
-  // Conversation privée organisateur ↔ invité retenu.
-  ensureConversationForDispo(dispoPostId, dispo.userId, req.requesterId).catch(() => {});
+  // Conversation privée organisateur ↔ invité retenu (réutilisée si elle existe déjà).
+  ensureConversationForDispo(dispo.userId, req.requesterId).catch(() => {});
 
   createNotification(req.requesterId, 'match_confirmed', { dispoId: dispoPostId, when, court }).catch(() => {});
   for (const d of autoDeclined) {

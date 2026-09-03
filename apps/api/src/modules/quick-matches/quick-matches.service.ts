@@ -66,7 +66,7 @@ export async function respond(quickMatchId: string, userId: string, action: 'acc
 
   if (action === 'accept') {
     // Conversation privée entre les deux joueurs du défi.
-    ensureConversationForQuick(quickMatchId, qm.challengerId, qm.challengedId).catch(() => {});
+    ensureConversationForQuick(qm.challengerId, qm.challengedId).catch(() => {});
   }
 
   createNotification(qm.challengerId, action === 'accept' ? 'match_confirmed' : 'match_declined', {
