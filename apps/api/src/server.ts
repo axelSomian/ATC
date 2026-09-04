@@ -10,7 +10,8 @@ import rateLimit from 'express-rate-limit';
 import passport from 'passport';
 import { log } from './lib/logger.js';
 import { captureError } from './lib/sentry.js';
-import { requestLog } from './middleware/request-log.js';
+import { prisma } from './lib/prisma.js';
+import { requestLog, getLastActivityAt } from './middleware/request-log.js';
 import { errorHandler } from './middleware/error.js';
 import './middleware/passport.js';
 import { setIo, handlePresence, resetPresence, setSocketConversation } from './lib/socket.js';
@@ -147,3 +148,16 @@ httpServer.listen(PORT, () => {
   log.info('api.started', { port: Number(PORT), env: process.env.NODE_ENV ?? 'development' });
   resetPresence();
 });
+
+// Neon (plan gratuit) suspend le compute après ~5 min d'inactivité ; la requête
+// suivante paie alors ~2-3 s de réveil (+ des erreurs « terminating connection »).
+// Pendant qu'un membre utilise l'app (requête HTTP dans les 8 dernières minutes),
+// on garde la base chaude par un ping léger. Dès que le trafic cesse, on laisse
+// Neon se rendormir → pas de gaspillage d'heures de calcul.
+if (process.env.NODE_ENV === 'production') {
+  const keepAlive = setInterval(() => {
+    if (Date.now() - getLastActivityAt() > 8 * 60 * 1000) return;
+    prisma.$queryRaw`SELECT 1`.catch((err) => log.warn('db.keepalive.failed', { err }));
+  }, 4 * 60 * 1000);
+  keepAlive.unref();
+}

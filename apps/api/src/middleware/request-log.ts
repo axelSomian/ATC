@@ -2,6 +2,10 @@ import type { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'node:crypto';
 import { log } from '../lib/logger.js';
 
+/** Horodatage de la dernière requête HTTP réelle (hors /health) — sert au keep-alive DB. */
+let lastActivityAt = Date.now();
+export const getLastActivityAt = (): number => lastActivityAt;
+
 /**
  * Une ligne de log par requête HTTP à sa fin :
  *   method, path, status, durée (ms), userId (si authentifié), ip, reqId.
@@ -11,6 +15,7 @@ import { log } from '../lib/logger.js';
 export function requestLog(req: Request, res: Response, next: NextFunction) {
   if (req.path === '/health') return next();
 
+  lastActivityAt = Date.now();
   const reqId = req.get('x-request-id') || randomUUID();
   (req as Request & { reqId: string }).reqId = reqId;
   res.setHeader('x-request-id', reqId);
