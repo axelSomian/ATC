@@ -122,10 +122,20 @@
           </select>
         </div>
 
+        <label class="signup-consent">
+          <input type="checkbox" formControlName="acceptTerms" />
+          <span>
+            J'ai lu et j'accepte les
+            <a routerLink="/legal/cgu" target="_blank" rel="noopener" class="link-clay">conditions d'utilisation</a>
+            et la
+            <a routerLink="/legal/confidentialite" target="_blank" rel="noopener" class="link-clay">politique de confidentialité</a>.
+          </span>
+        </label>
+
         <button
           type="submit"
           class="btn btn-primary btn-full btn-lg"
-          [disabled]="loading()"
+          [disabled]="loading() || form.controls.acceptTerms.invalid"
         >
           {{ loading() ? 'Création…' : 'Créer mon compte' }}
         </button>

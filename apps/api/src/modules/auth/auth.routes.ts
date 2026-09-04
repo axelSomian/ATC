@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 import {
   signup, login, loginWithGoogle, refresh, getMe,
   requestPasswordReset, resetPassword,
-  verifyEmail, resendVerification,
+  verifyEmail, resendVerification, acceptTerms,
 } from './auth.service.js';
 import {
   signupSchema, loginSchema, googleAuthSchema,
@@ -87,6 +87,15 @@ router.post('/resend-verification', authenticate, async (req, res, next) => {
   try {
     const result = await resendVerification((req.user as { id: string }).id);
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/accept-terms', authenticate, async (req, res, next) => {
+  try {
+    const user = await acceptTerms((req.user as { id: string }).id);
+    res.json({ user });
   } catch (err) {
     next(err);
   }

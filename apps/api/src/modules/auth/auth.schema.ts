@@ -9,6 +9,9 @@ export const signupSchema = z.object({
   level: z.number().int().min(1).max(5),
   city: z.string().optional(),
   clubId: z.string().optional(),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: 'Vous devez accepter les CGU et la politique de confidentialité.' }),
+  }),
 });
 
 export const loginSchema = z.object({

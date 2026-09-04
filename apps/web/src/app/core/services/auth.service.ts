@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap, catchError, throwError } from 'rxjs';
 import { AuthStore } from '../stores/auth.store';
-import type { GoogleLoginResponse, LoginResponse, UserMe } from '../models/user.model';
+import type { AuthUser, GoogleLoginResponse, LoginResponse, UserMe } from '../models/user.model';
 
 const API = '/api/v1';
 
@@ -12,6 +12,7 @@ export interface SignupPayload {
   email: string;
   password: string;
   level: number;
+  acceptTerms: true;
   phone?: string;
   city?: string;
   clubId?: string;
@@ -72,6 +73,13 @@ export class AuthService {
   resendVerification() {
     return this.http.post<{ sent?: boolean; alreadyVerified?: boolean }>(
       `${API}/auth/resend-verification`, {},
+    );
+  }
+
+  /** Enregistre l'acceptation des CGU + politique de confidentialité. */
+  acceptTerms() {
+    return this.http.post<{ user: AuthUser }>(`${API}/auth/accept-terms`, {}).pipe(
+      tap((res) => this.store.setUser(res.user)),
     );
   }
 

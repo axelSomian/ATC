@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, adminGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard, adminGuard, termsGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
@@ -9,8 +9,24 @@ export const routes: Routes = [
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
   {
-    path: '',
+    path: 'legal/confidentialite',
+    loadComponent: () =>
+      import('./features/legal/privacy.component').then((m) => m.LegalPrivacyComponent),
+  },
+  {
+    path: 'legal/cgu',
+    loadComponent: () =>
+      import('./features/legal/terms.component').then((m) => m.LegalTermsComponent),
+  },
+  {
+    path: 'legal/accept',
     canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/legal/accept.component').then((m) => m.LegalAcceptComponent),
+  },
+  {
+    path: '',
+    canActivate: [authGuard, termsGuard],
     loadComponent: () =>
       import('./layout/main-layout/main-layout.component').then((m) => m.MainLayoutComponent),
     children: [

@@ -31,6 +31,8 @@ model User {
   joinedAt        DateTime @default(now())
   online          Boolean  @default(false)
   emailVerified   Boolean  @default(false) // e-mail confirmé (Google = true d'office)
+  termsAcceptedAt DateTime? // date d'acceptation des CGU + politique de confidentialité
+  termsVersion    String?   // version des textes acceptée (voir src/lib/legal.ts)
   role            String   @default("member") // 'member' | 'admin'
   rating          Int      @default(1000)
   ratingGames     Int      @default(0)

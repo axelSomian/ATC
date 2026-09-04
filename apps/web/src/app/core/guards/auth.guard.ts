@@ -12,6 +12,26 @@ export const authGuard: CanActivateFn = () => {
   return router.createUrlTree(['/auth/login']);
 };
 
+/**
+ * Bloque l'accès à l'app tant que le membre n'a pas accepté la version courante
+ * des CGU + politique de confidentialité. Au rechargement, le profil n'est pas
+ * encore chargé : on force un /auth/me avant de trancher (comme adminGuard).
+ */
+export const termsGuard: CanActivateFn = () => {
+  const store = inject(AuthStore);
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  const gate = () => router.createUrlTree(['/legal/accept']);
+
+  if (!store.isAuthenticated()) return router.createUrlTree(['/auth/login']);
+  if (store.user()) return store.user()!.termsAccepted ? true : gate();
+
+  return auth.getMe().pipe(
+    map(() => (store.user()?.termsAccepted ? true : gate())),
+    catchError(() => of(router.createUrlTree(['/auth/login']))),
+  );
+};
+
 export const guestGuard: CanActivateFn = () => {
   const store = inject(AuthStore);
   const router = inject(Router);

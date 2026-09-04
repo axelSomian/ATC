@@ -3,6 +3,18 @@
    mobile : photo en bandeau + feuille du formulaire qui remonte
    ============================================================ */
 
+.signup-consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--color-muted);
+  margin: 4px 0 4px;
+}
+.signup-consent input { margin-top: 2px; flex-shrink: 0; width: 16px; height: 16px; }
+.signup-consent a { font-weight: 500; }
+
 .auth-page {
   display: flex;
   min-height: 100vh;

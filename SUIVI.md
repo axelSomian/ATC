@@ -231,6 +231,49 @@
 
 ---
 
+## Conformité / réglementaire (session 8, 2026-09-04)
+
+Revue des angles morts juridiques (**pas un avis de juriste** — l'ARTCI et le statut
+de l'association nécessitent un conseil local). Traité point par point.
+
+### 🔴 Bloquant
+
+| # | Point | Statut |
+|---|-------|--------|
+| **1** | **Aucune politique de confidentialité ni CGU, aucun consentement** | ✅ Fait (2026-09-04) — voir ci-dessous |
+| 2 | **Déclaration ARTCI** (Loi ivoirienne n° 2013-450) du traitement, avant collecte | 📋 Formalité externe — à faire avec un conseil |
+| 3 | **Transfert hors Côte d'Ivoire** (hébergement UE) à encadrer/déclarer | 📋 Idem #2 |
+| 4 | **Mineurs** : `age` min 10, aucune barrière à l'inscription, messagerie ados↔adultes | 📋 Backlog — déclaration d'âge + consentement parental < 16 ans |
+| 5 | **Suppression de compte + export des données** impossibles (droit à l'effacement / portabilité) | 📋 Backlog |
+
+### 🟠 Important
+6. Aucun DPA signé avec les sous-traitants (Neon, Render, Vercel, Cloudinary, Maileroo, Google, Sentry) + publier la liste.
+7. E-mails sans lien de désinscription ni identité légale de l'expéditeur (lié obs. #9/#10).
+8. Annuaire des membres sans information ni opt-out.
+9. Aucune durée de conservation définie (comptes, messages, logs IP, jetons).
+10. Aucune procédure de notification de violation de données (72 h ARTCI/CNIL).
+11. Logs (IP + userId) et Sentry = données perso à déclarer + limiter dans le temps.
+12. Agrégation RSS — droit voisin des éditeurs de presse (franceinfo surtout) : extraits courts, toujours liés, retrait sur demande.
+
+### 🟡 À cadrer
+13. Statut juridique de l'association (sinon responsable = personne physique).
+14. AIPD justifiée (mineurs + mise en relation physique + roadmap carte des joueurs).
+15. Bandeau cookies/traceurs (si Sentry activé + favoris/bookmarks).
+16. Consentement photos de tiers (droit à l'image) — cadré par les CGU.
+17. « Carte des joueurs » (roadmap) = géoloc utilisateurs → consentement explicite + AIPD obligatoires avant build.
+
+### Point #1 — implémenté (2026-09-04)
+
+- **Textes** : `/legal/confidentialite` + `/legal/cgu` (composants `features/legal/`), routes **publiques**. Bandeau « à faire relire par un juriste » en tête. Contact = `guyaxelsomian@gmail.com` (à remplacer par une adresse dédiée).
+- **Version** : `apps/api/src/lib/legal.ts` `LEGAL_VERSION = '2026-09-04'`. Bumper cette constante → tous les membres doivent ré-accepter.
+- **Modèle** : `User.termsAcceptedAt` + `termsVersion` (migration `20260904120000_legal_consent`, **pas de backfill** → tous les comptes existants doivent accepter au prochain accès).
+- **À l'inscription e-mail/mdp** : case à cocher obligatoire (`acceptTerms: z.literal(true)`), acceptation enregistrée à la création.
+- **Écran bloquant** `/legal/accept` (`LegalAcceptComponent`) : garde `termsGuard` sur le layout principal → tout membre (Google, comptes existants, ou après un bump de version) sans acceptation valide y est redirigé, aucun accès à l'app avant « J'accepte » (ou « Refuser » = déconnexion).
+- **Route** : `POST /auth/accept-terms` (authentifié) → `termsAcceptedAt = now`, `termsVersion = LEGAL_VERSION`. `getMe` / login / signup renvoient `termsAccepted: boolean`.
+- Liens CGU/confidentialité : footer login, sidebar, écran d'acceptation, case d'inscription.
+
+---
+
 ## Observabilité (session 8, 2026-09-03) ✅ socle
 
 - **Log structuré** (`lib/logger.ts`, zéro dépendance) : 1 ligne JSON par événement vers stdout/stderr, niveau via `LOG_LEVEL` (défaut `info` en prod).

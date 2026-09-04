@@ -7,6 +7,7 @@ import { AppError } from '../../middleware/error.js';
 import { initialRating } from '../matches/elo.js';
 import { assertValidClub } from '../reference/reference.service.js';
 import { sendWelcome, sendPasswordReset, sendVerifyEmail } from '../mailer/mailer.service.js';
+import { LEGAL_VERSION, hasAcceptedTerms } from '../../lib/legal.js';
 import type { SignupDto, LoginDto, GoogleAuthDto } from './auth.schema.js';
 
 const RESET_TTL_MS = 30 * 60 * 1000;
@@ -31,6 +32,7 @@ interface AuthUserRow {
   level: number;
   role: string;
   emailVerified: boolean;
+  termsVersion: string | null;
 }
 
 function authUserResponse(u: AuthUserRow) {
@@ -42,6 +44,7 @@ function authUserResponse(u: AuthUserRow) {
     level: u.level,
     role: u.role,
     emailVerified: u.emailVerified,
+    termsAccepted: hasAcceptedTerms(u),
   };
 }
 
@@ -98,15 +101,20 @@ export async function signup(dto: SignupDto) {
       clubId: dto.clubId,
       initials,
       rating: initialRating(dto.level),
+      termsAcceptedAt: new Date(),
+      termsVersion: LEGAL_VERSION,
     },
-    select: { id: true, name: true, email: true, initials: true, level: true, role: true, emailVerified: true },
+    select: {
+      id: true, name: true, email: true, initials: true, level: true,
+      role: true, emailVerified: true, termsVersion: true,
+    },
   });
 
   // Un seul e-mail à l'inscription : la confirmation d'adresse (fait aussi office de bienvenue).
   await issueEmailVerification(user.id, user.email, user.name);
 
   const tokens = generateTokens(user.id);
-  return { user, ...tokens };
+  return { user: authUserResponse(user), ...tokens };
 }
 
 /** Invalide les jetons de vérif en cours et en émet un neuf (e-mail avec lien). */
@@ -143,6 +151,19 @@ export async function verifyEmail(token: string) {
   ]);
 
   return { verified: true };
+}
+
+/** Enregistre l'acceptation des CGU + politique (version courante). */
+export async function acceptTerms(userId: string) {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { termsAcceptedAt: new Date(), termsVersion: LEGAL_VERSION },
+    select: {
+      id: true, name: true, email: true, initials: true, level: true,
+      role: true, emailVerified: true, termsVersion: true,
+    },
+  });
+  return authUserResponse(user);
 }
 
 /** Renvoie un e-mail de confirmation (route authentifiée, rate-limitée). */
@@ -336,9 +357,11 @@ export async function getMe(userId: string) {
       online: true,
       role: true,
       emailVerified: true,
+      termsVersion: true,
       club: { select: { id: true, slug: true, name: true, zone: true, location: true } },
     },
   });
   if (!user) throw new AppError(404, 'Utilisateur introuvable');
-  return user;
+  const { termsVersion, ...rest } = user;
+  return { ...rest, termsAccepted: hasAcceptedTerms({ termsVersion }) };
 }

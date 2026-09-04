@@ -170,3 +170,13 @@
   color: #B23B2E;
   background: rgba(178, 59, 46, 0.08);
 }
+
+.sidebar-legal {
+  margin: 8px 0 0;
+  padding: 0 10px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.28);
+}
+.sidebar-legal a { color: inherit; text-decoration: none; }
+.sidebar-legal a:hover { color: rgba(255, 255, 255, 0.6); text-decoration: underline; }
+.sidebar-legal span { margin: 0 6px; }

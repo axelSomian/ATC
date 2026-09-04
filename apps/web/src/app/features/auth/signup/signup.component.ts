@@ -35,6 +35,7 @@ export class SignupComponent {
     level: [1, [Validators.required, Validators.min(1), Validators.max(5)]],
     city: [''],
     clubId: [''],
+    acceptTerms: [false, [Validators.requiredTrue]],
   });
 
   readonly loading = signal(false);
@@ -64,6 +65,7 @@ export class SignupComponent {
         email: raw.email,
         password: raw.password,
         level: raw.level,
+        acceptTerms: true,
         city: raw.city || undefined,
         clubId: raw.clubId || undefined,
       })
