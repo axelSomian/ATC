@@ -115,15 +115,16 @@ async function latestMatchContext(userA: string, userB: string): Promise<MatchCo
              dp."userId" AS host_id, mr."requesterId" AS guest_id
       FROM "DispoPost" dp
       JOIN "MatchRequest" mr ON mr."dispoPostId" = dp.id AND mr.status = 'accepted'
-      WHERE (dp."userId" = ${userA} AND mr."requesterId" = ${userB})
-         OR (dp."userId" = ${userB} AND mr."requesterId" = ${userA})
+      WHERE dp."userId" IN (${userA}, ${userB})
+        AND mr."requesterId" IN (${userA}, ${userB})
+        AND dp."userId" <> mr."requesterId"
       UNION ALL
       SELECT 'quick' AS source, qm.id, qm."when", qm.court, qm.type,
              qm."challengerId" AS host_id, qm."challengedId" AS guest_id
       FROM "QuickMatch" qm
       WHERE qm.status = 'accepted'
-        AND ((qm."challengerId" = ${userA} AND qm."challengedId" = ${userB})
-          OR (qm."challengerId" = ${userB} AND qm."challengedId" = ${userA}))
+        AND qm."challengerId" IN (${userA}, ${userB})
+        AND qm."challengedId" IN (${userA}, ${userB})
     ) mm
     ORDER BY mm.mwhen DESC
     LIMIT 1
@@ -238,15 +239,16 @@ export async function listConversations(userId: string) {
                dp."userId" AS host_id, mr."requesterId" AS guest_id
         FROM "DispoPost" dp
         JOIN "MatchRequest" mr ON mr."dispoPostId" = dp.id AND mr.status = 'accepted'
-        WHERE (dp."userId" = ${userId} AND mr."requesterId" = other."userId")
-           OR (dp."userId" = other."userId" AND mr."requesterId" = ${userId})
+        WHERE dp."userId" IN (${userId}, other."userId")
+          AND mr."requesterId" IN (${userId}, other."userId")
+          AND dp."userId" <> mr."requesterId"
         UNION ALL
         SELECT 'quick' AS source, qm.id, qm."when", qm.court, qm.type,
                qm."challengerId" AS host_id, qm."challengedId" AS guest_id
         FROM "QuickMatch" qm
         WHERE qm.status = 'accepted'
-          AND ((qm."challengerId" = ${userId} AND qm."challengedId" = other."userId")
-            OR (qm."challengerId" = other."userId" AND qm."challengedId" = ${userId}))
+          AND qm."challengerId" IN (${userId}, other."userId")
+          AND qm."challengedId" IN (${userId}, other."userId")
       ) mm
       ORDER BY mm.mwhen DESC
       LIMIT 1
