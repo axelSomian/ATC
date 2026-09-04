@@ -1,6 +1,6 @@
 # ATC — Abidjan Tennis Community
 
-Application web responsive permettant aux membres de la communauté de se connecter, consulter le profil et le niveau des autres membres, publier des annonces et organiser des matchs de tennis.
+ATC est une communauté de tennis visant à mettre en relation les passionnés de ce sport. Application web responsive permettant aux membres de se connecter, consulter le profil et le niveau des autres membres, publier des annonces et organiser des matchs de tennis.
 
 ---
 
