@@ -3,6 +3,18 @@ import { authGuard, guestGuard, adminGuard, termsGuard } from './core/guards/aut
 
 export const routes: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
+  // Actions déclenchées par un lien e-mail : doivent fonctionner que l'utilisateur
+  // soit connecté ou non (après inscription il l'est → pas de guestGuard ici).
+  {
+    path: 'auth/verify-email',
+    loadComponent: () =>
+      import('./features/auth/verify-email/verify-email.component').then((m) => m.VerifyEmailComponent),
+  },
+  {
+    path: 'auth/reset-password',
+    loadComponent: () =>
+      import('./features/auth/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
+  },
   {
     path: 'auth',
     canActivate: [guestGuard],
