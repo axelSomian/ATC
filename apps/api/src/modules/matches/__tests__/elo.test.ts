@@ -1,4 +1,14 @@
-import { computeElo, initialRating, ratingToLevel } from '../elo';
+import {
+  computeElo,
+  initialRating,
+  ratingToLevel,
+  gamesFromScore,
+  movMultiplier,
+  movFromScore,
+  MOV_MAX,
+  winProbability,
+  matchStakes,
+} from '../elo';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -464,4 +474,175 @@ describe('computeElo', () => {
     });
   });
 
+});
+
+// ─── gamesFromScore ───────────────────────────────────────────────────────────
+
+describe('gamesFromScore', () => {
+  it.each([
+    ['6-4 7-5',        [13, 9]],
+    ['6-0 6-0',        [12, 0]],
+    ['6-4 3-6 7-5',    [16, 15]],
+    ['6-4, 3-6, 7-5',  [16, 15]],  // séparateur virgule
+    ['  7-6   6-7 ',   [13, 13]],  // espaces multiples / bords
+  ] as [string, [number, number]][])('« %s » → %j', (score, expected) => {
+    expect(gamesFromScore(score)).toEqual(expected);
+  });
+
+  it('ignore les fragments non « n-n » (annotation de tie-break)', () => {
+    expect(gamesFromScore('6-4 7-6(4)')).toEqual([13, 10]);
+  });
+
+  it('retourne null si rien d\'exploitable', () => {
+    expect(gamesFromScore('')).toBeNull();
+    expect(gamesFromScore('abandon')).toBeNull();
+    expect(gamesFromScore('—')).toBeNull();
+  });
+});
+
+// ─── movMultiplier ────────────────────────────────────────────────────────────
+
+describe('movMultiplier', () => {
+  it('correction sèche (6-0 6-0) → plafond MOV_MAX', () => {
+    expect(movMultiplier(12, 0)).toBeCloseTo(MOV_MAX, 5);
+  });
+
+  it('match serré (7-6 7-6) → quasi 1', () => {
+    expect(movMultiplier(14, 12)).toBeCloseTo(1.0308, 3);
+  });
+
+  it('victoire nette en deux sets (6-4 6-4) → entre les deux', () => {
+    const m = movMultiplier(12, 8);
+    expect(m).toBeGreaterThan(1);
+    expect(m).toBeLessThan(MOV_MAX);
+  });
+
+  it('jamais < 1 ni > MOV_MAX', () => {
+    for (let w = 0; w <= 20; w++) {
+      for (let l = 0; l <= 20; l++) {
+        const m = movMultiplier(w, l);
+        expect(m).toBeGreaterThanOrEqual(1);
+        expect(m).toBeLessThanOrEqual(MOV_MAX);
+      }
+    }
+  });
+
+  it('score « à l\'envers » (perdant avec plus de jeux) retombe à 1', () => {
+    expect(movMultiplier(5, 7)).toBe(1);
+  });
+
+  it('total de jeux nul → 1 (pas de division par zéro)', () => {
+    expect(movMultiplier(0, 0)).toBe(1);
+  });
+});
+
+// ─── movFromScore ─────────────────────────────────────────────────────────────
+
+describe('movFromScore', () => {
+  it('oriente la marge selon le vainqueur', () => {
+    // "6-0 6-0" côté hôte : si l'hôte gagne → gros facteur ; s'il perd → 1
+    expect(movFromScore('6-0 6-0', true)).toBeCloseTo(MOV_MAX, 5);
+    expect(movFromScore('6-0 6-0', false)).toBe(1);
+  });
+
+  it('score illisible → 1', () => {
+    expect(movFromScore('abandon', true)).toBe(1);
+  });
+});
+
+// ─── computeElo — paramètre mov ───────────────────────────────────────────────
+
+describe('computeElo — facteur de marge', () => {
+  it('mov = 1 par défaut → comportement inchangé', () => {
+    expect(computeElo(1000, 0, 1000, true)).toEqual(computeElo(1000, 0, 1000, true, 1));
+    expect(computeElo(1000, 0, 1000, true).delta).toBe(20);
+  });
+
+  it('une correction amplifie le gain (1000 vs 1000, K=40)', () => {
+    // round(40 × 0.5 × 1.4) = round(28) = 28
+    expect(computeElo(1000, 0, 1000, true, 1.4).delta).toBe(28);
+    expect(computeElo(1000, 0, 1000, true, 1.4).newRating).toBe(1028);
+  });
+
+  it('la marge amplifie aussi la perte du perdant (symétrie)', () => {
+    expect(computeElo(1000, 0, 1000, false, 1.4).delta).toBe(-28);
+  });
+
+  it('reste quasi zéro-somme : même mov appliqué aux deux joueurs', () => {
+    const mov = movFromScore('6-1 6-2', true); // hôte gagne
+    const a = computeElo(1000, 0, 1000, true, mov);
+    const b = computeElo(1000, 0, 1000, false, mov);
+    expect(Math.abs(a.delta + b.delta)).toBeLessThanOrEqual(1);
+  });
+
+  it('la marge ne peut pas inverser le signe du delta', () => {
+    for (const mov of [1, 1.1, 1.25, MOV_MAX]) {
+      expect(computeElo(900, 5, 1400, true, mov).delta).toBeGreaterThanOrEqual(0);
+      expect(computeElo(1400, 5, 900, false, mov).delta).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it('newRating reste borné [600, 2000] même avec mov maximal', () => {
+    expect(computeElo(1990, 0, 600, false, MOV_MAX).newRating).toBeGreaterThanOrEqual(600);
+    expect(computeElo(600, 0, 1990, true, MOV_MAX).newRating).toBeLessThanOrEqual(2000);
+  });
+});
+
+// ─── winProbability ───────────────────────────────────────────────────────────
+
+describe('winProbability', () => {
+  it('ratings égaux → 0,5', () => {
+    expect(winProbability(1200, 1200)).toBeCloseTo(0.5, 10);
+  });
+
+  it('somme des deux côtés = 1', () => {
+    for (const [a, b] of [[1000, 1300], [1450, 900], [1600, 1605]] as [number, number][]) {
+      expect(winProbability(a, b) + winProbability(b, a)).toBeCloseTo(1, 10);
+    }
+  });
+
+  it('200 pts d\'avance ≈ 76 %, 400 pts ≈ 91 %', () => {
+    expect(winProbability(1200, 1000)).toBeCloseTo(0.76, 2);
+    expect(winProbability(1400, 1000)).toBeCloseTo(0.909, 2);
+  });
+});
+
+// ─── matchStakes ──────────────────────────────────────────────────────────────
+
+describe('matchStakes', () => {
+  it('matchup égal → bande « balanced », gains ≈ symétriques', () => {
+    const s = matchStakes(1000, 10, 1000);   // K = 25
+    expect(s.band).toBe('balanced');
+    expect(s.probability).toBe(0.5);
+    expect(s.deltaWin).toBe(13);
+    expect(s.deltaLoss).toBe(-12);           // Math.round(-12.5) = -12
+  });
+
+  it('adversaire nettement plus fort → « outsider » : gros gain, petite perte', () => {
+    const s = matchStakes(1000, 10, 1300);
+    expect(s.band).toBe('outsider');
+    expect(s.probability).toBeLessThan(0.4);
+    expect(s.deltaWin).toBeGreaterThan(Math.abs(s.deltaLoss));
+    expect(s.deltaWin).toBeGreaterThan(0);
+    expect(s.deltaLoss).toBeLessThan(0);
+  });
+
+  it('adversaire nettement plus faible → « favorite » : petit gain, grosse perte', () => {
+    const s = matchStakes(1300, 10, 1000);
+    expect(s.band).toBe('favorite');
+    expect(s.probability).toBeGreaterThan(0.6);
+    expect(Math.abs(s.deltaLoss)).toBeGreaterThan(s.deltaWin);
+  });
+
+  it('les points en jeu correspondent à computeElo (mov neutre)', () => {
+    const s = matchStakes(1120, 22, 1240);
+    expect(s.deltaWin).toBe(computeElo(1120, 22, 1240, true).delta);
+    expect(s.deltaLoss).toBe(computeElo(1120, 22, 1240, false).delta);
+  });
+
+  it('bornes de bande : ~40 % et ~60 %', () => {
+    expect(matchStakes(1000, 10, 1100).band).toBe('outsider');   // p ≈ 0,36
+    expect(matchStakes(1000, 10, 1050).band).toBe('balanced');   // p ≈ 0,43
+    expect(matchStakes(1100, 10, 1000).band).toBe('favorite');   // p ≈ 0,64
+  });
 });

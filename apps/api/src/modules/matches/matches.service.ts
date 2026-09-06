@@ -2,7 +2,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { sendScoreToValidate, sendScoreConfirmed, sendScoreDisputed } from '../mailer/mailer.service.js';
-import { computeElo, MIN_GAMES_TO_MOVE_LEVEL } from './elo.js';
+import { computeElo, movFromScore, MIN_GAMES_TO_MOVE_LEVEL } from './elo.js';
 import { bg } from '../../lib/bg.js';
 import type { RecordMatchDto, ValidateMatchDto, MyMatchesQueryDto } from './matches.schema.js';
 
@@ -174,15 +174,24 @@ export async function recordMatch(userId: string, dto: RecordMatchDto) {
   return match;
 }
 
-export async function applyEloUpdate(hostId: string, guestId: string, winnerId: string): Promise<void> {
+export async function applyEloUpdate(
+  hostId: string,
+  guestId: string,
+  winnerId: string,
+  scoreHost?: string,
+): Promise<void> {
   const [host, guest] = await Promise.all([
     prisma.user.findUnique({ where: { id: hostId },  select: { rating: true, ratingGames: true, bestRanking: true } }),
     prisma.user.findUnique({ where: { id: guestId }, select: { rating: true, ratingGames: true, bestRanking: true } }),
   ]);
   if (!host || !guest) return;
 
-  const hostResult  = computeElo(host.rating,  host.ratingGames,  guest.rating, winnerId === hostId);
-  const guestResult = computeElo(guest.rating, guest.ratingGames, host.rating,  winnerId === guestId);
+  // Facteur de marge du score, identique pour les deux joueurs (préserve la
+  // somme quasi nulle). Score absent ou illisible → 1 (aucune modulation).
+  const mov = scoreHost ? movFromScore(scoreHost, winnerId === hostId) : 1;
+
+  const hostResult  = computeElo(host.rating,  host.ratingGames,  guest.rating, winnerId === hostId,  mov);
+  const guestResult = computeElo(guest.rating, guest.ratingGames, host.rating,  winnerId === guestId, mov);
 
   // Le niveau ne bouge qu'à partir du MIN_GAMES_TO_MOVE_LEVEL-ième match confirmé.
   // Avant, on ne touche pas `level` : le niveau auto-déclaré à l'inscription reste.
@@ -249,7 +258,7 @@ export async function validateMatch(matchId: string, userId: string, dto: Valida
   });
 
   if (dto.action === 'confirm') {
-    bg(applyEloUpdate(match.hostId, match.guestId, match.winnerId), 'elo.update', { matchId: match.id });
+    bg(applyEloUpdate(match.hostId, match.guestId, match.winnerId, match.scoreHost), 'elo.update', { matchId: match.id });
   }
 
   if (match.recordedBy) {

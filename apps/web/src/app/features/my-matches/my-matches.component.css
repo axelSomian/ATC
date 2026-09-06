@@ -239,6 +239,58 @@
   color: var(--color-ink-light);
 }
 
+/* ── Enjeu du match ── */
+.stakes {
+  flex-basis: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border-light);
+  border-left: 3px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.stakes-title {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+
+.stakes-reward {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.stakes-win  { color: var(--color-positive); }
+.stakes-loss { color: var(--color-muted); }
+.stakes-dot  { color: var(--color-border); }
+
+.stakes-sub {
+  margin: 5px 0 0;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-muted);
+}
+
+/* Bandes — l'outsider est mis en avant (opportunité), le favori en alerte douce */
+.stakes--outsider {
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-alpha);
+}
+.stakes--outsider .stakes-title { color: var(--color-accent); }
+.stakes--balanced {
+  border-left-color: var(--color-sage);
+}
+.stakes--favorite {
+  border-left-color: var(--color-warning);
+}
+
 /* ── Score action ── */
 .score-action {
   margin-top: var(--space-4);

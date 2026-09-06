@@ -7,7 +7,7 @@ import { QuickMatchesService } from '../../core/services/quick-matches.service';
 import { CourtMapService } from '../../core/services/court-map.service';
 import { MessagesService } from '../../core/services/messages.service';
 import { AuthStore } from '../../core/stores/auth.store';
-import type { Match, UpcomingMatch } from '../../core/models/match.model';
+import type { Match, UpcomingMatch, MatchStakes } from '../../core/models/match.model';
 import type { QuickMatch } from '../../core/models/quick-match.model';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -15,6 +15,30 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 interface SetScore { h: string; g: string; }
+
+interface StakesView {
+  tone: 'outsider' | 'balanced' | 'favorite';
+  title: string;
+  sub: string;
+}
+
+const STAKES_COPY: Record<MatchStakes['band'], StakesView> = {
+  outsider: {
+    tone: 'outsider',
+    title: 'L\'occasion de créer la surprise',
+    sub: 'Personne ne vous attend en face. Tout à gagner, presque rien à perdre.',
+  },
+  balanced: {
+    tone: 'balanced',
+    title: 'Ça va se jouer sur des détails',
+    sub: 'Le genre de match qui se gagne dans la tête.',
+  },
+  favorite: {
+    tone: 'favorite',
+    title: 'À vous de confirmer',
+    sub: 'Le piège classique, c\'est de sous-estimer l\'adversaire.',
+  },
+};
 
 @Component({
   selector: 'app-my-matches',
@@ -306,5 +330,10 @@ export class MyMatchesComponent implements OnInit {
 
   opponentScore(m: Match): string {
     return m.hostId === this.currentUserId() ? m.scoreGuest : m.scoreHost;
+  }
+
+  // ── Enjeu du match ──
+  stakesView(s: MatchStakes): StakesView {
+    return STAKES_COPY[s.band];
   }
 }

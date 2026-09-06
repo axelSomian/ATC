@@ -5,6 +5,7 @@ import { createNotification } from '../notifications/notifications.service.js';
 import { ensureConversationForDispo } from '../messaging/messaging.service.js';
 import { assertEmailVerifiedForPublish } from '../auth/auth.service.js';
 import { emitToAll } from '../../lib/socket.js';
+import { matchStakes, MIN_GAMES_TO_MOVE_LEVEL } from '../matches/elo.js';
 
 const USER_SELECT = {
   id: true, name: true, initials: true,
@@ -202,9 +203,36 @@ export async function getUpcomingForUser(userId: string) {
     };
   });
 
-  return [...asHost, ...asGuest, ...asQuick].sort(
+  const list = [...asHost, ...asGuest, ...asQuick].sort(
     (a, b) => new Date(a.when).getTime() - new Date(b.when).getTime(),
   );
+
+  // ── Enjeu du match (privé) ──────────────────────────────────────────────────
+  // Calcul serveur uniquement : le rating brut ne quitte jamais l'API. On expose
+  // seulement `stakes` (proba + points en jeu + bande) et pour les matchs simples
+  // où les deux joueurs ont assez de matchs classés pour que l'estimation ait un sens.
+  const oppIds = [...new Set(
+    list.map(m => m.opponent?.id).filter((id): id is string => Boolean(id)),
+  )];
+  const [me, opps] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { rating: true, ratingGames: true } }),
+    oppIds.length
+      ? prisma.user.findMany({ where: { id: { in: oppIds } }, select: { id: true, rating: true, ratingGames: true } })
+      : Promise.resolve([] as { id: string; rating: number; ratingGames: number }[]),
+  ]);
+  const ratingById = Object.fromEntries(opps.map(u => [u.id, u]));
+
+  return list.map(m => {
+    const opp = m.opponent ? ratingById[m.opponent.id] : undefined;
+    const eligible =
+      m.type === 'simple' &&
+      !!me  && me.ratingGames  >= MIN_GAMES_TO_MOVE_LEVEL &&
+      !!opp && opp.ratingGames >= MIN_GAMES_TO_MOVE_LEVEL;
+    return {
+      ...m,
+      stakes: eligible ? matchStakes(me!.rating, me!.ratingGames, opp!.rating) : null,
+    };
+  });
 }
 
 export async function respondRequest(

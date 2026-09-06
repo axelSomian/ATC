@@ -65,10 +65,35 @@ E_A = 1 / (1 + 10^((R_B - R_A) / 400))
 
 ### Nouveau rating
 ```
-R_A_new = R_A + K × (S - E_A)
+R_A_new = R_A + K × (S - E_A) × MoV
 ```
 - `S = 1` si victoire, `S = 0` si défaite
 - `K` = facteur de sensibilité (voir ci-dessous)
+- `MoV` = facteur de marge du score (voir ci-dessous) — `1` si le score est absent ou illisible
+
+### Facteur de marge (Margin of Victory)
+
+Le delta de base ne connaît que le vainqueur. On le module par la marge réelle,
+calculée sur la **somme des jeux** de chaque joueur (`gamesFromScore` + `movMultiplier`
+dans `elo.ts`) :
+
+```
+dominance = max(0, jeux_vainqueur - jeux_perdant) / (jeux_vainqueur + jeux_perdant)
+MoV       = clamp(1 + dominance × MOV_SLOPE, 1, MOV_MAX)      # MOV_SLOPE = 0.4, MOV_MAX = 1.4
+```
+
+| Score | Jeux | MoV |
+|-------|------|-----|
+| 6-0 6-0 | 12–0 | **1.40** (plafond) |
+| 6-1 6-1 | 12–2 | ~1.29 |
+| 6-3 6-3 | 12–6 | ~1.13 |
+| 6-4 7-5 | 13–9 | ~1.07 |
+| 7-6 7-6 | 14–12 | ~1.03 |
+
+- Le **même** MoV est appliqué aux deux joueurs → la somme reste quasi nulle.
+- `MoV ≥ 1` toujours : un match serré = une victoire pleine, jamais dévaluée.
+- `MOV_SLOPE = 0` désactive complètement la marge (retour au comportement d'avant).
+- Score « à l'envers » (perdant avec plus de jeux, ex. abandon) → `MoV = 1`.
 
 ### Facteur K — sensibilité selon l'expérience
 

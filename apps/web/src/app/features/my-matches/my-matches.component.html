@@ -104,6 +104,19 @@
                   @if (m.duration) { <span class="match-tag">{{ formatDuration(m.duration) }}</span> }
                 </div>
               </div>
+
+              <!-- Enjeu du match (simple, joueurs classés) -->
+              @if (m.stakes && scoringId() !== m.id) {
+                <div class="stakes stakes--{{ stakesView(m.stakes).tone }}">
+                  <span class="stakes-title">{{ stakesView(m.stakes).title }}</span>
+                  <div class="stakes-reward">
+                    <span class="stakes-win">Victoire +{{ m.stakes.deltaWin }}</span>
+                    <span class="stakes-dot">·</span>
+                    <span class="stakes-loss">Défaite {{ m.stakes.deltaLoss }}</span>
+                  </div>
+                  <p class="stakes-sub">{{ stakesView(m.stakes).sub }}</p>
+                </div>
+              }
             </div>
 
             <!-- Actions : discuter + saisir le score (les deux joueurs peuvent soumettre) -->
