@@ -52,6 +52,11 @@ export class SocketService implements OnDestroy {
     this.socket?.emit('conversation:leave');
   }
 
+  /** Signale (ou arrête) « je suis en train d'écrire » dans la conversation ouverte. */
+  setTyping(conversationId: string, typing: boolean): void {
+    this.socket?.emit('conversation:typing', { conversationId, typing });
+  }
+
   on<T>(event: string, handler: (data: T) => void): void {
     // Les callbacks Socket.IO arrivent hors de la zone Angular : on les y ramène
     // pour que les mises à jour de signaux déclenchent bien la détection de changements.

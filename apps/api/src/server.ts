@@ -65,11 +65,35 @@ io.on('connection', (socket) => {
   socket.join(`user:${userId}`);
   handlePresence(io, socket);
 
-  // Conversation actuellement ouverte à l'écran (règle « push si hors conversation »).
+  // Conversation actuellement ouverte à l'écran :
+  //  - règle « push si hors conversation » (setSocketConversation)
+  //  - room `conv:<id>` pour diffuser l'indicateur « est en train d'écrire »
+  let openConv: string | null = null;
+
   socket.on('conversation:enter', (id: unknown) => {
-    setSocketConversation(socket.id, typeof id === 'string' ? id : null);
+    const convId = typeof id === 'string' ? id : null;
+    if (openConv && openConv !== convId) socket.leave(`conv:${openConv}`);
+    openConv = convId;
+    setSocketConversation(socket.id, convId);
+    if (convId) socket.join(`conv:${convId}`);
   });
-  socket.on('conversation:leave', () => setSocketConversation(socket.id, null));
+
+  socket.on('conversation:leave', () => {
+    if (openConv) socket.leave(`conv:${openConv}`);
+    openConv = null;
+    setSocketConversation(socket.id, null);
+  });
+
+  // « X est en train d'écrire… » — éphémère, relayé aux autres membres de la conv.
+  socket.on('conversation:typing', (payload: unknown) => {
+    if (!openConv) return;
+    const typing = !!(payload as { typing?: boolean } | null)?.typing;
+    socket.to(`conv:${openConv}`).emit('conversation:typing', {
+      conversationId: openConv,
+      userId,
+      typing,
+    });
+  });
 });
 
 app.use(helmet());

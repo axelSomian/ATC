@@ -89,13 +89,21 @@ const TYPE_LABELS: Record<string, string> = { simple: 'Simple', double: 'Double'
         }
       </div>
 
+      @if (peerTyping() && other(); as o) {
+        <div class="typing-row" aria-live="polite">
+          <span class="typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>{{ o.name }} est en train d'écrire…</span>
+        </div>
+      }
+
       <form class="composer" (submit)="send(); $event.preventDefault()">
         <input
           type="text"
           class="composer-input"
           placeholder="Votre message…"
           [value]="draft()"
-          (input)="draft.set($any($event.target).value)"
+          (input)="onInput($any($event.target).value)"
+          (blur)="stopTyping()"
           [disabled]="loading() || !!error()"
           maxlength="2000"
         />
@@ -194,6 +202,28 @@ const TYPE_LABELS: Record<string, string> = { simple: 'Simple', double: 'Double'
     }
     .composer-input:focus { outline: none; border-color: var(--color-accent); }
     .composer .btn { flex-shrink: 0; width: 38px; height: 38px; padding: 0; border-radius: 50%; }
+
+    .typing-row {
+      display: flex; align-items: center; gap: var(--space-2);
+      padding: 4px var(--space-4) 6px;
+      font-size: var(--text-xs); color: var(--color-muted);
+      background: var(--color-bg);
+    }
+    .typing-dots { display: inline-flex; gap: 3px; }
+    .typing-dots i {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--color-muted);
+      animation: typing-blink 1.2s infinite ease-in-out both;
+    }
+    .typing-dots i:nth-child(2) { animation-delay: 0.18s; }
+    .typing-dots i:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes typing-blink {
+      0%, 80%, 100% { opacity: 0.25; }
+      40% { opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .typing-dots i { animation: none; opacity: 0.6; }
+    }
   `],
 })
 export class ConversationComponent implements OnDestroy {
@@ -215,6 +245,11 @@ export class ConversationComponent implements OnDestroy {
   readonly sending     = signal(false);
   readonly draft       = signal('');
   readonly error       = signal('');
+  readonly peerTyping  = signal(false);
+
+  private iAmTyping = false;
+  private stopTypingTimer?: ReturnType<typeof setTimeout>;
+  private peerTypingTimer?: ReturnType<typeof setTimeout>;
 
   readonly meId  = computed(() => this.store.user()?.id ?? '');
   readonly other = computed<ConvParticipant | null>(() => {
@@ -229,14 +264,29 @@ export class ConversationComponent implements OnDestroy {
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
       const id = pm.get('id');
-      if (id) this.load(id);
+      if (id && id !== this.convId()) {
+        this.stopTyping();
+        this.peerTyping.set(false);
+        this.load(id);
+      }
     });
+
+    this.socket.on<{ conversationId: string; userId: string; typing: boolean }>(
+      'conversation:typing',
+      (ev) => {
+        if (ev.conversationId !== this.convId() || ev.userId === this.meId()) return;
+        this.setPeerTyping(ev.typing);
+      },
+    );
 
     effect(() => {
       const ev = this.svc.incoming();
       if (!ev || ev.conversationId !== this.convId()) return;
       this.mergeMessage(ev.message);
-      if (ev.message.senderId !== this.meId()) this.svc.markRead(this.convId());
+      if (ev.message.senderId !== this.meId()) {
+        this.setPeerTyping(false); // son message est arrivé → il n'écrit plus
+        this.svc.markRead(this.convId());
+      }
       this.scrollSoon();
     }, { allowSignalWrites: true });
 
@@ -251,7 +301,7 @@ export class ConversationComponent implements OnDestroy {
     // Sur mobile / PWA : mettre l'app en arrière-plan ne détruit pas le composant.
     // On signale « je ne regarde plus » pour que les push repartent.
     const onVisibility = () => {
-      if (document.hidden) this.socket.leaveConversation();
+      if (document.hidden) { this.stopTyping(); this.socket.leaveConversation(); }
       else if (this.convId()) this.socket.enterConversation(this.convId());
     };
     document.addEventListener('visibilitychange', onVisibility);
@@ -259,12 +309,51 @@ export class ConversationComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopTyping();
+    clearTimeout(this.peerTypingTimer);
+    this.socket.off('conversation:typing');
     this.svc.activeId.set(null);
     this.socket.leaveConversation();
   }
 
   typeLabel(t: string): string { return TYPE_LABELS[t] ?? t; }
   openMap(court: string): void { this.courtMap.open(court); }
+
+  // ── Indicateur « est en train d'écrire » ──
+  onInput(value: string): void {
+    this.draft.set(value);
+    const hasText = value.trim().length > 0;
+
+    if (hasText && !this.iAmTyping && this.convId()) {
+      this.iAmTyping = true;
+      this.socket.setTyping(this.convId(), true);
+    }
+
+    clearTimeout(this.stopTypingTimer);
+    if (hasText) {
+      // Plus de frappe pendant 2,5 s → on considère que l'utilisateur a fini.
+      this.stopTypingTimer = setTimeout(() => this.stopTyping(), 2500);
+    } else {
+      this.stopTyping();
+    }
+  }
+
+  stopTyping(): void {
+    clearTimeout(this.stopTypingTimer);
+    if (this.iAmTyping && this.convId()) {
+      this.socket.setTyping(this.convId(), false);
+    }
+    this.iAmTyping = false;
+  }
+
+  private setPeerTyping(on: boolean): void {
+    clearTimeout(this.peerTypingTimer);
+    this.peerTyping.set(on);
+    if (on) {
+      // Filet de sécurité si l'événement « typing:false » se perd.
+      this.peerTypingTimer = setTimeout(() => this.peerTyping.set(false), 5000);
+    }
+  }
 
   showDaySep(i: number): boolean {
     const list = this.messages();
@@ -315,6 +404,7 @@ export class ConversationComponent implements OnDestroy {
   send(): void {
     const body = this.draft().trim();
     if (!body || this.sending()) return;
+    this.stopTyping();
     this.sending.set(true);
     this.error.set('');
     this.svc.send(this.convId(), body).subscribe({
