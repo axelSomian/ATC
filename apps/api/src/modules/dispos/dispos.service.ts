@@ -4,7 +4,7 @@ import type { CreateDispoDto, DisposQueryDto } from './dispos.schema.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { ensureConversationForDispo } from '../messaging/messaging.service.js';
 import { assertEmailVerifiedForPublish } from '../auth/auth.service.js';
-import { emitToAll } from '../../lib/socket.js';
+import { emitToAllExcept } from '../../lib/socket.js';
 import { matchStakes, MIN_GAMES_TO_MOVE_LEVEL } from '../matches/elo.js';
 
 const USER_SELECT = {
@@ -80,7 +80,9 @@ export async function createDispo(userId: string, dto: CreateDispoDto) {
     data: { ...dto, userId, when: new Date(dto.when) },
     select: DISPO_SELECT,
   });
-  emitToAll('dispo:new', dispo);
+  // Live feed pour les autres membres — l'auteur, lui, l'a déjà via la réponse HTTP
+  // (sinon l'annonce apparaît en double : optimistic add + event socket).
+  emitToAllExcept(userId, 'dispo:new', dispo);
   return dispo;
 }
 

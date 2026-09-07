@@ -186,8 +186,15 @@ export class MatchFinderComponent implements OnInit, OnDestroy {
         this.showCreate.set(false);
         this.creating.set(false);
         this.createForm.reset({ duration: 60, type: 'simple' });
-        this.dispos.update(list => [dispo, ...list]);
-        this.myDispos.update(list => [dispo, ...list]);
+        // Garde anti-doublon : l'event socket `dispo:new` n'est plus renvoyé à
+        // l'auteur, mais on protège quand même contre un double insert (2 onglets).
+        if (!this.dispos().some(d => d.id === dispo.id)) {
+          this.dispos.update(list => [dispo, ...list]);
+          this.total.update(n => n + 1);
+        }
+        if (!this.myDispos().some(d => d.id === dispo.id)) {
+          this.myDispos.update(list => [dispo, ...list]);
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.createError.set(err.error?.error ?? 'Erreur lors de la création.');

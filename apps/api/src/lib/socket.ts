@@ -15,6 +15,14 @@ export function emitToAll(event: string, data: unknown): void {
   _io?.emit(event, data);
 }
 
+/**
+ * Diffuse à tout le monde sauf aux sockets de `userId` (qui a déjà l'info via la
+ * réponse HTTP). Évite le doublon « ma propre annonce revient en live ».
+ */
+export function emitToAllExcept(userId: string, event: string, data: unknown): void {
+  _io?.except(`user:${userId}`).emit(event, data);
+}
+
 // ── Conversation ouverte à l'écran (pour la règle « push si pas dans la conv ») ──
 
 const socketConversation = new Map<string, string>(); // socket.id -> conversationId
