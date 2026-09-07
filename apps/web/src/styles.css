@@ -126,6 +126,9 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 
+img, video { max-width: 100%; }
+img { height: auto; }
+
 /* ═══════════════════════════════════════
    TYPOGRAPHY
    ═══════════════════════════════════════ */
