@@ -6,6 +6,7 @@ import { MatchesService, type RecordMatchDto } from '../../core/services/matches
 import { QuickMatchesService } from '../../core/services/quick-matches.service';
 import { CourtMapService } from '../../core/services/court-map.service';
 import { MessagesService } from '../../core/services/messages.service';
+import { MatchCardService, type MatchCardData } from '../../core/services/match-card.service';
 import { AuthStore } from '../../core/stores/auth.store';
 import type { Match, UpcomingMatch, MatchStakes } from '../../core/models/match.model';
 import type { QuickMatch } from '../../core/models/quick-match.model';
@@ -52,6 +53,7 @@ export class MyMatchesComponent implements OnInit {
   private readonly quickSvc      = inject(QuickMatchesService);
   private readonly courtMap      = inject(CourtMapService);
   private readonly messagesSvc   = inject(MessagesService);
+  private readonly matchCard     = inject(MatchCardService);
   private readonly authStore     = inject(AuthStore);
   private readonly route         = inject(ActivatedRoute);
   private readonly destroyRef    = inject(DestroyRef);
@@ -72,6 +74,7 @@ export class MyMatchesComponent implements OnInit {
   readonly currentUserId = computed(() => this.authStore.user()?.id ?? '');
 
   readonly scoringId  = signal<string | null>(null);
+  readonly sharingId  = signal<string | null>(null);
   readonly submitting = signal(false);
   readonly scoreError = signal('');
   readonly numSets    = signal<number>(2);
@@ -335,5 +338,40 @@ export class MyMatchesComponent implements OnInit {
   // ── Enjeu du match ──
   stakesView(s: MatchStakes): StakesView {
     return STAKES_COPY[s.band];
+  }
+
+  // ── Carte de match partageable ──
+  async shareMatch(m: Match): Promise<void> {
+    if (this.sharingId()) return;
+    this.sharingId.set(m.id);
+    try {
+      await this.matchCard.share(this.buildCardData(m));
+    } catch {
+      /* échec silencieux : l'utilisateur voit qu'il ne se passe rien */
+    } finally {
+      this.sharingId.set(null);
+    }
+  }
+
+  private buildCardData(m: Match): MatchCardData {
+    const hostSets: number[] = [];
+    const guestSets: number[] = [];
+    for (const set of (m.scoreHost ?? '').trim().split(/[\s,]+/)) {
+      const parsed = /^(\d{1,2})-(\d{1,2})/.exec(set);
+      if (!parsed) continue;
+      hostSets.push(+parsed[1]);
+      guestSets.push(+parsed[2]);
+    }
+    const hostWon = m.winnerId === m.host.id;
+    return {
+      playedAt: m.playedAt,
+      court: m.court,
+      type: m.type,
+      siteUrl: location.host,
+      players: [
+        { name: m.host.name,  initials: m.host.initials,  avatarUrl: m.host.avatarUrl,  level: m.host.level,  won: hostWon,  sets: hostSets },
+        { name: m.guest.name, initials: m.guest.initials, avatarUrl: m.guest.avatarUrl, level: m.guest.level, won: !hostWon, sets: guestSets },
+      ],
+    };
   }
 }
