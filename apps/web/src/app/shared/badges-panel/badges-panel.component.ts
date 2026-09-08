@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { BadgesService } from '../../core/services/badges.service';
 import type { BadgesPayload, BadgeSerie } from '../../core/models/badge.model';
@@ -15,7 +15,7 @@ import type { BadgesPayload, BadgeSerie } from '../../core/models/badge.model';
   templateUrl: './badges-panel.component.html',
   styleUrl: './badges-panel.component.css',
 })
-export class BadgesPanelComponent {
+export class BadgesPanelComponent implements OnInit {
   private readonly badges = inject(BadgesService);
 
   readonly userId = input<string>();
@@ -36,16 +36,12 @@ export class BadgesPanelComponent {
     return !this.showLocked() && !!d && this.visibleFeats().length === 0 && !d.series.some((s) => s.earned);
   });
 
-  constructor() {
-    effect(() => {
-      const id = this.userId();
-      this.loading.set(true);
-      this.failed.set(false);
-      const req = id ? this.badges.getFor(id) : this.badges.getMine();
-      req.subscribe({
-        next: (d) => { this.data.set(d); this.loading.set(false); },
-        error: () => { this.failed.set(true); this.loading.set(false); },
-      });
+  ngOnInit(): void {
+    const id = this.userId();
+    const req = id ? this.badges.getFor(id) : this.badges.getMine();
+    req.subscribe({
+      next: (d) => { this.data.set(d); this.loading.set(false); },
+      error: () => { this.failed.set(true); this.loading.set(false); },
     });
   }
 
