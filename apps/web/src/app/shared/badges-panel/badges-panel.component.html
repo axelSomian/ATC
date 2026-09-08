@@ -17,14 +17,23 @@
     <div class="series-row">
       @for (s of d.series; track s.code) {
         <div class="serie" [class.earned]="s.earned" [title]="s.description">
-          <div class="serie-top">
-            <span class="serie-label">{{ s.label }}</span>
-            @if (s.earned) {
-              <svg class="serie-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            }
+          <div class="serie-ring">
+            <svg viewBox="0 0 44 44" aria-hidden="true">
+              <circle class="ring-track" cx="22" cy="22" r="19" />
+              <circle class="ring-fill" cx="22" cy="22" r="19"
+                [style.stroke-dasharray]="ringCirc"
+                [style.stroke-dashoffset]="ringOffset(s)"
+                transform="rotate(-90 22 22)" />
+            </svg>
+            <span class="serie-value">{{ s.value }}</span>
           </div>
-          <span class="serie-value">{{ s.value }}<span class="serie-target">/ {{ s.target }}</span></span>
-          <span class="serie-bar"><span class="serie-bar-fill" [style.width.%]="pct(s)"></span></span>
+          <span class="serie-label">
+            <span class="serie-ico"><app-badge-icon [code]="s.code" /></span>
+            {{ s.label }}
+          </span>
+          <span class="serie-goal">
+            @if (s.earned) { Débloqué } @else { Objectif&nbsp;: {{ s.target }} }
+          </span>
         </div>
       }
     </div>
@@ -33,17 +42,14 @@
     @if (visibleFeats().length) {
       <div class="feats-grid">
         @for (a of visibleFeats(); track a.code) {
-          <div class="feat" [class.locked]="!a.earned">
-            <span class="feat-icon">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6">
-                <circle cx="12" cy="9" r="6"/>
-                <path d="M9 14.5 7 22l5-3 5 3-2-7.5"/>
-              </svg>
+          <div class="feat" [class.locked]="!a.earned" [class.earned]="a.earned">
+            <span class="feat-chip feat-chip--{{ a.code }}">
+              <app-badge-icon [code]="a.code" />
             </span>
             <span class="feat-label">{{ a.label }}</span>
             <span class="feat-desc">{{ a.description }}</span>
             @if (a.earned && a.unlockedAt) {
-              <span class="feat-tag">{{ a.unlockedAt | date:'d MMM yyyy' }}</span>
+              <span class="feat-tag">Débloqué le {{ a.unlockedAt | date:'d MMM yyyy' }}</span>
             } @else if (!a.earned) {
               <span class="feat-tag feat-tag-locked">À débloquer</span>
             }

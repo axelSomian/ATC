@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { BadgesService } from '../../core/services/badges.service';
+import { BadgeIconComponent } from './badge-icon.component';
 import type { BadgesPayload, BadgeSerie } from '../../core/models/badge.model';
 
 /**
@@ -11,12 +12,15 @@ import type { BadgesPayload, BadgeSerie } from '../../core/models/badge.model';
 @Component({
   selector: 'app-badges-panel',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, BadgeIconComponent],
   templateUrl: './badges-panel.component.html',
   styleUrl: './badges-panel.component.css',
 })
 export class BadgesPanelComponent implements OnInit {
   private readonly badges = inject(BadgesService);
+
+  /** Géométrie de l'anneau de progression des séries (r = 19 sur un viewBox 44). */
+  readonly ringCirc = 2 * Math.PI * 19;
 
   readonly userId = input<string>();
   readonly showLocked = input(true);
@@ -48,5 +52,9 @@ export class BadgesPanelComponent implements OnInit {
   pct(s: BadgeSerie): number {
     if (s.target <= 0) return 0;
     return Math.min(100, Math.round((s.value / s.target) * 100));
+  }
+
+  ringOffset(s: BadgeSerie): number {
+    return this.ringCirc * (1 - this.pct(s) / 100);
   }
 }
