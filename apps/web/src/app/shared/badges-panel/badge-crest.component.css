@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.crest {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+}
+
+.crest-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+:host(.is-earned) .crest-svg {
+  filter: drop-shadow(0 4px 10px rgba(22, 63, 50, 0.28));
+}
+:host(.is-locked) .crest-svg {
+  filter: grayscale(0.15) drop-shadow(0 3px 7px rgba(28, 28, 26, 0.16));
+  opacity: 0.92;
+}
+
+.ribbon-text {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  fill: #F4E7C6;
+}
+:host(.is-locked) .ribbon-text { fill: #C7C8CE; }
+
+/* Glyphe central — superposé, ~52 % de la largeur, ancré haut-centre du champ */
+.crest-glyph {
+  position: absolute;
+  left: 50%;
+  top: 37%;
+  width: 52%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  display: block;
+  color: #F5E9CB;
+}
+:host(.is-earned) .crest-glyph {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+:host(.is-locked) .crest-glyph {
+  color: #8A8B92;
+}
+
+.crest-glyph app-badge-icon {
+  width: 100%;
+  height: 100%;
+}

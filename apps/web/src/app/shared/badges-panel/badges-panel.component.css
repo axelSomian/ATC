@@ -113,102 +113,46 @@
 }
 .serie.earned .serie-goal { color: var(--color-accent); }
 
-/* ── Hauts faits ────────────────────────────────────────────────────── */
+/* ── Hauts faits — écussons ─────────────────────────────────────────── */
 
 .feats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: var(--space-4) var(--space-3);
 }
 
 .feat {
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4) var(--space-3) var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  background: var(--color-surface);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.feat.earned {
-  box-shadow: var(--shadow-xs);
-}
-.feat.earned:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-.feat-chip {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 4px;
-}
-.feat-chip app-badge-icon {
-  width: 22px;
-  height: 22px;
+  text-align: center;
+  gap: 3px;
 }
 
-/* Teintes par haut fait (dans la palette ATC) */
-.feat-chip--premier_match,
-.feat-chip--vingt_adversaires,
-.feat-chip--toujours_partant,
-.feat-chip--fidele_club {
-  background: color-mix(in srgb, var(--color-sage) 20%, white);
-  color: color-mix(in srgb, var(--color-sage) 75%, var(--color-ink));
+.feat app-badge-crest {
+  width: 100%;
+  max-width: 124px;
+  transition: transform 0.18s ease;
 }
-.feat-chip--outsider,
-.feat-chip--passage_niveau {
-  background: var(--color-accent-alpha);
-  color: var(--color-accent);
-}
-.feat-chip--premiere_victoire_plus_fort,
-.feat-chip--remontada {
-  background: color-mix(in srgb, var(--color-warning) 18%, white);
-  color: color-mix(in srgb, var(--color-warning) 80%, var(--color-ink));
-}
-.feat-chip--veteran,
-.feat-chip--le_tombeur {
-  background: color-mix(in srgb, var(--color-clay, var(--color-sand-beige)) 22%, white);
-  color: color-mix(in srgb, var(--color-clay, var(--color-sand-beige)) 78%, var(--color-ink));
+.feat:not(.locked) app-badge-crest:hover {
+  transform: translateY(-3px) scale(1.02);
 }
 
-.feat-label {
-  font-size: var(--text-sm);
-  font-weight: 800;
-  color: var(--color-ink);
-  line-height: 1.2;
-}
 .feat-desc {
+  margin: 4px 0 0;
   font-size: var(--text-xs);
   color: var(--color-muted);
   line-height: 1.35;
-  flex: 1;
 }
+
 .feat-tag {
-  margin-top: 6px;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--color-accent);
 }
 .feat-tag-locked { color: var(--color-muted); }
-
-/* Verrouillé — neutre, quelle que soit la teinte du code */
-.feat.locked {
-  background: var(--color-cream);
-  border-style: dashed;
-}
-.feat.locked .feat-chip {
-  background: color-mix(in srgb, var(--color-sand-beige) 30%, white) !important;
-  color: var(--color-sand-beige) !important;
-}
-.feat.locked .feat-label { color: var(--color-ink-light); }
 
 @media (max-width: 600px) {
   .series-row { gap: var(--space-2); }

@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, input, signal } from '@angular/cor
 import { DatePipe } from '@angular/common';
 import { BadgesService } from '../../core/services/badges.service';
 import { BadgeIconComponent } from './badge-icon.component';
+import { BadgeCrestComponent } from './badge-crest.component';
 import type { BadgesPayload, BadgeSerie } from '../../core/models/badge.model';
 
 /**
@@ -12,7 +13,7 @@ import type { BadgesPayload, BadgeSerie } from '../../core/models/badge.model';
 @Component({
   selector: 'app-badges-panel',
   standalone: true,
-  imports: [DatePipe, BadgeIconComponent],
+  imports: [DatePipe, BadgeIconComponent, BadgeCrestComponent],
   templateUrl: './badges-panel.component.html',
   styleUrl: './badges-panel.component.css',
 })

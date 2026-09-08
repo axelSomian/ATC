@@ -42,12 +42,9 @@
     @if (visibleFeats().length) {
       <div class="feats-grid">
         @for (a of visibleFeats(); track a.code) {
-          <div class="feat" [class.locked]="!a.earned" [class.earned]="a.earned">
-            <span class="feat-chip feat-chip--{{ a.code }}">
-              <app-badge-icon [code]="a.code" />
-            </span>
-            <span class="feat-label">{{ a.label }}</span>
-            <span class="feat-desc">{{ a.description }}</span>
+          <div class="feat" [class.locked]="!a.earned">
+            <app-badge-crest [code]="a.code" [label]="a.label" [earned]="a.earned" />
+            <p class="feat-desc">{{ a.description }}</p>
             @if (a.earned && a.unlockedAt) {
               <span class="feat-tag">Débloqué le {{ a.unlockedAt | date:'d MMM yyyy' }}</span>
             } @else if (!a.earned) {

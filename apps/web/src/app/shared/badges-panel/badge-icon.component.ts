@@ -1,15 +1,15 @@
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 
 /**
- * Icône dédiée par badge (séries + hauts faits). Tracé SVG au trait, hérite de
- * `currentColor` — pas d'emoji (cf. design system). `code` inconnu → médaille.
+ * Glyphe SVG dédié à chaque badge (panneau + écusson). Tracé au trait, hérite
+ * de `currentColor`. Pas d'emoji (cf. design system). `code` inconnu → médaille.
  */
 @Component({
   selector: 'app-badge-icon',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" [attr.stroke-width]="strokeWidth()"
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       @switch (code()) {
         @case ('serie_victoires') {
@@ -58,10 +58,11 @@ import { Component, ChangeDetectionStrategy, input } from '@angular/core';
     </svg>
   `,
   styles: [`
-    :host { display: inline-flex; }
-    svg { width: 100%; height: 100%; }
+    :host { display: inline-flex; width: 100%; height: 100%; }
+    svg { width: 100%; height: 100%; display: block; }
   `],
 })
 export class BadgeIconComponent {
   readonly code = input.required<string>();
+  readonly strokeWidth = input(1.75);
 }
