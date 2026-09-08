@@ -233,7 +233,11 @@
 
       <!-- Avatar upload -->
       <div class="avatar-upload-row">
-        <div class="avatar-upload-wrap" (click)="triggerFileInput()">
+        <div class="avatar-upload-wrap" role="button" tabindex="0"
+             aria-label="Changer la photo de profil"
+             (click)="triggerFileInput()"
+             (keydown.enter)="triggerFileInput()"
+             (keydown.space)="$event.preventDefault(); triggerFileInput()">
           <div class="avatar avatar-xl">
             @if (avatarPreview()) {
               <img [src]="avatarPreview()!" alt="Aperçu" class="avatar-img" />

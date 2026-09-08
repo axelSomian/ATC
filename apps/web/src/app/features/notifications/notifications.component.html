@@ -27,7 +27,10 @@
   } @else {
     <div class="notif-list">
       @for (n of notifService.all(); track n.id) {
-        <div class="notif-card card" [class.unread]="!n.readAt" (click)="navigate(n)">
+        <div class="notif-card card" [class.unread]="!n.readAt" role="button" tabindex="0"
+             (click)="navigate(n)"
+             (keydown.enter)="navigate(n)"
+             (keydown.space)="$event.preventDefault(); navigate(n)">
           <div class="notif-icon-wrap notif-icon-{{ icon(n.type) }}">
             @if (n.type === 'match_request') {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
