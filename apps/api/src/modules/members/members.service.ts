@@ -109,7 +109,9 @@ export async function getMemberById(id: string) {
     ? await prisma.user.count({ where: { rating: { gt: member.rating }, ratingGames: { gte: 5 } } }) + 1
     : null;
 
-  return { ...member, matchesPlayed, wins, losses, winRate, winStreak, rank, recentMatches };
+  // Le rating brut ne sort jamais côté client — seuls niveau, classement et delta sont exposés.
+  const { rating: _rating, ...memberPublic } = member;
+  return { ...memberPublic, matchesPlayed, wins, losses, winRate, winStreak, rank, recentMatches };
 }
 
 export async function getRankings() {
@@ -117,7 +119,7 @@ export async function getRankings() {
     where: { ratingGames: { gte: 5 } },
     select: {
       id: true, name: true, initials: true, avatarUrl: true,
-      level: true, rating: true, ratingGames: true, ratingDelta: true,
+      level: true, ratingDelta: true,
     },
     orderBy: { rating: 'desc' },
     take: 100,
@@ -152,7 +154,7 @@ export async function getRankings() {
     return {
       rank: i + 1,
       id: u.id, name: u.name, initials: u.initials, avatarUrl: u.avatarUrl,
-      level: u.level, rating: u.rating, ratingDelta: u.ratingDelta,
+      level: u.level, ratingDelta: u.ratingDelta,
       matchesPlayed, wins, losses: matchesPlayed - wins, winRate,
     };
   });

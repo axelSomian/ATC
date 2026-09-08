@@ -37,14 +37,6 @@ export class RankingsComponent implements OnInit {
     return this.reference.levelLabel(level);
   }
 
-  ratingColor(rating: number): string {
-    if (rating >= 1500) return 'rating-expert';
-    if (rating >= 1300) return 'rating-avance';
-    if (rating >= 1100) return 'rating-confirme';
-    if (rating >= 900)  return 'rating-inter';
-    return 'rating-debutant';
-  }
-
   rankIcon(rank: number): string {
     if (rank === 1) return '🥇';
     if (rank === 2) return '🥈';

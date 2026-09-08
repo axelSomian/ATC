@@ -83,7 +83,7 @@
           {{ (stats()?.matchesPlayed ?? 0) === 0 ? '—' : (stats()!.winRate + '%') }}
         </span>
         <span class="stat-tile-hint">
-          @if ((stats()?.matchesPlayed ?? 0) > 0 && stats()?.rating != null) { {{ stats()!.rating }} pts }
+          @if ((stats()?.matchesPlayed ?? 0) > 0) { {{ levelLabel() }} }
         </span>
       </div>
       <div class="stat-tile">

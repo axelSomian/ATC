@@ -44,7 +44,6 @@ export interface UserProfile extends UserPublic {
   wins?: number;
   losses?: number;
   winRate?: number;
-  rating?: number;
   ratingGames?: number;
   rank?: number | null;
   bestRanking?: number | null;

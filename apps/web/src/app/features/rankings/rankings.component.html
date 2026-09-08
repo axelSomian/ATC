@@ -4,7 +4,7 @@
   <div class="rankings-hero">
     <div>
       <h1>Classement</h1>
-      <p class="text-muted">Joueurs classés par rating ELO · matchs confirmés uniquement</p>
+      <p class="text-muted">Classement établi sur les matchs confirmés · mis à jour à chaque résultat</p>
     </div>
   </div>
 
@@ -17,12 +17,11 @@
       <div class="my-rank-body">
         <span class="my-rank-number">#{{ myRank()!.rank }}</span>
         <div class="my-rank-stats">
-          <span class="my-rank-rating" [class]="ratingColor(myRank()!.rating)">{{ myRank()!.rating }} pts</span>
           <span class="my-rank-record">{{ myRank()!.wins }}V · {{ myRank()!.losses }}D · {{ myRank()!.winRate }}%</span>
         </div>
         @if (myRank()!.ratingDelta !== 0) {
           <span class="my-rank-delta" [class]="deltaCss(myRank()!.ratingDelta)">
-            {{ deltaArrow(myRank()!.ratingDelta) }} {{ deltaLabel(myRank()!.ratingDelta) }} pts
+            {{ deltaArrow(myRank()!.ratingDelta) }} {{ deltaLabel(myRank()!.ratingDelta) }}
           </span>
         }
       </div>
@@ -54,7 +53,6 @@
         <span class="col-wins">V</span>
         <span class="col-losses">D</span>
         <span class="col-pct">%V</span>
-        <span class="col-rating">Rating</span>
         <span class="col-delta">Évol.</span>
       </div>
 
@@ -99,11 +97,6 @@
             <span class="col-wins stat-cell win-cell">{{ entry.wins }}</span>
             <span class="col-losses stat-cell">{{ entry.losses }}</span>
             <span class="col-pct stat-cell" [class.pct-good]="entry.winRate >= 50">{{ entry.winRate }}%</span>
-
-            <!-- Rating -->
-            <span class="col-rating rating-badge" [class]="ratingColor(entry.rating)">
-              {{ entry.rating }}
-            </span>
 
             <!-- Évolution -->
             <span class="col-delta delta-cell" [class]="deltaCss(entry.ratingDelta)">

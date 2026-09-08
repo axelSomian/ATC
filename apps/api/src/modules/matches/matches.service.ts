@@ -61,7 +61,6 @@ export async function getMyStats(userId: string) {
     upcomingCount: upcomingDispos + upcomingQuick,
     membersTotal,
     rank,
-    rating:      me?.rating      ?? null,
     ratingDelta: me?.ratingDelta ?? null,
   };
 }

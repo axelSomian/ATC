@@ -42,7 +42,6 @@ export interface RankingEntry {
   initials:      string;
   avatarUrl:     string | null;
   level:         number;
-  rating:        number;
   ratingDelta:   number;
   matchesPlayed: number;
   wins:          number;

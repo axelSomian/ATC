@@ -129,6 +129,24 @@ html, body {
 img, video { max-width: 100%; }
 img { height: auto; }
 
+/* ── Focus clavier — visible sur tout élément focusable, jamais au clic souris ── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ── Respect de « animations réduites » (préférence système / accessibilité) ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ═══════════════════════════════════════
    TYPOGRAPHY
    ═══════════════════════════════════════ */
