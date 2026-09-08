@@ -134,7 +134,7 @@ export async function resolveMatch(matchId: string, dto: ResolveMatchDto) {
 
   // Le litige n'a jamais déclenché l'ELO — on l'applique maintenant.
   // `updated.scoreHost` = score éventuellement corrigé par l'admin.
-  bg(applyEloUpdate(match.hostId, match.guestId, winnerId, updated.scoreHost), 'elo.update.dispute', { matchId: match.id });
+  bg(applyEloUpdate(match.hostId, match.guestId, winnerId, updated.scoreHost, match.id), 'elo.update.dispute', { matchId: match.id });
 
   for (const userId of [match.hostId, match.guestId]) {
     createNotification(userId, 'score_resolved', {

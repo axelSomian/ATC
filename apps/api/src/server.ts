@@ -26,6 +26,7 @@ import referenceRoutes from './modules/reference/reference.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
 import messagingRoutes from './modules/messaging/messaging.routes.js';
 import pushRoutes from './modules/push/push.routes.js';
+import badgesRoutes from './modules/badges/badges.routes.js';
 import { newsPublicRouter, newsAdminRouter, newsSyncRouter } from './modules/news/news.routes.js';
 
 const app = express();
@@ -151,6 +152,7 @@ app.use('/api/v1/notifications', notificationsRoutes);
 app.use('/api/v1/quick-matches', quickMatchesRoutes);
 app.use('/api/v1/conversations', messagingRoutes);
 app.use('/api/v1/push', pushRoutes);
+app.use('/api/v1/badges', badgesRoutes);
 app.use('/api/v1/news/rss', newsSyncRouter);
 app.use('/api/v1/news', newsPublicRouter);
 app.use('/api/v1/admin/news', newsAdminRouter);

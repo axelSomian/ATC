@@ -28,6 +28,10 @@ function pushContent(type: string, p: Record<string, unknown>): { title: string;
       return { title: 'Score contesté', body: 'Le score de votre match a été contesté', url: `${MATCHS}?vue=mes-matchs&tab=history` };
     case 'score_resolved':
       return { title: 'Litige tranché', body: 'Un administrateur a tranché le litige de votre match', url: `${MATCHS}?vue=mes-matchs&tab=history` };
+    case 'badge_unlocked': {
+      const label = (p['label'] as string | undefined) ?? 'un nouveau badge';
+      return { title: 'Badge débloqué', body: `Tu viens de débloquer « ${label} »`, url: '/profile?tab=badges' };
+    }
     default:
       return null;
   }
@@ -50,7 +54,7 @@ export async function createNotification(
 
   const c = pushContent(type, payload);
   if (c) {
-    const ref = payload['dispoId'] ?? payload['quickMatchId'] ?? payload['matchId'] ?? '';
+    const ref = payload['dispoId'] ?? payload['quickMatchId'] ?? payload['matchId'] ?? payload['code'] ?? '';
     bg(sendPushToUser(userId, { ...c, tag: `notif:${type}:${ref}` }), 'push.notification', { userId, type });
   }
 

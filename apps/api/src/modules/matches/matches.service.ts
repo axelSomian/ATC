@@ -3,6 +3,7 @@ import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { sendScoreToValidate, sendScoreConfirmed, sendScoreDisputed } from '../mailer/mailer.service.js';
 import { computeElo, movFromScore, MIN_GAMES_TO_MOVE_LEVEL } from './elo.js';
+import { recordLevelUp, refreshAndNotify } from '../badges/badges.service.js';
 import { bg } from '../../lib/bg.js';
 import type { RecordMatchDto, ValidateMatchDto, MyMatchesQueryDto } from './matches.schema.js';
 
@@ -179,10 +180,11 @@ export async function applyEloUpdate(
   guestId: string,
   winnerId: string,
   scoreHost?: string,
+  matchId?: string,
 ): Promise<void> {
   const [host, guest] = await Promise.all([
-    prisma.user.findUnique({ where: { id: hostId },  select: { rating: true, ratingGames: true, bestRanking: true } }),
-    prisma.user.findUnique({ where: { id: guestId }, select: { rating: true, ratingGames: true, bestRanking: true } }),
+    prisma.user.findUnique({ where: { id: hostId },  select: { rating: true, ratingGames: true, level: true, bestRanking: true } }),
+    prisma.user.findUnique({ where: { id: guestId }, select: { rating: true, ratingGames: true, level: true, bestRanking: true } }),
   ]);
   if (!host || !guest) return;
 
@@ -217,7 +219,26 @@ export async function applyEloUpdate(
         ratingDelta: guestResult.delta,
       },
     }),
+    // Contexte figé pour le calcul des badges (outsider, le tombeur, le déclic).
+    ...(matchId
+      ? [prisma.match.update({
+          where: { id: matchId },
+          data:  { hostRatingBefore: host.rating, guestRatingBefore: guest.rating },
+        })]
+      : []),
   ]);
+
+  // « Palier franchi » — écrit au moment exact du changement de niveau.
+  if (hostMovesLevel && hostResult.newLevel !== host.level) {
+    bg(recordLevelUp(hostId, host.level, hostResult.newLevel), 'badges.levelup', { userId: hostId });
+  }
+  if (guestMovesLevel && guestResult.newLevel !== guest.level) {
+    bg(recordLevelUp(guestId, guest.level, guestResult.newLevel), 'badges.levelup', { userId: guestId });
+  }
+
+  // Recalcul des hauts faits « historique » + notif des nouveaux.
+  bg(refreshAndNotify(hostId),  'badges.refresh', { userId: hostId });
+  bg(refreshAndNotify(guestId), 'badges.refresh', { userId: guestId });
 
   // Mettre à jour bestRanking si le nouveau rang est meilleur (plus petit)
   const newHostGames  = host.ratingGames + 1;
@@ -253,12 +274,15 @@ export async function validateMatch(matchId: string, userId: string, dto: Valida
 
   const updated = await prisma.match.update({
     where: { id: matchId },
-    data:  { status: newStatus },
+    data:  {
+      status: newStatus,
+      ...(newStatus === 'disputed' ? { wasDisputed: true } : {}),
+    },
     include: MATCH_INCLUDE,
   });
 
   if (dto.action === 'confirm') {
-    bg(applyEloUpdate(match.hostId, match.guestId, match.winnerId, match.scoreHost), 'elo.update', { matchId: match.id });
+    bg(applyEloUpdate(match.hostId, match.guestId, match.winnerId, match.scoreHost, match.id), 'elo.update', { matchId: match.id });
   }
 
   if (match.recordedBy) {

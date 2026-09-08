@@ -51,6 +51,7 @@ model User {
   pushSubscriptions        PushSubscription[]
   passwordResetTokens      PasswordResetToken[]
   emailVerificationTokens  EmailVerificationToken[]
+  achievements             Achievement[]
 
   @@index([rating, ratingGames])
   @@index([level, online])
@@ -156,6 +157,11 @@ model Match {
   winnerId     String
   status       String      @default("confirmed") // 'pending' | 'confirmed' | 'disputed'
   recordedBy   String? // userId who submitted the score
+  // Contexte figé au moment où l'ELO s'applique (confirmation / résolution) —
+  // sert au calcul des badges (outsider, tombeur…). Null = match d'avant la feature.
+  hostRatingBefore  Int?
+  guestRatingBefore Int?
+  wasDisputed       Boolean @default(false) // a transité par 'disputed' au moins une fois
   dispoPostId  String?     @unique
   quickMatchId String?     @unique
   host         User        @relation("host", fields: [hostId], references: [id])
@@ -166,6 +172,23 @@ model Match {
   @@index([hostId, status, playedAt])
   @@index([guestId, status, playedAt])
   @@index([winnerId])
+}
+
+// Hauts faits débloqués (permanents) — cf. src/modules/badges/badges.engine.ts.
+// Les « séries » (compteurs vivants : victoires d'affilée, matchs du mois, sans
+// accroc) NE sont PAS stockées : elles sont recalculées à la lecture depuis
+// l'historique. Ici on ne garde que ce qui doit être figé : la date de déblocage
+// (affichage « débloqué le… ») et l'anti-double-notif.
+model Achievement {
+  id         String   @id @default(cuid())
+  userId     String
+  code       String // 'premier_match' | 'outsider' | 'le_tombeur' | … (badges.engine.ts)
+  unlockedAt DateTime @default(now())
+  context    Json? // détail figé au déblocage (ex. { from: 2, to: 3 } pour un passage de niveau)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code])
+  @@index([userId])
 }
 
 model Notification {
