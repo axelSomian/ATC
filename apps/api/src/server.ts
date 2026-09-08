@@ -11,6 +11,7 @@ import passport from 'passport';
 import { log } from './lib/logger.js';
 import { captureError } from './lib/sentry.js';
 import { prisma } from './lib/prisma.js';
+import { bg } from './lib/bg.js';
 import { requestLog, getLastActivityAt } from './middleware/request-log.js';
 import { errorHandler } from './middleware/error.js';
 import './middleware/passport.js';
@@ -28,6 +29,7 @@ import messagingRoutes from './modules/messaging/messaging.routes.js';
 import pushRoutes from './modules/push/push.routes.js';
 import badgesRoutes from './modules/badges/badges.routes.js';
 import { newsPublicRouter, newsAdminRouter, newsSyncRouter } from './modules/news/news.routes.js';
+import { promoteDuePosts } from './modules/news/news.service.js';
 
 const app = express();
 // Derrière le proxy Render (et Vercel) : faire confiance au 1er hop pour
@@ -186,4 +188,12 @@ if (process.env.NODE_ENV === 'production') {
     prisma.$queryRaw`SELECT 1`.catch((err) => log.warn('db.keepalive.failed', { err }));
   }, 4 * 60 * 1000);
   keepAlive.unref();
+
+  // Filet supplémentaire pour la bascule des actualités programmées : tant que le
+  // serveur tourne, on promeut les échues toutes les 5 min (indépendamment du
+  // trafic /news et du cron GitHub). Ne couvre pas l'endormissement Render.
+  const publishTick = setInterval(() => {
+    bg(promoteDuePosts(), 'news.promoteDuePosts.tick');
+  }, 5 * 60 * 1000);
+  publishTick.unref();
 }
