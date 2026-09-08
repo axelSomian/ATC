@@ -69,36 +69,10 @@
 
     <!-- Statistiques -->
     <div class="stats-row">
-      <div class="stat-tile">
-        <span class="stat-tile-label">Matchs joués</span>
-        <span class="stat-tile-value">{{ stats()?.matchesPlayed ?? 0 }}</span>
-        <span class="stat-tile-hint">
-          @if ((stats()?.matchesPlayed ?? 0) === 0) { Aucun encore }
-          @else { {{ stats()!.wins }}V · {{ stats()!.losses }}D }
-        </span>
-      </div>
-      <div class="stat-tile">
-        <span class="stat-tile-label">% Victoire</span>
-        <span class="stat-tile-value" [class.is-positive]="(stats()?.winRate ?? 0) >= 50">
-          {{ (stats()?.matchesPlayed ?? 0) === 0 ? '—' : (stats()!.winRate + '%') }}
-        </span>
-        <span class="stat-tile-hint">
-          @if ((stats()?.matchesPlayed ?? 0) > 0) { {{ levelLabel() }} }
-        </span>
-      </div>
-      <div class="stat-tile">
-        <span class="stat-tile-label">Classement</span>
-        <span class="stat-tile-value stat-tile-rank">{{ rankLabel() }}</span>
-        <span class="stat-tile-hint">
-          @if (stats()?.rank == null) {
-            5 matchs requis
-          } @else if (deltaLabel()) {
-            <span [class.delta-up]="deltaUp()" [class.delta-down]="deltaDown()">{{ deltaLabel() }} dernier match</span>
-          } @else if (profile()?.bestRanking) {
-            Meilleur : #{{ profile()!.bestRanking }}
-          }
-        </span>
-      </div>
+      <app-stat-tile label="Matchs joués" [value]="stats()?.matchesPlayed ?? 0" [hint]="matchesHint()" />
+      <app-stat-tile label="% Victoire" [value]="winPctValue()"
+        [tone]="winPctPositive() ? 'positive' : 'ink'" [hint]="winPctHint()" />
+      <app-stat-tile label="Classement" [value]="rankLabel()" tone="gold" [hint]="rankHint()" />
     </div>
 
     <!-- Badges -->
@@ -137,8 +111,8 @@
     <div class="profile-grid">
 
       <!-- Bio -->
-      <div class="card profile-section">
-        <h3 class="section-title">À propos</h3>
+      <div class="panel profile-section">
+        <app-section-title label="À propos" />
         @if (profile()!.bio) {
           <p class="bio-text">{{ profile()!.bio }}</p>
         } @else {
@@ -147,8 +121,8 @@
       </div>
 
       <!-- Infos -->
-      <div class="card profile-section">
-        <h3 class="section-title">Informations</h3>
+      <div class="panel profile-section">
+        <app-section-title label="Informations" />
         <div class="info-list">
           <div class="info-row">
             <span class="info-label">Email</span>
@@ -185,14 +159,14 @@
 
     <!-- Preferences -->
     @if (profile()!.preferredCourts.length || profile()!.preferredTimes.length) {
-      <div class="card profile-section">
-        <h3 class="section-title">Préférences</h3>
+      <div class="panel profile-section">
+        <app-section-title label="Préférences" />
         @if (profile()!.preferredCourts.length) {
           <div class="pref-group">
             <span class="pref-label">Clubs où je joue</span>
             <div class="tags">
               @for (c of profile()!.preferredCourts; track c) {
-                <span class="tag">{{ c }}</span>
+                <span class="chip">{{ c }}</span>
               }
             </div>
           </div>
@@ -202,7 +176,7 @@
             <span class="pref-label">Créneaux</span>
             <div class="tags">
               @for (t of profile()!.preferredTimes; track t) {
-                <span class="tag">{{ t }}</span>
+                <span class="chip">{{ t }}</span>
               }
             </div>
           </div>
@@ -266,7 +240,7 @@
 
         <!-- Identité -->
         <div class="card edit-section">
-          <h3 class="section-title">Identité</h3>
+          <app-section-title label="Identité" />
 
           <div class="form-group">
             <label class="form-label" for="name">Nom complet</label>
@@ -313,7 +287,7 @@
 
         <!-- Contact & équipement -->
         <div class="card edit-section">
-          <h3 class="section-title">Contact & équipement</h3>
+          <app-section-title label="Contact & équipement" />
 
           <div class="form-group">
             <label class="form-label" for="phone">Téléphone</label>
@@ -350,7 +324,7 @@
 
       <!-- Bio -->
       <div class="card edit-section">
-        <h3 class="section-title">Bio</h3>
+        <app-section-title label="Bio" />
         <div class="form-group">
           <textarea class="form-control bio-input" formControlName="bio"
             placeholder="Décrivez votre style de jeu, vos objectifs…" rows="4"></textarea>
@@ -359,7 +333,7 @@
 
       <!-- Préférences -->
       <div class="card edit-section">
-        <h3 class="section-title">Préférences</h3>
+        <app-section-title label="Préférences" />
 
         <div class="pref-group">
           <span class="pref-label">Clubs où je joue</span>

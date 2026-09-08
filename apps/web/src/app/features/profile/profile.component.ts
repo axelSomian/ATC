@@ -7,6 +7,8 @@ import { MembersService, type UpdateProfilePayload } from '../../core/services/m
 import { MatchesService, type MyStats } from '../../core/services/matches.service';
 import { ReferenceService } from '../../core/services/reference.service';
 import { BadgesPanelComponent } from '../../shared/badges-panel/badges-panel.component';
+import { StatTileComponent } from '../../shared/ui/stat-tile.component';
+import { SectionTitleComponent } from '../../shared/ui/section-title.component';
 import { CITIES_CI } from '@atc/shared';
 import type { UserMe } from '../../core/models/user.model';
 import type { UpcomingMatch } from '../../core/models/match.model';
@@ -29,7 +31,7 @@ const VENUE_FALLBACK = [
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, DatePipe, RouterLink, BadgesPanelComponent],
+  imports: [ReactiveFormsModule, DatePipe, RouterLink, BadgesPanelComponent, StatTileComponent, SectionTitleComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
 })
@@ -84,6 +86,26 @@ export class ProfileComponent implements OnInit {
   });
   readonly deltaUp   = computed(() => (this.stats()?.ratingDelta ?? 0) > 0);
   readonly deltaDown = computed(() => (this.stats()?.ratingDelta ?? 0) < 0);
+
+  // ── Valeurs pré-formatées pour les tuiles de stats ──
+  readonly matchesHint = computed(() => {
+    const s = this.stats();
+    if (!s || s.matchesPlayed === 0) return 'Aucun encore';
+    return `${s.wins}V · ${s.losses}D`;
+  });
+  readonly winPctValue = computed(() => {
+    const s = this.stats();
+    return !s || s.matchesPlayed === 0 ? '—' : `${s.winRate}%`;
+  });
+  readonly winPctPositive = computed(() => (this.stats()?.winRate ?? 0) >= 50);
+  readonly winPctHint = computed(() => ((this.stats()?.matchesPlayed ?? 0) > 0 ? this.levelLabel() : ''));
+  readonly rankHint = computed(() => {
+    const s = this.stats();
+    if (!s || s.rank == null) return '5 matchs requis';
+    if (this.deltaLabel()) return `${this.deltaLabel()} au dernier match`;
+    const best = this.profile()?.bestRanking;
+    return best ? `Meilleur : #${best}` : '';
+  });
 
   readonly form = this.fb.group({
     name:    ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
