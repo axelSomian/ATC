@@ -258,28 +258,6 @@
   to   { background-position: -200% 0; }
 }
 
-/* ── Empty ── */
-.empty-state {
-  text-align: center;
-  padding: var(--space-16) var(--space-6);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.empty-icon {
-  width: 52px; height: 52px;
-  border-radius: 14px;
-  background: var(--color-cream-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-muted);
-}
-
-.empty-title { font-size: var(--text-lg); font-weight: 600; letter-spacing: -0.01em; }
-
 /* ── Pagination ── */
 .pagination { display: flex; align-items: center; justify-content: center; gap: var(--space-2); }
 

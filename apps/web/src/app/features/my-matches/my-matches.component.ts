@@ -8,6 +8,7 @@ import { CourtMapService } from '../../core/services/court-map.service';
 import { MessagesService } from '../../core/services/messages.service';
 import { MatchCardService, type MatchCardData } from '../../core/services/match-card.service';
 import { BadgesService } from '../../core/services/badges.service';
+import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 import { AuthStore } from '../../core/stores/auth.store';
 import type { Match, UpcomingMatch, MatchStakes } from '../../core/models/match.model';
 import type { QuickMatch } from '../../core/models/quick-match.model';
@@ -45,7 +46,7 @@ const STAKES_COPY: Record<MatchStakes['band'], StakesView> = {
 @Component({
   selector: 'app-my-matches',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, EmptyStateComponent],
   templateUrl: './my-matches.component.html',
   styleUrl: './my-matches.component.css',
 })

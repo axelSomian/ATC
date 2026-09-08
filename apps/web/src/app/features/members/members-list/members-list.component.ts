@@ -6,13 +6,14 @@ import { MembersService, type MembersQuery } from '../../../core/services/member
 import { ReferenceService } from '../../../core/services/reference.service';
 import { PresenceService } from '../../../core/services/presence.service';
 import { LevelLegendComponent } from '../../../shared/level-legend/level-legend.component';
+import { EmptyStateComponent } from '../../../shared/empty-state/empty-state.component';
 import { CITIES_CI } from '@atc/shared';
 import type { UserProfile } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-members-list',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, LevelLegendComponent],
+  imports: [RouterLink, ReactiveFormsModule, LevelLegendComponent, EmptyStateComponent],
   templateUrl: './members-list.component.html',
   styleUrl: './members-list.component.css',
 })

@@ -1,12 +1,13 @@
 import { Component, inject, computed } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NotificationsService } from '../../core/services/notifications.service';
+import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 import type { AppNotification } from '../../core/models/notification.model';
 
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, EmptyStateComponent],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.css',
 })

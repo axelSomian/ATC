@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
+import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DisposService, type DispoPost, type DisposQuery } from '../../core/services/dispos.service';
 import { AuthStore } from '../../core/stores/auth.store';
@@ -26,7 +27,7 @@ const DURATIONS = [
 @Component({
   selector: 'app-match-finder',
   standalone: true,
-  imports: [ReactiveFormsModule, DatePipe, RouterLink],
+  imports: [ReactiveFormsModule, DatePipe, RouterLink, EmptyStateComponent],
   templateUrl: './match-finder.component.html',
   styleUrl: './match-finder.component.css',
 })

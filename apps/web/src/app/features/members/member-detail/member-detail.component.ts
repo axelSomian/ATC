@@ -8,6 +8,7 @@ import { AuthStore } from '../../../core/stores/auth.store';
 import { ReferenceService } from '../../../core/services/reference.service';
 import { PresenceService } from '../../../core/services/presence.service';
 import { BadgesPanelComponent } from '../../../shared/badges-panel/badges-panel.component';
+import { EmptyStateComponent } from '../../../shared/empty-state/empty-state.component';
 import type { UserProfile, RecentMatch } from '../../../core/models/user.model';
 
 // Repli si le catalogue des clubs (DB) est injoignable au démarrage.
@@ -19,7 +20,7 @@ const VENUE_FALLBACK = [
 @Component({
   selector: 'app-member-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, ReactiveFormsModule, BadgesPanelComponent],
+  imports: [RouterLink, DatePipe, ReactiveFormsModule, BadgesPanelComponent, EmptyStateComponent],
   templateUrl: './member-detail.component.html',
   styleUrl: './member-detail.component.css',
 })

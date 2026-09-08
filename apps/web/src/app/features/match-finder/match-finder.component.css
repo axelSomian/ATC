@@ -584,32 +584,6 @@
 }
 .level-dot.active { background: var(--color-accent); }
 
-/* ── Empty state ── */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-16) var(--space-4);
-  text-align: center;
-}
-
-.empty-icon {
-  width: 52px; height: 52px;
-  border-radius: 14px;
-  background: var(--color-cream-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-muted);
-}
-
-.empty-title {
-  font-weight: 600;
-  font-size: var(--text-base);
-  letter-spacing: -0.01em;
-}
-
 /* ── Mobile ── */
 @media (max-width: 540px) {
   .mf-hero { padding: var(--space-5); border-radius: var(--radius-xl); }

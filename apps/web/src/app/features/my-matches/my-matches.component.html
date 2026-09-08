@@ -39,14 +39,11 @@
   <!-- ══════════ À VENIR ══════════ -->
   @if (!loading() && tab() === 'upcoming') {
     @if (upcoming().length === 0) {
-      <div class="card empty-state">
-        <div class="empty-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/></svg>
-        </div>
-        <p class="empty-title">Aucun match à venir</p>
-        <p class="text-muted" style="font-size:var(--text-sm)">Publiez une annonce ou défiez un membre directement.</p>
-        <a routerLink="/matchs" [queryParams]="{ vue: 'trouver' }" class="btn btn-primary btn-sm">Trouver un match</a>
-      </div>
+      <app-empty-state title="Aucun match à venir"
+        hint="Publiez une annonce ou défiez un membre directement.">
+        <svg icon width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/></svg>
+        <a cta routerLink="/matchs" [queryParams]="{ vue: 'trouver' }" class="btn btn-primary btn-sm">Trouver un match</a>
+      </app-empty-state>
     } @else {
       <div class="match-list">
         @for (m of upcoming(); track m.id) {
@@ -273,14 +270,11 @@
     }
 
     @if (receivedChallenges().length === 0 && sentChallenges().length === 0) {
-      <div class="card empty-state">
-        <div class="empty-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        </div>
-        <p class="empty-title">Aucun défi en cours</p>
-        <p class="text-muted" style="font-size:var(--text-sm)">Défiez un membre directement depuis son profil.</p>
-        <a routerLink="/members" class="btn btn-primary btn-sm">Voir les membres</a>
-      </div>
+      <app-empty-state title="Aucun défi en cours"
+        hint="Défiez un membre directement depuis son profil.">
+        <svg icon width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <a cta routerLink="/members" class="btn btn-primary btn-sm">Voir les membres</a>
+      </app-empty-state>
     }
   }
 
@@ -449,13 +443,10 @@
 
     <!-- Historique confirmé -->
     @if (confirmedHistory().length === 0 && pendingValidation().length === 0 && pendingByMe().length === 0 && disputedMatches().length === 0) {
-      <div class="card empty-state">
-        <div class="empty-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        </div>
-        <p class="empty-title">Aucun match joué</p>
-        <p class="text-muted" style="font-size:var(--text-sm)">Votre historique apparaîtra après vos premiers matchs.</p>
-      </div>
+      <app-empty-state title="Aucun match joué"
+        hint="Votre historique apparaîtra après vos premiers matchs.">
+        <svg icon width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </app-empty-state>
     }
 
     @if (confirmedHistory().length > 0) {

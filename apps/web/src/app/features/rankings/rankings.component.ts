@@ -4,11 +4,12 @@ import { MembersService, type RankingEntry } from '../../core/services/members.s
 import { AuthStore } from '../../core/stores/auth.store';
 import { ReferenceService } from '../../core/services/reference.service';
 import { LevelLegendComponent } from '../../shared/level-legend/level-legend.component';
+import { EmptyStateComponent } from '../../shared/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-rankings',
   standalone: true,
-  imports: [RouterLink, LevelLegendComponent],
+  imports: [RouterLink, LevelLegendComponent, EmptyStateComponent],
   templateUrl: './rankings.component.html',
   styleUrl: './rankings.component.css',
 })
