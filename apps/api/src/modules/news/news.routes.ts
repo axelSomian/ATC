@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import multer from 'multer';
 import { authenticate, requireAdmin } from '../../middleware/passport.js';
 import { AppError } from '../../middleware/error.js';
@@ -22,22 +22,34 @@ import {
   adminCreate,
   adminUpdate,
   adminRemove,
+  promoteDuePosts,
+  maybePublishDue,
 } from './news.service.js';
 import {
   listFeeds, createFeed, updateFeed, deleteFeed, syncAllFeeds, maybeSync,
 } from './rss.service.js';
 
-// ── Synchro RSS déclenchée par cron externe : /api/v1/news/rss ─────────────
-// Protégée par un token d'en-tête (pas de JWT — appelé par GitHub Actions).
+// ── Tâches déclenchées par cron externe : /api/v1/news/rss ─────────────────
+// Protégées par un token d'en-tête (pas de JWT — appelé par GitHub Actions).
 export const newsSyncRouter = Router();
+
+function checkToken(req: Request): boolean {
+  const token = process.env.RSS_SYNC_TOKEN;
+  return !!token && req.get('x-rss-token') === token;
+}
 
 newsSyncRouter.post('/sync', async (req, res, next) => {
   try {
-    const token = process.env.RSS_SYNC_TOKEN;
-    if (!token || req.get('x-rss-token') !== token) {
-      return res.status(401).json({ error: 'Token invalide' });
-    }
+    if (!checkToken(req)) return res.status(401).json({ error: 'Token invalide' });
     res.json(await syncAllFeeds());
+  } catch (err) { next(err); }
+});
+
+// Passe les publications programmées arrivées à échéance en « publié » + notifie.
+newsSyncRouter.post('/publish-due', async (req, res, next) => {
+  try {
+    if (!checkToken(req)) return res.status(401).json({ error: 'Token invalide' });
+    res.json({ promoted: await promoteDuePosts() });
   } catch (err) { next(err); }
 });
 
@@ -48,7 +60,8 @@ newsPublicRouter.use(authenticate); // rubrique réservée aux membres connecté
 
 newsPublicRouter.get('/', async (req, res, next) => {
   try {
-    maybeSync(); // fetch-on-read (throttlé 6 h, fire-and-forget)
+    maybeSync();        // RSS : fetch-on-read (throttlé 6 h, fire-and-forget)
+    maybePublishDue();  // programmées échues : bascule + push (throttlé 60 s)
     res.json(await listPublic(listQuerySchema.parse(req.query)));
   } catch (err) { next(err); }
 });

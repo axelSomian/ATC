@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { renderMarkdown } from '../../lib/markdown.js';
 import { sendBroadcast } from '../../lib/webpush.js';
+import { bg } from '../../lib/bg.js';
 import type { CreatePostDto, ListQueryDto, UpdatePostDto } from './news.schema.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -199,7 +200,7 @@ function normalizePublishedAt(status: string, iso: string | null | undefined): D
 
 async function maybeNotify(post: { id: string; title: string; summary: string; slug: string; status: string; publishedAt: Date | null; notifyOnPublish: boolean; notifiedAt: Date | null }) {
   if (!post.notifyOnPublish || post.notifiedAt) return;
-  if (!isLiveNow(post.status, post.publishedAt)) return; // programmé futur : push différé (non géré sans cron)
+  if (!isLiveNow(post.status, post.publishedAt)) return; // programmé futur : la notif partira à la bascule (promoteDuePosts)
   await prisma.post.update({ where: { id: post.id }, data: { notifiedAt: new Date() } });
   sendBroadcast({
     title: post.title.slice(0, 80),
@@ -207,4 +208,36 @@ async function maybeNotify(post: { id: string; title: string; summary: string; s
     url: `/actualite/${post.slug}`,
     tag: `news:${post.id}`,
   }).catch(() => {});
+}
+
+// ── Bascule des publications programmées arrivées à échéance ────────────────
+// La visibilité est déjà calculée à la lecture (publicWhere), mais il faut un
+// vrai « moment de publication » pour : figer status='published' et surtout
+// déclencher la notif push. Déclenché sur GET /news (throttlé) + cron 10 min.
+
+let lastPromoteAt = 0;
+const PROMOTE_TTL_MS = 60_000;
+
+export async function promoteDuePosts(): Promise<number> {
+  const due = await prisma.post.findMany({
+    where: { status: 'scheduled', publishedAt: { lte: new Date() } },
+  });
+  if (due.length === 0) return 0;
+
+  await prisma.post.updateMany({
+    where: { id: { in: due.map((p) => p.id) } },
+    data: { status: 'published' },
+  });
+
+  for (const p of due) {
+    await maybeNotify({ ...p, status: 'published' });
+  }
+  return due.length;
+}
+
+/** Version throttlée « fetch-on-read », à appeler sur les routes publiques. */
+export function maybePublishDue(): void {
+  if (Date.now() - lastPromoteAt < PROMOTE_TTL_MS) return;
+  lastPromoteAt = Date.now();
+  bg(promoteDuePosts(), 'news.promoteDuePosts');
 }

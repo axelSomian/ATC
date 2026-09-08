@@ -1,0 +1,24 @@
+name: Publier les actualités programmées
+
+# Bascule en « publié » les publications programmées dont l'heure est atteinte,
+# et déclenche leur notification push. La visibilité, elle, est déjà calculée à
+# la lecture — ce cron sert au vrai « moment de publication » (statut + push),
+# même sans trafic. Un déclencheur throttlé (60 s) existe aussi sur GET /news.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *' # toutes les 10 min (GitHub peut décaler de quelques min)
+  workflow_dispatch: {}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Promouvoir les posts arrivés à échéance
+        run: |
+          code=$(curl -sS -o /tmp/out.json -w '%{http_code}' \
+            --max-time 60 --retry 2 --retry-delay 15 \
+            -X POST "https://atc-api-ws9f.onrender.com/api/v1/news/rss/publish-due" \
+            -H "x-rss-token: ${{ secrets.RSS_SYNC_TOKEN }}")
+          echo "HTTP $code"; cat /tmp/out.json; echo
+          test "$code" = "200"
