@@ -1,0 +1,59 @@
+<section class="card badges-card">
+  <header class="badges-head">
+    <h3 class="section-title">Badges</h3>
+    @if (data(); as d) {
+      <span class="badges-count">{{ d.earnedCount }}<span class="badges-count-total">/{{ d.totalCount }}</span></span>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="badges-loading"><div class="spinner spinner-sm"></div></div>
+  } @else if (failed()) {
+    <p class="empty-hint">Badges indisponibles pour le moment.</p>
+  }
+
+  @if (!loading() && !failed() && data(); as d) {
+    <!-- Séries -->
+    <div class="series-row">
+      @for (s of d.series; track s.code) {
+        <div class="serie" [class.earned]="s.earned" [title]="s.description">
+          <div class="serie-top">
+            <span class="serie-label">{{ s.label }}</span>
+            @if (s.earned) {
+              <svg class="serie-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            }
+          </div>
+          <span class="serie-value">{{ s.value }}<span class="serie-target">/ {{ s.target }}</span></span>
+          <span class="serie-bar"><span class="serie-bar-fill" [style.width.%]="pct(s)"></span></span>
+        </div>
+      }
+    </div>
+
+    <!-- Hauts faits -->
+    @if (visibleFeats().length) {
+      <div class="feats-grid">
+        @for (a of visibleFeats(); track a.code) {
+          <div class="feat" [class.locked]="!a.earned">
+            <span class="feat-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="12" cy="9" r="6"/>
+                <path d="M9 14.5 7 22l5-3 5 3-2-7.5"/>
+              </svg>
+            </span>
+            <span class="feat-label">{{ a.label }}</span>
+            <span class="feat-desc">{{ a.description }}</span>
+            @if (a.earned && a.unlockedAt) {
+              <span class="feat-tag">{{ a.unlockedAt | date:'d MMM yyyy' }}</span>
+            } @else if (!a.earned) {
+              <span class="feat-tag feat-tag-locked">À débloquer</span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (isEmptyForOther()) {
+      <p class="empty-hint">Pas encore de badge débloqué.</p>
+    }
+  }
+</section>

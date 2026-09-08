@@ -126,6 +126,10 @@
           <span class="tab-badge">{{ member()!.matchesPlayed }}</span>
         }
       </button>
+      <button class="tab-btn" [class.active]="tab() === 'badges'" (click)="tab.set('badges')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="6"/><path d="M9 14.5 7 22l5-3 5 3-2-7.5"/></svg>
+        Badges
+      </button>
     </div>
 
     <!-- ══════════ ONGLET INFOS ══════════ -->
@@ -382,6 +386,11 @@
       }
 
     } <!-- /onglet history -->
+
+    <!-- ══════════ ONGLET BADGES ══════════ -->
+    @if (tab() === 'badges') {
+      <app-badges-panel [userId]="id()" [showLocked]="isOwnProfile()" />
+    }
 
   }
 

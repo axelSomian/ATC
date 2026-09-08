@@ -6,6 +6,7 @@ import { DatePipe } from '@angular/common';
 import { MembersService, type UpdateProfilePayload } from '../../core/services/members.service';
 import { MatchesService, type MyStats } from '../../core/services/matches.service';
 import { ReferenceService } from '../../core/services/reference.service';
+import { BadgesPanelComponent } from '../../shared/badges-panel/badges-panel.component';
 import { CITIES_CI } from '@atc/shared';
 import type { UserMe } from '../../core/models/user.model';
 import type { UpcomingMatch } from '../../core/models/match.model';
@@ -28,7 +29,7 @@ const VENUE_FALLBACK = [
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, DatePipe, RouterLink],
+  imports: [ReactiveFormsModule, DatePipe, RouterLink, BadgesPanelComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
 })

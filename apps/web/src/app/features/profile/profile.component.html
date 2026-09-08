@@ -101,6 +101,9 @@
       </div>
     </div>
 
+    <!-- Badges -->
+    <app-badges-panel />
+
     <!-- Prochain match -->
     @if (nextMatch()) {
       <a routerLink="/matchs" [queryParams]="{ vue: 'mes-matchs' }" class="next-match card">

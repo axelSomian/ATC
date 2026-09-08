@@ -56,6 +56,9 @@ export class NotificationsService {
       case 'score_resolved':
         this.router.navigate(['/matchs'], { queryParams: { vue: 'mes-matchs', tab: 'history', focus: p.matchId ?? null } });
         break;
+      case 'badge_unlocked':
+        this.router.navigate(['/profile']);
+        break;
       default:
         this.router.navigate(['/notifications']);
     }
@@ -102,6 +105,8 @@ export class NotificationsService {
         return `Le score de votre match a été contesté`;
       case 'score_resolved':
         return `Un administrateur a tranché le litige de votre match`;
+      case 'badge_unlocked':
+        return `Badge débloqué : « ${payload.label ?? 'nouveau badge'} »`;
       default:
         return 'Nouvelle notification';
     }

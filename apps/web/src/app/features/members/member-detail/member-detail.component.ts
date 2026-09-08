@@ -7,6 +7,7 @@ import { QuickMatchesService } from '../../../core/services/quick-matches.servic
 import { AuthStore } from '../../../core/stores/auth.store';
 import { ReferenceService } from '../../../core/services/reference.service';
 import { PresenceService } from '../../../core/services/presence.service';
+import { BadgesPanelComponent } from '../../../shared/badges-panel/badges-panel.component';
 import type { UserProfile, RecentMatch } from '../../../core/models/user.model';
 
 // Repli si le catalogue des clubs (DB) est injoignable au démarrage.
@@ -18,7 +19,7 @@ const VENUE_FALLBACK = [
 @Component({
   selector: 'app-member-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, ReactiveFormsModule],
+  imports: [RouterLink, DatePipe, ReactiveFormsModule, BadgesPanelComponent],
   templateUrl: './member-detail.component.html',
   styleUrl: './member-detail.component.css',
 })
@@ -35,7 +36,7 @@ export class MemberDetailComponent implements OnInit {
   readonly member   = signal<UserProfile | null>(null);
   readonly loading  = signal(true);
   readonly error    = signal('');
-  readonly tab      = signal<'info' | 'history'>('info');
+  readonly tab      = signal<'info' | 'history' | 'badges'>('info');
 
   readonly showChallenge  = signal(false);
   readonly challenging    = signal(false);

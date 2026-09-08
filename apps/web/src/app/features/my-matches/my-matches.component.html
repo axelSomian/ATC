@@ -115,6 +115,9 @@
                     <span class="stakes-loss">Défaite {{ m.stakes.deltaLoss }}</span>
                   </div>
                   <p class="stakes-sub">{{ stakesView(m.stakes).sub }}</p>
+                  @if (winStreak() >= 2) {
+                    <p class="stakes-streak">Tu joues ta série de {{ winStreak() }} victoires</p>
+                  }
                 </div>
               }
             </div>

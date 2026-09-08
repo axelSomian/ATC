@@ -286,6 +286,12 @@
   line-height: 1.4;
   color: var(--color-muted);
 }
+.stakes-streak {
+  margin: 6px 0 0;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-accent);
+}
 
 /* Bandes — l'outsider est mis en avant (opportunité), le favori en alerte douce */
 .stakes--outsider {

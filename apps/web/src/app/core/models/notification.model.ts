@@ -1,4 +1,4 @@
-export type NotifType = 'match_request' | 'match_confirmed' | 'match_declined' | 'match_spot_reassigned' | 'quick_match_request' | 'score_to_validate' | 'score_confirmed' | 'score_disputed' | 'score_resolved';
+export type NotifType = 'match_request' | 'match_confirmed' | 'match_declined' | 'match_spot_reassigned' | 'quick_match_request' | 'score_to_validate' | 'score_confirmed' | 'score_disputed' | 'score_resolved' | 'badge_unlocked';
 
 export interface AppNotification {
   id: string;
@@ -16,6 +16,9 @@ export interface AppNotification {
     court?: string;
     scoreHost?: string;
     scoreGuest?: string;
+    code?: string;
+    label?: string;
+    description?: string;
   };
   readAt: string | null;
   createdAt: string;

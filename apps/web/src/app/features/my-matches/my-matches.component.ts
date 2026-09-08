@@ -7,6 +7,7 @@ import { QuickMatchesService } from '../../core/services/quick-matches.service';
 import { CourtMapService } from '../../core/services/court-map.service';
 import { MessagesService } from '../../core/services/messages.service';
 import { MatchCardService, type MatchCardData } from '../../core/services/match-card.service';
+import { BadgesService } from '../../core/services/badges.service';
 import { AuthStore } from '../../core/stores/auth.store';
 import type { Match, UpcomingMatch, MatchStakes } from '../../core/models/match.model';
 import type { QuickMatch } from '../../core/models/quick-match.model';
@@ -54,6 +55,7 @@ export class MyMatchesComponent implements OnInit {
   private readonly courtMap      = inject(CourtMapService);
   private readonly messagesSvc   = inject(MessagesService);
   private readonly matchCard     = inject(MatchCardService);
+  private readonly badgesSvc     = inject(BadgesService);
   private readonly authStore     = inject(AuthStore);
   private readonly route         = inject(ActivatedRoute);
   private readonly destroyRef    = inject(DestroyRef);
@@ -77,6 +79,9 @@ export class MyMatchesComponent implements OnInit {
   readonly sharingId  = signal<string | null>(null);
   readonly submitting = signal(false);
   readonly scoreError = signal('');
+
+  /** Série de victoires en cours (carte d'enjeu) — 0 si aucune. */
+  readonly winStreak = signal(0);
   readonly numSets    = signal<number>(2);
   readonly setScores  = signal<SetScore[]>([]);
 
@@ -131,6 +136,10 @@ export class MyMatchesComponent implements OnInit {
         this.quickSvc.getMine().subscribe({ next: d => { this.challenges.set(d); res(); }, error: () => res() });
       }),
     ]).then(() => this.loading.set(false));
+
+    this.badgesSvc.getMine().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: b => this.winStreak.set(b.series.find(s => s.code === 'serie_victoires')?.value ?? 0),
+    });
   }
 
   setTab(t: 'upcoming' | 'challenges' | 'history'): void { this.tab.set(t); }
