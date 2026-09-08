@@ -112,6 +112,9 @@ const uploadPhoto = multer({
 
 newsAdminRouter.get('/', async (req, res, next) => {
   try {
+    // Bascule d'abord les programmées échues (peu d'admins, coût négligeable) —
+    // le panneau les voit donc « Publié » dès le 1er chargement.
+    await promoteDuePosts();
     res.json(await adminList(adminListQuerySchema.parse(req.query)));
   } catch (err) { next(err); }
 });
