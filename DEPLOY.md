@@ -80,3 +80,8 @@ Socket.IO, lui, se connecte **directement** à l'URL Render (auth par token, pas
   Alternative sans veille : **Koyeb** (free) — même `buildCommand` / `startCommand`.
 - **Neon free** : 0,5 Go, 1 projet. Largement suffisant au début.
 - Uploads : passent déjà par **Cloudinary** (le disque Render est éphémère).
+
+## Vérification automatisation E2E
+
+- 2026-09-20 : commit trivial poussé pour tester `trigger-e2e.yml` (déclenchement des
+  tests E2E `Template-PW-automation` sur `deployment_status` réussi, env. Production).
