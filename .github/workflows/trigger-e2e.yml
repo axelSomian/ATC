@@ -1,0 +1,19 @@
+name: Déclencher les tests E2E
+
+on:
+  deployment_status
+
+jobs:
+  dispatch:
+    if: >
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appeler l'API GitHub pour lancer Template-PW-automation
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.DISPATCH_TOKEN }}" \
+            https://api.github.com/repos/axelSomian/Template-PW-automation/dispatches \
+            -d '{"event_type":"atc-deployed","client_payload":{"url":"${{ github.event.deployment_status.environment_url }}"}}'
