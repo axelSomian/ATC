@@ -85,3 +85,4 @@ Socket.IO, lui, se connecte **directement** à l'URL Render (auth par token, pas
 
 - 2026-09-20 : commit trivial poussé pour tester `trigger-e2e.yml` (déclenchement des
   tests E2E `Template-PW-automation` sur `deployment_status` réussi, env. Production).
+- 2026-09-20 (essai 2) : nouveau commit trivial pour re-tester le déclenchement.
