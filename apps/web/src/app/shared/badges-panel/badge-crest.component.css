@@ -16,7 +16,7 @@
 }
 
 :host(.is-earned) .crest-svg {
-  filter: drop-shadow(0 4px 10px rgba(22, 63, 50, 0.28));
+  filter: drop-shadow(0 4px 10px rgba(16, 36, 61, 0.28));
 }
 :host(.is-locked) .crest-svg {
   filter: grayscale(0.15) drop-shadow(0 3px 7px rgba(28, 28, 26, 0.16));

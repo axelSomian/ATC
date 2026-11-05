@@ -44,7 +44,7 @@
 }
 .search-input:focus {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(31, 90, 69, 0.10);
+  box-shadow: 0 0 0 3px rgba(217, 236, 60, 0.18);
 }
 .search-input::placeholder { color: var(--color-muted); }
 
@@ -95,7 +95,7 @@
   font-family: var(--font-body);
 }
 .filter-online:hover { border-color: var(--color-success); color: var(--color-positive); }
-.filter-online.active { background: rgba(47, 107, 79,.07); border-color: var(--color-success); color: var(--color-positive); }
+.filter-online.active { background: rgba(30, 158, 100, .07); border-color: var(--color-success); color: var(--color-positive); }
 
 .online-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-success); }
 
@@ -320,10 +320,10 @@
 .club-filter-chip button {
   display: flex;
   border: none;
-  background: rgba(31, 90, 69, 0.12);
-  color: var(--color-accent);
+  background: rgba(217, 236, 60, 0.15);
+  color: var(--color-accent-dark);
   border-radius: var(--radius-full);
   padding: 3px;
   cursor: pointer;
 }
-.club-filter-chip button:hover { background: rgba(31, 90, 69, 0.20); }
+.club-filter-chip button:hover { background: rgba(217, 236, 60, 0.28); }

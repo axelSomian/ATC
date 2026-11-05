@@ -35,7 +35,7 @@
   position: relative;
 }
 .notif-card:hover { box-shadow: var(--shadow-md); }
-.notif-card.unread { background: rgba(31, 90, 69, 0.03); }
+.notif-card.unread { background: rgba(217, 236, 60, 0.04); }
 
 /* ── Icône ── */
 .notif-icon-wrap {
@@ -44,9 +44,9 @@
   border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
 }
-.notif-icon-request   { background: rgba(31, 90, 69, 0.09); color: var(--color-accent); }
-.notif-icon-confirmed { background: rgba(47, 107, 79, 0.10); color: var(--color-positive); }
-.notif-icon-declined  { background: rgba(178, 59, 46, 0.08); color: #9B3226; }
+.notif-icon-request   { background: rgba(217, 236, 60, 0.12); color: var(--color-accent-dark); }
+.notif-icon-confirmed { background: rgba(30, 158, 100, 0.10); color: var(--color-positive); }
+.notif-icon-declined  { background: rgba(193, 68, 14, 0.08); color: #C1440E; }
 .notif-icon-default   { background: var(--color-bg); color: var(--color-muted); }
 
 /* ── Corps ── */

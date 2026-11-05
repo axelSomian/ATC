@@ -24,7 +24,7 @@
 }
 .court-picker .cp-search input:focus {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(31, 90, 69, 0.14);
+  box-shadow: 0 0 0 3px rgba(217, 236, 60, 0.20);
 }
 .court-picker .cp-search .btn { flex-shrink: 0; }
 

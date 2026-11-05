@@ -18,8 +18,8 @@
   padding: var(--space-6);
   border-radius: var(--radius-2xl);
   background:
-    radial-gradient(circle at 88% 12%, rgba(143, 174, 155, 0.28) 0%, transparent 45%),
-    linear-gradient(135deg, var(--color-deep-forest) 0%, #1B4A3B 55%, #21624C 130%);
+    radial-gradient(circle at 88% 12%, rgba(217, 236, 60, 0.12) 0%, transparent 45%),
+    linear-gradient(135deg, var(--color-deep-forest) 0%, #162D4D 55%, #1A3460 130%);
   color: #fff;
   box-shadow: var(--shadow-md);
 }
@@ -155,8 +155,8 @@
 }
 
 .ribbon-confirmed {
-  background: rgba(47, 107, 79, 0.10);
-  border: 1px solid rgba(47, 107, 79, 0.25);
+  background: rgba(30, 158, 100, 0.10);
+  border: 1px solid rgba(30, 158, 100, 0.25);
   color: var(--color-positive);
 }
 
@@ -458,7 +458,7 @@
 .dc-join svg { transition: transform var(--transition-fast); }
 .dc-join:hover {
   background: var(--color-accent-hover);
-  box-shadow: 0 6px 18px rgba(31, 90, 69, 0.22);
+  box-shadow: 0 6px 18px rgba(16, 36, 61, 0.22);
 }
 .dc-join:hover svg { transform: translateX(3px); }
 
@@ -474,8 +474,8 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.type-simple { background: rgba(31, 90, 69, 0.10); color: var(--color-accent); }
-.type-double { background: rgba(22, 63, 50, 0.10); color: var(--color-deep-forest); }
+.type-simple { background: rgba(217, 236, 60, 0.12); color: var(--color-accent-dark); }
+.type-double { background: rgba(16, 36, 61, 0.08); color: var(--color-deep-forest); }
 .type-mixte  { background: var(--color-sand-beige); color: #5C4A32; }
 
 /* ── Status badges ── */
@@ -489,8 +489,8 @@
   font-weight: 500;
 }
 .status-pending  { background: rgba(176, 125, 60, 0.08);  color: #8A5A22; border: 1px solid rgba(176, 125, 60, 0.20); }
-.status-accepted { background: rgba(47, 107, 79, 0.08);  color: var(--color-positive); border: 1px solid rgba(47, 107, 79, 0.22); }
-.status-declined { background: rgba(178, 59, 46, 0.07);  color: #9B3226; border: 1px solid rgba(178, 59, 46, 0.18); }
+.status-accepted { background: rgba(30, 158, 100, 0.08); color: var(--color-positive); border: 1px solid rgba(30, 158, 100, 0.22); }
+.status-declined { background: rgba(193, 68, 14, 0.07);  color: #C1440E; border: 1px solid rgba(193, 68, 14, 0.18); }
 
 /* ── My dispo card ── */
 .my-dispo-card.is-focused {
@@ -520,9 +520,9 @@
   transition: all var(--transition);
 }
 .btn-delete:hover {
-  border-color: rgba(178, 59, 46, 0.35);
+  border-color: rgba(193, 68, 14, 0.35);
   color: var(--color-error);
-  background: rgba(178, 59, 46, 0.06);
+  background: rgba(193, 68, 14, 0.06);
 }
 
 /* ── Requests ── */

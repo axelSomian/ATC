@@ -82,8 +82,8 @@
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  background: var(--color-sage);
-  color: var(--color-deep-forest);
+  background: var(--color-accent);
+  color: var(--color-accent-dark);
   font-size: 10px;
   font-weight: 700;
   border-radius: 99px;
@@ -124,7 +124,7 @@
 .notif-mark-all {
   font-size: 11px;
   font-weight: 500;
-  color: var(--color-sage);
+  color: var(--color-accent);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -139,7 +139,7 @@
   text-align: center;
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-sage);
+  color: var(--color-accent);
   text-decoration: none;
   border-top: 1px solid rgba(255,255,255,0.07);
 }
@@ -169,8 +169,8 @@
 }
 .notif-item:last-child { border-bottom: none; }
 .notif-item:hover { background: rgba(255,255,255,0.04); }
-.notif-item.unread { background: rgba(143, 174, 155, 0.10); }
-.notif-item.unread:hover { background: rgba(143, 174, 155, 0.16); }
+.notif-item.unread { background: rgba(217, 236, 60, 0.07); }
+.notif-item.unread:hover { background: rgba(217, 236, 60, 0.11); }
 
 .notif-dot {
   width: 7px;
@@ -180,7 +180,7 @@
   flex-shrink: 0;
   background: transparent;
 }
-.notif-dot.visible { background: var(--color-sage); }
+.notif-dot.visible { background: var(--color-accent); }
 
 .notif-body { flex: 1; min-width: 0; }
 

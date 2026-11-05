@@ -25,15 +25,15 @@ const W = 1080;
 const H = 1920;
 
 const C = {
-  forest: '#163F32',
-  panel: '#F8F6F1',
-  cream: '#EDE5D8',
-  ink: '#1C1C1A',
-  accent: '#1F5A45',
-  sage: '#8FAE9B',
-  sand: '#CDBDA7',
-  muted: '#6E695C',
-  heroInk: '#F4EFE3',
+  forest: '#10243D',
+  panel: '#F4F5F1',
+  cream: '#E8ECEB',
+  ink: '#10243D',
+  accent: '#D9EC3C',
+  sage: '#A8C5B5',
+  sand: '#DDE3DF',
+  muted: '#5A6B7A',
+  heroInk: '#F4F5F1',
 };
 
 const TYPE_LABELS: Record<string, string> = { simple: 'Simple', double: 'Double', mixte: 'Mixte' };

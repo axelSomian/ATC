@@ -87,7 +87,7 @@
   animation: focus-pulse 1s ease-out;
 }
 @keyframes focus-pulse {
-  0% { box-shadow: 0 0 0 6px var(--color-accent-alpha, rgba(31, 90, 69,0.12)), var(--shadow-md); }
+  0% { box-shadow: 0 0 0 6px var(--color-accent-alpha, rgba(217, 236, 60,0.12)), var(--shadow-md); }
   100% { box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-md); }
 }
 
@@ -124,8 +124,8 @@
   padding: 2px 8px;
   border-radius: var(--radius-full);
 }
-.match-role-badge.host  { background: rgba(31, 90, 69,0.08); color: var(--color-accent); }
-.match-role-badge.guest { background: rgba(47, 107, 79,0.08); color: var(--color-positive); }
+.match-role-badge.host  { background: rgba(217, 236, 60, 0.12); color: var(--color-accent-dark); }
+.match-role-badge.guest { background: rgba(30, 158, 100, 0.08); color: var(--color-positive); }
 
 .source-badge {
   display: inline-flex;
@@ -136,9 +136,9 @@
   text-transform: uppercase;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  background: rgba(143, 174, 155, 0.16);
-  border: 1px solid rgba(143, 174, 155, 0.38);
-  color: #3F6151;
+  background: rgba(16, 36, 61, 0.07);
+  border: 1px solid rgba(16, 36, 61, 0.14);
+  color: var(--color-ink-light);
 }
 
 /* ── Match body ── */
@@ -436,7 +436,7 @@
   height: 100%;
   border-radius: 4px 0 0 4px;
 }
-.result-stripe.win  { background: #4E8C6A; }
+.result-stripe.win  { background: #1E9E64; }
 .result-stripe.loss { background: rgba(0,0,0,0.15); }
 
 .match-card.match-win  { padding-left: calc(var(--space-5) + 4px); }
@@ -452,7 +452,7 @@
   padding: 3px 10px;
   border-radius: var(--radius-full);
 }
-.result-pill.win  { background: rgba(47, 107, 79,0.10); color: var(--color-positive); }
+.result-pill.win  { background: rgba(30, 158, 100, 0.10); color: var(--color-positive); }
 .result-pill.loss { background: rgba(0,0,0,0.05); color: var(--color-muted); }
 
 /* ── Scoreboard ATP ── */
@@ -512,7 +512,7 @@
 
 /* Victoire : mes sets gagnés en vert */
 .sb-is-win .sb-row-me .sb-cell.sb-high {
-  background: rgba(47, 107, 79, 0.12);
+  background: rgba(30, 158, 100, 0.12);
   color: var(--color-positive);
 }
 
@@ -548,7 +548,7 @@
 }
 
 .btn-danger-outline {
-  border: 1px solid rgba(178, 59, 46, 0.40);
+  border: 1px solid rgba(193, 68, 14, 0.40);
   background: transparent;
   color: var(--color-error);
   font-family: var(--font-body);
@@ -556,7 +556,7 @@
   transition: all var(--transition);
 }
 .btn-danger-outline:hover {
-  background: rgba(178, 59, 46, 0.07);
+  background: rgba(193, 68, 14, 0.07);
 }
 
 /* ── Mobile ── */

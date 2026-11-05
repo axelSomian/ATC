@@ -1,60 +1,61 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 /* ═══════════════════════════════════════
-   DESIGN TOKENS — ATC premium tennis lifestyle
-   Palette: ATC Green signature, warm off-white base,
-   deep-forest + soft-black typography, sand/sage accents.
+   DESIGN TOKENS — TENNEX
+   Palette: Navy · Volt · Cloud · Clay · Mist · Win
    ═══════════════════════════════════════ */
 :root {
   /* ── Brand palette (source of truth) ── */
-  --color-atc-green:   #1F5A45;
-  --color-deep-forest: #163F32;
-  --color-soft-white:  #F8F6F1;
-  --color-warm-ivory:  #EDE5D8;
-  --color-sand-beige:  #CDBDA7;
-  --color-sage:        #8FAE9B;
-  --color-soft-black:  #1C1C1A;
+  --color-atc-green:   #D9EC3C;  /* Volt — kept for compat */
+  --color-deep-forest: #10243D;  /* Navy */
+  --color-soft-white:  #F4F5F1;  /* Cloud */
+  --color-warm-ivory:  #E8ECEB;
+  --color-sand-beige:  #DDE3DF;  /* Mist */
+  --color-sage:        #A8C5B5;
+  --color-soft-black:  #10243D;  /* Navy */
 
-  /* ── Accent = ATC Green (primary actions, active states, brand) ── */
-  --color-accent:       #1F5A45;
-  --color-accent-hover: #256B52;
-  --color-accent-dark:  #163F32;
-  --color-accent-alpha: rgba(31, 90, 69, 0.08);
+  /* ── Accent = Volt (primary actions, active states, brand) ── */
+  --color-accent:       #D9EC3C;
+  --color-accent-hover: #E8F54A;
+  --color-accent-dark:  #10243D;  /* Navy — text color ON volt backgrounds */
+  --color-accent-alpha: rgba(217, 236, 60, 0.12);
 
-  /* ── Compatibility aliases (kept for existing component refs) ── */
-  --color-clay:         #1F5A45;
-  --color-clay-light:   #256B52;
-  --color-clay-dark:    #163F32;
-  --color-clay-alpha:   rgba(31, 90, 69, 0.08);
-  --color-green:        #1F5A45;
-  --color-yellow:       #EDE5D8;
+  /* ── Clay (alerts, destructive, secondary accent) ── */
+  --color-clay:         #C1440E;
+  --color-clay-light:   #D45218;
+  --color-clay-dark:    #9A3509;
+  --color-clay-alpha:   rgba(193, 68, 14, 0.10);
 
-  /* ── Neutrals / surfaces ── */
-  --color-ink:          #1C1C1A;
-  --color-ink-light:    #3B3A35;
-  --color-muted:        #5E5749;
-  --color-border:       #DBD3C4;
-  --color-border-light: #E7E0D2;
-  --color-bg:           #F1EBDF;
-  --color-surface:      #F8F6F1;
-  --color-white:        #F8F6F1;
-  --color-cream:        #EDE5D8;
-  --color-cream-dark:   #E4DACA;
+  /* ── Compatibility aliases ── */
+  --color-green:  #D9EC3C;
+  --color-yellow: #D9EC3C;
 
-  /* ── Positive (wins, confirmed scores) — palette-compatible green ── */
-  --color-positive:        #2F6B4F;
-  --color-positive-bg:     rgba(47, 107, 79, 0.10);
-  --color-positive-border: rgba(47, 107, 79, 0.24);
+  /* ── Neutrals / surfaces (cool palette) ── */
+  --color-ink:          #10243D;  /* Navy */
+  --color-ink-light:    #1E3254;
+  --color-muted:        #5A6B7A;
+  --color-border:       #DDE3DF;  /* Mist */
+  --color-border-light: #EAF0EE;
+  --color-bg:           #ECEEF0;
+  --color-surface:      #F4F5F1;  /* Cloud */
+  --color-white:        #F4F5F1;
+  --color-cream:        #E8ECEB;
+  --color-cream-dark:   #DDE3DF;  /* Mist */
 
-  /* ── Success / Error / Warning (used only when semantically needed) ── */
-  --color-success: #4E8C6A;
-  --color-error:   #B23B2E;
+  /* ── Win (victories, confirmed scores) ── */
+  --color-positive:        #1E9E64;
+  --color-positive-bg:     rgba(30, 158, 100, 0.10);
+  --color-positive-border: rgba(30, 158, 100, 0.24);
+
+  /* ── Semantic (used only when needed) ── */
+  --color-success: #1E9E64;
+  --color-error:   #C1440E;  /* Clay */
   --color-warning: #B07D3C;
 
   /* ── Typography ── */
-  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-body:    'Inter', system-ui, -apple-system, sans-serif;
-  --font-logo:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body:    'Manrope', system-ui, -apple-system, sans-serif;
+  --font-logo:    'Space Grotesk', system-ui, sans-serif;
 
   /* ── Type scale ── */
   --text-xs:   11px;
@@ -207,12 +208,12 @@ a { color: inherit; }
 
 .btn-primary {
   background: var(--color-accent);
-  color: var(--color-soft-white);
-  box-shadow: 0 1px 3px rgba(22, 63, 50, 0.28);
+  color: var(--color-accent-dark);
+  box-shadow: 0 1px 3px rgba(16, 36, 61, 0.20);
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--color-accent-hover);
-  box-shadow: 0 2px 10px rgba(22, 63, 50, 0.26);
+  box-shadow: 0 2px 10px rgba(16, 36, 61, 0.18);
 }
 
 .btn-secondary {
@@ -225,10 +226,10 @@ a { color: inherit; }
 
 .btn-outline {
   background: transparent;
-  color: var(--color-accent);
-  border: 1px solid var(--color-accent);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
 }
-.btn-outline:hover:not(:disabled) { background: var(--color-accent-alpha); }
+.btn-outline:hover:not(:disabled) { background: var(--color-bg); border-color: var(--color-ink); }
 
 .btn-ghost {
   background: transparent;
@@ -238,11 +239,11 @@ a { color: inherit; }
 .btn-ghost:hover:not(:disabled) { background: var(--color-cream-dark); color: var(--color-ink); }
 
 .btn-danger {
-  background: rgba(178, 59, 46, 0.09);
+  background: rgba(193, 68, 14, 0.09);
   color: var(--color-error);
-  border: 1px solid rgba(178, 59, 46, 0.22);
+  border: 1px solid rgba(193, 68, 14, 0.22);
 }
-.btn-danger:hover:not(:disabled) { background: rgba(178, 59, 46, 0.15); }
+.btn-danger:hover:not(:disabled) { background: rgba(193, 68, 14, 0.15); }
 
 .btn-lg   { height: 40px; padding: 0 22px; font-size: var(--text-base); border-radius: var(--radius-xl); }
 .btn-sm   { height: 28px; padding: 0 12px; font-size: var(--text-xs); border-radius: var(--radius-md); }
@@ -280,11 +281,11 @@ select.form-control   { cursor: pointer; }
 .form-control::placeholder { color: var(--color-muted); }
 .form-control:focus {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(31, 90, 69, 0.14);
+  box-shadow: 0 0 0 3px rgba(217, 236, 60, 0.20);
 }
 .form-control.is-invalid {
   border-color: var(--color-error);
-  box-shadow: 0 0 0 3px rgba(178, 59, 46, 0.12);
+  box-shadow: 0 0 0 3px rgba(193, 68, 14, 0.12);
 }
 .form-error { font-size: var(--text-xs); color: var(--color-error); font-weight: 500; }
 .form-hint { display: block; margin-top: 4px; font-size: var(--text-xs); color: var(--color-muted); }
@@ -407,8 +408,8 @@ select.form-control   { cursor: pointer; }
    ═══════════════════════════════════════ */
 .alert-error {
   padding: 11px 14px;
-  background: rgba(178, 59, 46, 0.08);
-  border: 1px solid rgba(178, 59, 46, 0.22);
+  background: rgba(193, 68, 14, 0.08);
+  border: 1px solid rgba(193, 68, 14, 0.22);
   color: var(--color-error);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);

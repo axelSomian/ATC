@@ -107,9 +107,9 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(47, 107, 79, 0.12);
-  border: 1px solid rgba(47, 107, 79, 0.25);
-  color: #4E8C6A;
+  background: rgba(30, 158, 100, 0.12);
+  border: 1px solid rgba(30, 158, 100, 0.25);
+  color: #1E9E64;
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
@@ -120,7 +120,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #4E8C6A;
+  background: #1E9E64;
   animation: pulse 2s ease infinite;
 }
 
@@ -176,7 +176,7 @@
   line-height: 1;
 }
 
-.stat-val.stat-win       { color: #4E8C6A; }
+.stat-val.stat-win       { color: #1E9E64; }
 .stat-val.stat-loss      { color: rgba(255,255,255,0.40); }
 .stat-val.stat-rank      { color: #836841; }
 .stat-val.stat-best-rank { color: #836841; }
@@ -294,8 +294,8 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: rgba(47, 107, 79, 0.09);
-  border: 1px solid rgba(47, 107, 79, 0.25);
+  background: rgba(30, 158, 100, 0.09);
+  border: 1px solid rgba(30, 158, 100, 0.25);
   border-radius: var(--radius-lg);
   color: var(--color-positive);
   font-size: var(--text-sm);
@@ -504,7 +504,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4E8C6A;
+  color: #1E9E64;
 }
 
 /* Séparateur entre les deux lignes */

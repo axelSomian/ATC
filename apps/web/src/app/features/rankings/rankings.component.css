@@ -16,8 +16,8 @@
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-4) var(--space-5);
-  background: linear-gradient(135deg, rgba(31, 90, 69,0.04) 0%, transparent 100%);
-  border: 1.5px solid rgba(31, 90, 69,0.15);
+  background: linear-gradient(135deg, rgba(217, 236, 60, 0.05) 0%, transparent 100%);
+  border: 1.5px solid rgba(217, 236, 60, 0.20);
   flex-wrap: wrap;
 }
 .my-rank-label {
@@ -100,8 +100,8 @@
   transform: translateY(-1px);
 }
 .rank-row--me {
-  border: 1.5px solid rgba(31, 90, 69,0.25);
-  background: rgba(31, 90, 69,0.02);
+  border: 1.5px solid rgba(217, 236, 60, 0.30);
+  background: rgba(217, 236, 60, 0.04);
 }
 .rank-row--top3 {
   border: 1.5px solid rgba(176, 125, 60,0.2);
@@ -176,13 +176,13 @@
 .delta-up    .delta-val { color: var(--color-positive); }
 
 .delta-down  .delta-arrow,
-.delta-down  .delta-val { color: #9B3226; }
+.delta-down  .delta-val { color: #C1440E; }
 
 .delta-neutral .delta-arrow { color: var(--color-muted); font-weight: 400; }
 
 /* "Ma position" delta badge */
-.my-rank-delta.delta-up   { background: rgba(47, 107, 79,0.10);  color: var(--color-positive); }
-.my-rank-delta.delta-down { background: rgba(192,57,43,0.08);  color: #9B3226; }
+.my-rank-delta.delta-up   { background: rgba(30, 158, 100, 0.10);  color: var(--color-positive); }
+.my-rank-delta.delta-down { background: rgba(193, 68, 14, 0.08);  color: #C1440E; }
 
 /* ── Mobile ── */
 @media (max-width: 600px) {

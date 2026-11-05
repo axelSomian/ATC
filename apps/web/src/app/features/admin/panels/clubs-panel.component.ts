@@ -210,7 +210,7 @@ type PickTarget = { row: 'draft' | Editable; lat: number | null; lng: number | n
         align-items: center;
         justify-content: center;
         padding: var(--space-4);
-        background: rgba(22, 63, 50, 0.45);
+        background: rgba(16, 36, 61, 0.45);
         backdrop-filter: blur(3px);
         -webkit-backdrop-filter: blur(3px);
       }

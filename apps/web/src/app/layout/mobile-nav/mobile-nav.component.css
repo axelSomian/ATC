@@ -6,7 +6,7 @@
   right: 0;
   /* border-box : la safe-area s'AJOUTE aux 56px, elle ne les rogne pas */
   height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
-  background: rgba(22, 63, 50, 0.96);
+  background: rgba(16, 36, 61, 0.96);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.07);
@@ -40,7 +40,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--color-sage);
+  background: var(--color-accent);
 }
 
 @media (max-width: 768px) {
