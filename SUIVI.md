@@ -2,7 +2,7 @@
 
 > Dernière mise à jour : 2026-11-05 — **rattrapage** : le doc n'avait pas été tenu à jour
 > entre le 2026-09-04 (session 8) et aujourd'hui malgré ~30 commits. Voir § « Sessions
-> 9+ » et § « 🔄 Pivot TENNEX » plus bas pour tout ce qui manquait, et § « Pour reprendre
+> 9+ » et § « 🔄 Pivot TenCI » plus bas pour tout ce qui manquait, et § « Pour reprendre
 > le travail » en tout dernier pour l'état exact au moment de la coupure (utile en
 > particulier si tu reprends depuis une autre machine / Remote Control, sans accès à la
 > mémoire locale de cette session).
@@ -327,7 +327,7 @@ Tout ce qui suit a été livré sans jamais être consigné ici. Résumé par th
   seulement en simple et quand les deux joueurs ont assez de matchs classés — voir
   `FEATURE_CARTE_ENJEU.md`, `PRESENTATION_ELO.md`, `NIVEAU_ENGINE.md`. **Le rating brut
   n'est jamais affiché**, nulle part — règle produit stricte, à respecter dans tout
-  nouvel écran (y compris la refonte TENNEX).
+  nouvel écran (y compris la refonte TenCI).
 - **Badges** : socle back (13 badges, moteur de hauts faits persistés en table
   `Achievement`) + front (panneau profil + fiche membre, icône dédiée par badge, hauts
   faits en écussons collectionnables). Un bug de panneau bloqué sur le spinner (effect
@@ -356,11 +356,11 @@ Tout ce qui suit a été livré sans jamais être consigné ici. Résumé par th
 
 ---
 
-## 🔄 Pivot TENNEX (annoncé 2026-11-05)
+## 🔄 Pivot TenCI (annoncé 2026-11-05)
 
 Le PO a décidé de **vendre ATC à une fédération de tennis**. Voir le détail des
 décisions et de la direction visuelle proposée en tête de `CLAUDE.md` (section « Pivot
-en cours — ATC devient TENNEX ») — pas dupliqué ici pour éviter que les deux docs
+en cours — ATC devient TenCI ») — pas dupliqué ici pour éviter que les deux docs
 divergent. Statut en une phrase : **renommage large (marque+domaine+code+DB) acté,
 plateforme devient « officielle fédérale » (pas une marque blanche), liste précise des
 demandes fédérales pas encore reçue, direction visuelle (palette navy/volt/cloud/clay +
@@ -427,7 +427,7 @@ une autre machine, sans accès à la mémoire locale de la session qui a écrit 
      s'ils doivent être committés, complétés ou supprimés.
    - `SPEC_E2E_PARCOURS.md` : mien (session du 08/09), à committer — contenu utile, pas
      de raison de le laisser hors du repo.
-2. **Pivot TENNEX** : attendre la liste des demandes fédé + la validation de la
+2. **Pivot TenCI** : attendre la liste des demandes fédé + la validation de la
    direction visuelle avant tout dev de rebrand ou de fonctionnalité fédérale (voir §
    ci-dessus et tête de `CLAUDE.md`).
 3. **Bug cron RSS/actualité** : à corriger (voir § ci-dessus) — pas bloquant pour les

@@ -4,18 +4,18 @@ ATC est une communauté de tennis visant à mettre en relation les passionnés d
 
 ---
 
-## 🔄 Pivot en cours — ATC devient TENNEX (annoncé 05/11/2026)
+## 🔄 Pivot en cours — ATC devient TenCI (annoncé 05/11/2026)
 
 Le PO a décidé de **vendre ATC à une fédération de tennis**. Conséquences actées à date,
 **lire avant tout nouveau dev** :
 
-- **Renommage ATC → TENNEX**, portée large déjà confirmée par le PO : marque/UI **+**
+- **Renommage ATC → TenCI**, portée large déjà confirmée par le PO : marque/UI **+**
   domaine/repo **+** code & DB (identifiants internes, schéma Prisma, slugs...). Pas un
   simple rebrand cosmétique — le nom « ATC » / « atc » apparaît dans le code, les routes
   Cloudinary (`atc/avatars`, `atc/clubs`), les URLs Render/Vercel, les e-mails, le
   manifest PWA, etc. **Inventorier tous les points avant de renommer** (grep global
   `ATC`/`atc` dans `apps/`, `*.yml`, `render.yaml`, `.env*`, noms de domaine).
-- **Modèle produit** : ce n'est pas une marque blanche — TENNEX devient la **plateforme
+- **Modèle produit** : ce n'est pas une marque blanche — TenCI devient la **plateforme
   officielle d'une fédération**. Prévoir à terme : classements officiels, validation
   fédérale des clubs/membres, rôles au-delà de `admin`/`member` actuels (voir § Espace
   admin dans `SUIVI.md`). Impact structurel probable sur le schéma Prisma, pas seulement
@@ -26,28 +26,32 @@ Le PO a décidé de **vendre ATC à une fédération de tennis**. Conséquences 
   explicitement par le PO indépendamment de cette liste.
 - **Calendrier** : pas encore précisé.
 
-### Direction visuelle TENNEX — proposée, **pas encore appliquée au code**
+### Direction visuelle TenCI — ✅ APPLIQUÉE au code (05/11/2026, commit `ae82ac7`)
 
-Le PO veut « un design plus app », moins le mood éditorial/lifestyle chaleureux d'ATC.
-Direction proposée (aperçu visuel envoyé au PO en artifact, validation en attente) :
+Le PO voulait « un design plus app », moins le mood éditorial/lifestyle chaleureux
+d'ATC. Direction validée et déjà reportée dans `apps/web/src/styles.css` (tokens
+`:root`) — voir § Design system ci-dessous pour le détail à jour, **ne plus se fier
+à la description de l'ancienne palette ATC Green dans ce fichier avant ce commit**.
 
-- **Palette** (remplace la palette ATC Green du § Design system ci-dessous) :
-  `--navy #10243D` (sidebar/topbar/texte fort, remplace le vert forêt) ·
-  `--volt #D9EC3C` (accent unique — CTA, états actifs, logo ; « la balle ») ·
-  `--cloud #F4F5F1` (surface claire, blanc cassé froid) ·
-  `--clay #C1440E` (accent secondaire ponctuel — badges, mise en avant) ·
-  `--mist #DDE3DF` (bordures) · `--win #1E9E64` (sémantique victoire uniquement).
+- **Palette** : `--navy #10243D` (sidebar/topbar/texte fort) · `--volt #D9EC3C`
+  (accent unique — CTA, états actifs, logo ; « la balle ») · `--cloud #F4F5F1`
+  (surface claire, blanc cassé froid) · `--clay #C1440E` (accent secondaire ponctuel —
+  badges, mise en avant) · `--mist #DDE3DF` (bordures) · `--win #1E9E64` (sémantique
+  victoire uniquement).
 - **Typo** : **Space Grotesk** (700/800) pour titres, logo, et les gros chiffres
-  (scores, stats) — remplace Plus Jakarta Sans. **Manrope** (400–700) pour le texte
-  courant — remplace Inter.
+  (scores, stats). **Manrope** (400–700) pour le texte courant.
 - **Principe** : sidebar/topbar en navy foncé (registre « tableau de bord officiel »),
   CTA primaire = volt plein + texte navy, une seule carte « héro » élevée par écran
   (éviter l'effet kit de cartes SaaS identiques), le volt reste le seul accent vif.
-- **Implémentation à venir** : tout est centralisé dans `apps/web/src/styles.css`
-  (`:root`, ~460 lignes) — remplacer les tokens `--color-*` par ces valeurs, puis
-  corriger les quelques couleurs codées en dur hors tokens (8 fichiers `.css` + 5
-  fichiers `.ts` identifiés hors `styles.css` au moment de l'audit).
-- **Ne pas appliquer avant confirmation explicite du PO** sur cette direction.
+- **Reste à migrer** (trouvé en audit du 05/11, pas encore corrigé partout) :
+  `apps/web/src/index.html` (`theme-color`/`mask-icon` encore sur l'ancien vert
+  `#1F5A45`), `apps/web/src/manifest.webmanifest` (`theme_color`/`background_color`
+  idem — le `name`/`short_name` "ATC" du manifest, lui, **reste tel quel** tant que le
+  renommage produit n'est pas scopé), le dégradé du ruban SVG des badges
+  (`badge-crest.component.ts`, encore vert forêt ATC). `match-card.service.ts`
+  (police des images de score partageables) corrigé.
+- Le nom littéral "TenCI" n'a encore été écrit nulle part dans le code (logo, titre,
+  manifest) — seul le rebrand visuel (couleurs/typo) a été appliqué pour l'instant.
 
 ---
 
@@ -137,27 +141,30 @@ atc/
 
 ## 🎨 Design system
 
-Palette **ATC — premium tennis lifestyle** (validée client, sept. 2026). Tokens
+Palette **TenCI — plateforme officielle** (rebrand appliqué 05/11/2026, commit
+`ae82ac7` — remplace l'ancienne palette « ATC premium tennis lifestyle »). Tokens
 centralisés dans `apps/web/src/styles.css` (`:root`). Ne pas introduire de couleur
 hors palette sans raison UX forte.
 
-- **Signature** : ATC Green `#1F5A45` (`--color-accent`) — boutons primaires, CTA,
-  états actifs, onglets sélectionnés, éléments de marque. Utilisée stratégiquement,
-  jamais en aplat partout.
-- **Contraste sombre** : Deep Forest `#163F32` (`--color-deep-forest`) — sidebar,
-  topbar/bottom-nav mobile, panneaux sombres, héros. Sur fond sombre, les accents
-  passent en **Sage `#8FAE9B`** (l'ATC Green n'y est pas lisible).
-- **Bases claires** (dominantes) : Soft White `#F8F6F1` (`--color-surface`, cartes),
-  canvas légèrement plus chaud `--color-bg` `#F1EBDF`, Warm Ivory `#EDE5D8`
-  (`--color-cream` — surfaces secondaires, inputs, empty states).
-- **Accents lifestyle secondaires** : Sand Beige `#CDBDA7` (`--color-sand-beige`),
-  Sage `#8FAE9B` (`--color-sage`). Discrets, ne concurrencent jamais l'ATC Green.
-- **Typo / contraste** : Soft Black `#1C1C1A` (`--color-ink`) pour le texte ; jamais
-  de `#000` ni de `#fff` en surface.
+- **Signature** : Volt `#D9EC3C` (`--color-accent`) — boutons primaires, CTA, états
+  actifs, onglets sélectionnés, éléments de marque (texte en Navy dessus, pas blanc —
+  le Volt est trop clair). Utilisée stratégiquement, jamais en aplat partout.
+- **Contraste sombre** : Navy `#10243D` (`--color-deep-forest`/`--color-ink`) —
+  sidebar, topbar/bottom-nav mobile, panneaux sombres, héros, texte fort. Registre
+  « tableau de bord officiel » plutôt que lifestyle chaleureux.
+- **Bases claires** (dominantes) : Cloud `#F4F5F1` (`--color-surface`, cartes),
+  canvas `--color-bg` `#ECEEF0`, gris froid `#E8ECEB` (`--color-cream` — surfaces
+  secondaires, inputs, empty states).
+- **Accents secondaires** : Clay `#C1440E` (badges, mise en avant ponctuelle,
+  `--color-error`), Mist `#DDE3DF` (bordures). Discrets, ne concurrencent jamais le Volt.
+- **Typo / contraste** : texte en Navy `#10243D` (`--color-ink`) ; jamais de `#000`
+  ni de `#fff` en surface.
 - **Sémantique** (uniquement quand nécessaire, compatible palette) :
-  `--color-positive` `#2F6B4F` (victoires, scores confirmés),
-  `--color-error` `#B23B2E`, `--color-warning` `#B07D3C`.
-- **Fontes** : Inter (corps + titres), Plus Jakarta Sans (logo).
+  `--color-positive`/`--color-success` Win `#1E9E64` (victoires, scores confirmés),
+  `--color-error` Clay `#C1440E`, `--color-warning` `#B07D3C` (inchangé, hors palette
+  de marque — à revoir si besoin).
+- **Fontes** : Manrope (corps + texte courant), Space Grotesk (titres, logo, gros
+  chiffres — scores, stats).
 - **Photos** : `apps/web/src/assets/img/*.webp` — `court-serve` = héros login ;
   `court-editorial` = héros signup (photo aérienne de volée) ; `w/w-*.webp` = les 6
   tuiles de l'accueil (annonce, membres, clubs, classement, matchs, profil), voile
@@ -422,7 +429,7 @@ Base : `/api/v1`
 - [ ] Réservation de courts
 - [ ] App mobile (Ionic/Capacitor)
 - [ ] Paiement cotisations / inscriptions
-- [ ] 🔄 Fonctionnalités demandées par la fédération — liste à venir (voir § Pivot TENNEX)
+- [ ] 🔄 Fonctionnalités demandées par la fédération — liste à venir (voir § Pivot TenCI)
 
 ---
 

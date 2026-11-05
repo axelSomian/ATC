@@ -107,10 +107,10 @@ export class MatchCardService {
     // Bandeau de marque (haut)
     ctx.textAlign = 'center';
     ctx.fillStyle = C.sage;
-    ctx.font = '800 62px "Plus Jakarta Sans", sans-serif';
+    ctx.font = '800 62px "Space Grotesk", sans-serif';
     ctx.fillText('ATC', mid, 168);
     ctx.fillStyle = 'rgba(244,239,227,0.62)';
-    ctx.font = '500 22px Inter, sans-serif';
+    ctx.font = '500 22px Manrope, sans-serif';
     ctx.fillText('C O M M U N A U T É   T E N N I S   D ’ A B I D J A N', mid, 214);
 
     // Panneau
@@ -125,10 +125,10 @@ export class MatchCardService {
     // Eyebrow + date
     ctx.textAlign = 'center';
     ctx.fillStyle = C.accent;
-    ctx.font = '600 23px Inter, sans-serif';
+    ctx.font = '600 23px Manrope, sans-serif';
     ctx.fillText('R É S U L T A T   D U   M A T C H', mid, py + 88);
     ctx.fillStyle = C.muted;
-    ctx.font = '500 27px Inter, sans-serif';
+    ctx.font = '500 27px Manrope, sans-serif';
     ctx.fillText(this.formatDate(data.playedAt), mid, py + 132);
 
     // Joueurs
@@ -142,13 +142,13 @@ export class MatchCardService {
 
     ctx.textAlign = 'center';
     ctx.fillStyle = C.sand;
-    ctx.font = '600 34px Inter, sans-serif';
+    ctx.font = '600 34px Manrope, sans-serif';
     ctx.fillText('vs', mid, avTop + avD / 2 + 12);
 
     ctx.fillStyle = C.ink;
     const nameY = avTop + avD + 82;
-    this.fitText(ctx, pa.name, colL, nameY, pw * 0.42, '700 46px Inter, sans-serif');
-    this.fitText(ctx, pb.name, colR, nameY, pw * 0.42, '700 46px Inter, sans-serif');
+    this.fitText(ctx, pa.name, colL, nameY, pw * 0.42, '700 46px Manrope, sans-serif');
+    this.fitText(ctx, pb.name, colR, nameY, pw * 0.42, '700 46px Manrope, sans-serif');
 
     this.drawDots(ctx, colL, nameY + 44, pa.level);
     this.drawDots(ctx, colR, nameY + 44, pb.level);
@@ -177,11 +177,11 @@ export class MatchCardService {
 
       ctx.textAlign = 'left';
       ctx.fillStyle = isWinner ? '#fff' : C.ink;
-      ctx.font = '600 32px Inter, sans-serif';
+      ctx.font = '600 32px Manrope, sans-serif';
       ctx.fillText(this.clip(ctx, p.name, sbW * 0.42), sbX + 40, baseline + 11);
 
       ctx.textAlign = 'center';
-      ctx.font = '700 58px "Plus Jakarta Sans", sans-serif';
+      ctx.font = '700 58px "Space Grotesk", sans-serif';
       for (let i = 0; i < nSets; i++) {
         const v = p.sets[i];
         const cx = cellsStart + cellW * (i + 0.5);
@@ -199,20 +199,20 @@ export class MatchCardService {
     ctx.textAlign = 'center';
     ctx.fillStyle = C.accent;
     const narrativeY = sbY + rowH * 2 + 128;
-    this.fitText(ctx, this.narrative(winner, loser), mid, narrativeY, pw - 130, '700 44px Inter, sans-serif');
+    this.fitText(ctx, this.narrative(winner, loser), mid, narrativeY, pw - 130, '700 44px Manrope, sans-serif');
 
     // Meta
     ctx.fillStyle = C.muted;
     const metaBits = [data.court, TYPE_LABELS[data.type] ?? data.type].filter(Boolean);
-    this.fitText(ctx, metaBits.join('   ·   '), mid, narrativeY + 58, pw - 130, '500 27px Inter, sans-serif');
+    this.fitText(ctx, metaBits.join('   ·   '), mid, narrativeY + 58, pw - 130, '500 27px Manrope, sans-serif');
 
     // Pied (sur le fond forêt)
     ctx.textAlign = 'center';
     ctx.fillStyle = C.sage;
-    ctx.font = '600 25px Inter, sans-serif';
+    ctx.font = '600 25px Manrope, sans-serif';
     ctx.fillText('R E J O I N S   L A   C O M M U N A U T É', mid, py + ph + 96);
     ctx.fillStyle = C.heroInk;
-    ctx.font = '700 36px "Plus Jakarta Sans", sans-serif';
+    ctx.font = '700 36px "Space Grotesk", sans-serif';
     ctx.fillText(data.siteUrl, mid, py + ph + 148);
 
     return canvas;
@@ -283,7 +283,7 @@ export class MatchCardService {
       ctx.fillRect(cx - r, cy - r, d, d);
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
-      ctx.font = '700 70px Inter, sans-serif';
+      ctx.font = '700 70px Manrope, sans-serif';
       ctx.fillText((initials || '?').slice(0, 2).toUpperCase(), cx, cy + 24);
     }
     ctx.restore();
@@ -352,11 +352,11 @@ export class MatchCardService {
 
   private async ensureFonts(): Promise<void> {
     const faces = [
-      '800 62px "Plus Jakarta Sans"',
-      '700 58px "Plus Jakarta Sans"',
-      '500 27px Inter',
-      '600 32px Inter',
-      '700 46px Inter',
+      '800 62px "Space Grotesk"',
+      '700 58px "Space Grotesk"',
+      '500 27px Manrope',
+      '600 32px Manrope',
+      '700 46px Manrope',
     ];
     try {
       await Promise.all(faces.map((f) => (document as Document).fonts.load(f)));
