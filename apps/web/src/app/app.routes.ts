@@ -2,7 +2,17 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard, adminGuard, termsGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'accueil', pathMatch: 'full' },
+  // Page d'accueil publique (visiteur non connecté) : explique TenCI, renvoie vers
+  // signup/login. guestGuard renvoie un membre déjà connecté vers /accueil, comme
+  // pour /auth/login. pathMatch 'full' impératif ici : sinon cette route '' en
+  // préfixe intercepterait aussi /accueil, /members, etc.
+  {
+    path: '',
+    pathMatch: 'full',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./features/landing/landing.component').then((m) => m.LandingComponent),
+  },
   // Actions déclenchées par un lien e-mail : doivent fonctionner que l'utilisateur
   // soit connecté ou non (après inscription il l'est → pas de guestGuard ici).
   {
