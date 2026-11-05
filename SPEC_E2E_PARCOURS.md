@@ -86,6 +86,7 @@ Beaucoup de parcours sont **à deux joueurs** : prévoir deux sessions authentif
 
 ```
 Public (guestGuard — redirige vers /accueil si déjà connecté)
+  /                          ← page d'accueil publique (TenCI, 05/11/2026), CTA signup/login
   /auth/login
   /auth/signup
   /auth/forgot-password
@@ -114,6 +115,24 @@ Membres, Matchs, Classement, Profil. Sidebar ajoute Actualité, Clubs, Messages,
 ---
 
 ## 3. Parcours AUTH
+
+### 3.0 Découverte — page d'accueil publique
+
+**Objectif** : un visiteur non connecté comprend ce qu'est TenCI et se dirige vers
+l'inscription ou la connexion.
+
+**Étapes**
+1. Aller sur `/` sans session.
+
+**Assertions**
+- La page d'accueil publique s'affiche (pas de redirection directe vers
+  `/auth/login`) : mission, parcours en 4 étapes, avantages, section licence,
+  bande fédération.
+- CTA « Créer mon compte » → `/auth/signup` ; « Se connecter » (topbar et bas de
+  page) → `/auth/login`.
+- Connecté, aller sur `/` → `guestGuard` redirige vers `/accueil` (même règle que
+  pour `/auth/login`).
+- Liens de pied de page vers `/legal/confidentialite` et `/legal/cgu` fonctionnels.
 
 ### 3.1 Inscription (nouveau membre)
 
@@ -747,7 +766,7 @@ est l'entité lieu** (`Club.lat`/`lng`), rapprochement par `Club.name`.
 | Thème | Ce qu'on vérifie |
 |---|---|
 | **Responsive** | ≥768px : sidebar visible, pas de bottom-nav. <768px : bottom-nav visible, sidebar masquée. Pas de scroll horizontal. |
-| **Guards** | `authGuard` : route protégée sans session → `/auth/login`. `guestGuard` : `/auth/*` avec session → `/accueil`. `adminGuard` : `/admin` sans rôle → `/accueil`. `termsGuard` : CGU périmées → `/legal/accept`. Route inconnue `**` → `/accueil`. |
+| **Guards** | `authGuard` : route protégée sans session → `/auth/login`. `guestGuard` : `/` et `/auth/*` avec session → `/accueil`. `adminGuard` : `/admin` sans rôle → `/accueil`. `termsGuard` : CGU périmées → `/legal/accept`. Route inconnue `**` → `/accueil`. |
 | **i18n** | Tous les textes en français, format date `dd MMMM yyyy`, pas de chaîne anglaise en dur. |
 | **A11y** | Navigation clavier (focus visible), éléments cliquables focusables, `prefers-reduced-motion` respecté, contrastes texte discret OK. |
 | **Sécurité affichage** | Injecter `<script>`/`<b>` dans nom / note / score → affiché **échappé**, jamais interprété. |
