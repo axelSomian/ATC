@@ -4,6 +4,53 @@ ATC est une communauté de tennis visant à mettre en relation les passionnés d
 
 ---
 
+## 🔄 Pivot en cours — ATC devient TENNEX (annoncé 05/11/2026)
+
+Le PO a décidé de **vendre ATC à une fédération de tennis**. Conséquences actées à date,
+**lire avant tout nouveau dev** :
+
+- **Renommage ATC → TENNEX**, portée large déjà confirmée par le PO : marque/UI **+**
+  domaine/repo **+** code & DB (identifiants internes, schéma Prisma, slugs...). Pas un
+  simple rebrand cosmétique — le nom « ATC » / « atc » apparaît dans le code, les routes
+  Cloudinary (`atc/avatars`, `atc/clubs`), les URLs Render/Vercel, les e-mails, le
+  manifest PWA, etc. **Inventorier tous les points avant de renommer** (grep global
+  `ATC`/`atc` dans `apps/`, `*.yml`, `render.yaml`, `.env*`, noms de domaine).
+- **Modèle produit** : ce n'est pas une marque blanche — TENNEX devient la **plateforme
+  officielle d'une fédération**. Prévoir à terme : classements officiels, validation
+  fédérale des clubs/membres, rôles au-delà de `admin`/`member` actuels (voir § Espace
+  admin dans `SUIVI.md`). Impact structurel probable sur le schéma Prisma, pas seulement
+  visuel.
+- **Liste précise des demandes de la fédération** : pas encore communiquée au PO au
+  moment de la rédaction — **ne pas lancer de dev de fonctionnalités fédérales sans
+  cette liste**. Le rebrand visuel (ci-dessous), lui, est déjà lancé car demandé
+  explicitement par le PO indépendamment de cette liste.
+- **Calendrier** : pas encore précisé.
+
+### Direction visuelle TENNEX — proposée, **pas encore appliquée au code**
+
+Le PO veut « un design plus app », moins le mood éditorial/lifestyle chaleureux d'ATC.
+Direction proposée (aperçu visuel envoyé au PO en artifact, validation en attente) :
+
+- **Palette** (remplace la palette ATC Green du § Design system ci-dessous) :
+  `--navy #10243D` (sidebar/topbar/texte fort, remplace le vert forêt) ·
+  `--volt #D9EC3C` (accent unique — CTA, états actifs, logo ; « la balle ») ·
+  `--cloud #F4F5F1` (surface claire, blanc cassé froid) ·
+  `--clay #C1440E` (accent secondaire ponctuel — badges, mise en avant) ·
+  `--mist #DDE3DF` (bordures) · `--win #1E9E64` (sémantique victoire uniquement).
+- **Typo** : **Space Grotesk** (700/800) pour titres, logo, et les gros chiffres
+  (scores, stats) — remplace Plus Jakarta Sans. **Manrope** (400–700) pour le texte
+  courant — remplace Inter.
+- **Principe** : sidebar/topbar en navy foncé (registre « tableau de bord officiel »),
+  CTA primaire = volt plein + texte navy, une seule carte « héro » élevée par écran
+  (éviter l'effet kit de cartes SaaS identiques), le volt reste le seul accent vif.
+- **Implémentation à venir** : tout est centralisé dans `apps/web/src/styles.css`
+  (`:root`, ~460 lignes) — remplacer les tokens `--color-*` par ces valeurs, puis
+  corriger les quelques couleurs codées en dur hors tokens (8 fichiers `.css` + 5
+  fichiers `.ts` identifiés hors `styles.css` au moment de l'audit).
+- **Ne pas appliquer avant confirmation explicite du PO** sur cette direction.
+
+---
+
 ## 📐 Stack technique
 
 ### Monorepo
@@ -346,30 +393,36 @@ Base : `/api/v1`
 
 ## 🚀 Roadmap MVP
 
+> ⚠️ Cases mises à jour 05/11/2026 — beaucoup de « Phase 3 » étaient en réalité livrées
+> depuis des semaines et jamais cochées ici. Voir `SUIVI.md` pour le détail par sprint.
+
 ### Phase 1 — Foundations
-- [ ] Setup monorepo, Docker, CI
-- [ ] Schéma Prisma + migrations
-- [ ] Auth complète (signup, login, refresh)
-- [ ] Layout responsive (sidebar/bottom nav)
+- [x] Setup monorepo, Docker, CI (CI E2E partielle seulement — voir `SUIVI.md` § Bugs connus)
+- [x] Schéma Prisma + migrations
+- [x] Auth complète (signup, login, refresh, vérif e-mail, mot de passe oublié)
+- [x] Layout responsive (sidebar/bottom nav)
 
 ### Phase 2 — Core features
-- [ ] CRUD membres + profil
-- [ ] Annuaire avec recherche/filtres
-- [ ] Publication de dispo + demandes
-- [ ] Historique des matchs
+- [x] CRUD membres + profil
+- [x] Annuaire avec recherche/filtres
+- [x] Publication de dispo + demandes
+- [x] Historique des matchs
 
 ### Phase 3 — Communauté
-- [ ] Notifications temps réel
-- [ ] Messagerie 1-to-1
+- [x] Notifications temps réel (Socket.IO + Web Push PWA)
+- [x] Messagerie 1-to-1 (créée à l'acceptation d'un match, indicateur « en train d'écrire »)
 - [x] Carte du lieu d'un match (OpenStreetMap, sans clé API) + itinéraire ; le **Club** est l'entité lieu (fusion `Court`→`Club`, aoû. 2026)
 - [ ] Carte des joueurs
-- [ ] Page asso (news, événements)
+- [x] Page asso (news, événements) — EPIC Actualité livré (admin + page + détail + événements + RSS)
 
 ### Phase 4 — Plus
-- [ ] Tournois & classements
+- [x] Badges / hauts faits (3 séries + 10 hauts faits, socle + front livrés)
+- [x] Carte d'enjeu de match (proba + points en jeu, rating brut jamais exposé) + carte de match partageable (image story, partage natif)
+- [ ] Tournois & classements officiels
 - [ ] Réservation de courts
 - [ ] App mobile (Ionic/Capacitor)
 - [ ] Paiement cotisations / inscriptions
+- [ ] 🔄 Fonctionnalités demandées par la fédération — liste à venir (voir § Pivot TENNEX)
 
 ---
 

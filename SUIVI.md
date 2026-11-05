@@ -1,6 +1,11 @@
 # ATC — Suivi Produit
 
-> Dernière mise à jour : 2026-08-29 (session 7 — refonte visuelle, photos d'accueil, hero inscription, audit sécurité)
+> Dernière mise à jour : 2026-11-05 — **rattrapage** : le doc n'avait pas été tenu à jour
+> entre le 2026-09-04 (session 8) et aujourd'hui malgré ~30 commits. Voir § « Sessions
+> 9+ » et § « 🔄 Pivot TENNEX » plus bas pour tout ce qui manquait, et § « Pour reprendre
+> le travail » en tout dernier pour l'état exact au moment de la coupure (utile en
+> particulier si tu reprends depuis une autre machine / Remote Control, sans accès à la
+> mémoire locale de cette session).
 
 ---
 
@@ -310,3 +315,123 @@ de l'association nécessitent un conseil local). Traité point par point.
 > 4. **Auto-validation 48h** des scores (cron ou check à la connexion) — sinon l'ELO se fige
 > 5. **Matchs limbes >7 jours** — décider : fenêtre élargie ou onglet "À scorer"
 > 6. **Stats profil membre** — brancher W/L/% + rating sur `/members/:id` (données déjà dispo)
+
+---
+
+## Sessions 9+ (2026-09-04 → 2026-09-20) — rattrapage
+
+Tout ce qui suit a été livré sans jamais être consigné ici. Résumé par thème :
+
+- **ELO & enjeu de match** : marge du score prise en compte dans le calcul ELO ; **carte
+  d'enjeu** sur les matchs à venir (probabilité de victoire + points en jeu), visible
+  seulement en simple et quand les deux joueurs ont assez de matchs classés — voir
+  `FEATURE_CARTE_ENJEU.md`, `PRESENTATION_ELO.md`, `NIVEAU_ENGINE.md`. **Le rating brut
+  n'est jamais affiché**, nulle part — règle produit stricte, à respecter dans tout
+  nouvel écran (y compris la refonte TENNEX).
+- **Badges** : socle back (13 badges, moteur de hauts faits persistés en table
+  `Achievement`) + front (panneau profil + fiche membre, icône dédiée par badge, hauts
+  faits en écussons collectionnables). Un bug de panneau bloqué sur le spinner (effect
+  interdisant les writes en NG17) a été corrigé au passage.
+- **Carte de match partageable** : image « story » générée en canvas (1080×1920) sur un
+  match confirmé, partage natif WhatsApp/Instagram. Lot 1 client-only livré.
+- **Messagerie** : indicateur « est en train d'écrire ».
+- **EPIC Actualité** : terminé (Lots 1-4) — modèle `Post` unique, visibilité calculée à
+  la lecture, admin (CRUD + programmation), page publique, détail, page événements, flux
+  RSS. Plusieurs correctifs sur la publication programmée (le panneau admin ne basculait
+  pas les posts échus ; tick serveur ajouté).
+- **UX/UI hardening** (« améliore tout ») : focus clavier visible, `prefers-reduced-motion`
+  respecté, rating masqué partout (cf. règle ci-dessus), `app-empty-state` unifié,
+  primitives partagées (`stat-tile`, `section-title`, `chip`, `panel`), contraste du
+  texte discret corrigé. Primitives + hiérarchie plus poussées restent à faire.
+- **Mailer** : passage à **Maileroo** (remplace SendGrid mentionné dans la stack
+  d'origine) ; en dev sans `MAILEROO_API_KEY`, les e-mails sont juste logués en console
+  (sujet + destinataire, **pas le lien/token**) — point important pour qui veut tester
+  vérif e-mail / mot de passe oublié en local ou en CI (voir `SPEC_E2E_PARCOURS.md`
+  § 0.3.1). Bug corrigé : l'absence de clé en prod était avalée silencieusement.
+  Gabarits alignés sur la charte ATC, script `diag-email` pour tester le rendu.
+- **Perf DB** : keep-alive Neon pendant l'usage actif (anti-autosuspend du plan gratuit).
+- **Divers fixes** : lien de confirmation d'e-mail cassé une fois déjà connecté ; annonce
+  affichée en double dans le feed après création ; scroll horizontal sur mobile dans
+  Actualité.
+
+---
+
+## 🔄 Pivot TENNEX (annoncé 2026-11-05)
+
+Le PO a décidé de **vendre ATC à une fédération de tennis**. Voir le détail des
+décisions et de la direction visuelle proposée en tête de `CLAUDE.md` (section « Pivot
+en cours — ATC devient TENNEX ») — pas dupliqué ici pour éviter que les deux docs
+divergent. Statut en une phrase : **renommage large (marque+domaine+code+DB) acté,
+plateforme devient « officielle fédérale » (pas une marque blanche), liste précise des
+demandes fédérales pas encore reçue, direction visuelle (palette navy/volt/cloud/clay +
+Space Grotesk/Manrope) proposée au PO mais pas encore appliquée au code — en attente de
+validation avant de toucher `styles.css`.**
+
+**Ne pas renommer ni démarrer de dev fédéral avant d'avoir, dans l'ordre : (1) la liste
+des demandes fédé, (2) la validation de la direction visuelle, (3) un plan de migration
+DB si le renommage touche le schéma en prod (Neon).**
+
+---
+
+## Automatisation E2E post-déploiement (2026-09-20) ✅
+
+- `.github/workflows/trigger-e2e.yml` : sur `deployment_status` réussi en environnement
+  `Production` (déploiement Vercel du front), déclenche un `repository_dispatch` vers le
+  repo **`Template-PW-automation`** (tests Playwright), avec l'URL de déploiement en
+  payload. Secret requis côté ATC : `DISPATCH_TOKEN`.
+- **Confirmé fonctionnel de bout en bout** le 2026-09-20 (run `repository_dispatch` →
+  succès côté `Template-PW-automation`) après un premier aller-retour de debug.
+- `SPEC_E2E_PARCOURS.md` (racine du repo) : spec complète des parcours utilisateur à
+  automatiser en E2E (40+ parcours détaillés, prérequis techniques, priorisation,
+  structure Playwright proposée). **Rédigée mais pas encore exploitée** — personne n'a
+  encore écrit les specs Playwright elles-mêmes dans `Template-PW-automation`.
+
+---
+
+## 🚩 Bug ouvert — crons Actualité/RSS échouent systématiquement (découvert 2026-11-05)
+
+En vérifiant l'état du pipeline CI le 2026-11-05, constat : les deux workflows cron liés
+à l'actualité **échouent à 100% des runs**, sur un historique remontant à plusieurs
+semaines (pas une régression récente) :
+
+- `.github/workflows/publish-scheduled.yml` (*/10 min) — `POST
+  /api/v1/news/rss/publish-due`
+- `.github/workflows/rss-sync.yml` (*/6h) — `POST /api/v1/news/rss/sync`
+
+L'API est saine (`GET /api/v1/levels` → 200). L'endpoint répond `401 "Token invalide"`
+sans header — cohérent avec un **`RSS_SYNC_TOKEN` désaligné** entre le secret GitHub
+Actions et la variable d'env Render (jamais posé côté Render, ou changé d'un côté sans
+l'autre). Impact réel limité : la visibilité des articles est calculée à la lecture
+(fallback déjà en place), donc le site public n'est pas cassé — mais le flip de statut
+« publié » et le push de notif au moment exact n'ont probablement **jamais** tourné
+automatiquement depuis la mise en place du cron. **À corriger** : comparer/régénérer le
+token des deux côtés (GitHub secret `RSS_SYNC_TOKEN` du repo `axelSomian/ATC` ↔ variable
+d'env Render de l'API).
+
+---
+
+## Pour reprendre le travail (état au 2026-11-05)
+
+Checklist pour quiconque reprend la main sur ce repo (y compris une session Claude sur
+une autre machine, sans accès à la mémoire locale de la session qui a écrit ce doc) :
+
+1. **Working tree local** (sur la machine où ce doc a été mis à jour) a des changements
+   non commités qui n'ont pas de rapport avec le travail ci-dessus et n'ont **pas** été
+   touchés faute de certitude sur leur origine :
+   - `apps/web/README.md` et `apps/web/src/index.html` : altérations suspectes (typo
+     insérée au milieu d'un mot, espace ajouté dans une balise) — ressemble à une
+     corruption accidentelle plutôt qu'un vrai edit. À inspecter avant de committer ou
+     de jeter (`git diff`).
+   - Fichiers non trackés d'origine incertaine : `NOTE_VERSION_BADGES.md`,
+     `apps/api/prisma/send-badge-notif.ts`, `presentation-atc.html`. Décider avec le PO
+     s'ils doivent être committés, complétés ou supprimés.
+   - `SPEC_E2E_PARCOURS.md` : mien (session du 08/09), à committer — contenu utile, pas
+     de raison de le laisser hors du repo.
+2. **Pivot TENNEX** : attendre la liste des demandes fédé + la validation de la
+   direction visuelle avant tout dev de rebrand ou de fonctionnalité fédérale (voir §
+   ci-dessus et tête de `CLAUDE.md`).
+3. **Bug cron RSS/actualité** : à corriger (voir § ci-dessus) — pas bloquant pour les
+   utilisateurs mais silencieux depuis des semaines, autant le fermer.
+4. **E2E Playwright** : `SPEC_E2E_PARCOURS.md` donne la liste des parcours et les points
+   durs (mail-catcher de test à ajouter côté API) — personne n'a encore commencé
+   l'écriture des specs dans `Template-PW-automation`.
