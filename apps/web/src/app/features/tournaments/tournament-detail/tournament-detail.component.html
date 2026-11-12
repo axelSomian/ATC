@@ -1,0 +1,183 @@
+<div class="td-page">
+  <a class="back-link" routerLink="/tournois">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Tournois
+  </a>
+
+  @if (tournament(); as t) {
+    <header class="td-hero">
+      <div class="td-hero-top">
+        <h1>{{ t.name }}</h1>
+        <span class="tournament-status" [class]="'status-' + t.status">{{ statusLabel(t) }}</span>
+      </div>
+      @if (t.rulesLabel) { <span class="tournament-rules">{{ t.rulesLabel }}</span> }
+      <p class="td-meta">
+        {{ t.startDate | date:'d MMMM' }} – {{ t.endDate | date:'d MMMM yyyy' }}
+        @if (t.location) { <span class="tournament-dot">·</span> {{ t.location }} }
+      </p>
+      @if (t.description) { <p class="td-description">{{ t.description }}</p> }
+
+      <div class="td-action">
+        @if (t.status === 'open') {
+          @if (t.registered) {
+            <span class="tournament-registered">Inscrit ✓</span>
+            <button type="button" class="btn btn-ghost btn-sm" [disabled]="pendingId()" (click)="unregister()">
+              Se désinscrire
+            </button>
+          } @else if (t.ineligibleReason) {
+            <span class="tournament-ineligible">{{ t.ineligibleReason }}</span>
+          } @else {
+            <button type="button" class="btn btn-primary btn-sm" [disabled]="pendingId()" (click)="register()">
+              S'inscrire
+            </button>
+          }
+        } @else if (t.registered) {
+          <span class="tournament-registered">Inscrit ✓</span>
+        }
+      </div>
+    </header>
+
+    <div class="td-stats">
+      <div class="td-stat">
+        <span class="td-stat-value">{{ t.participants.length }}</span>
+        <span class="td-stat-label">Inscrits</span>
+      </div>
+      <div class="td-stat">
+        <span class="td-stat-value">{{ t.maxPlayers ?? '∞' }}</span>
+        <span class="td-stat-label">Places</span>
+      </div>
+      <div class="td-stat">
+        <span class="td-stat-value">{{ remaining(t) ?? '—' }}</span>
+        <span class="td-stat-label">Restantes</span>
+      </div>
+    </div>
+
+    @if (t.participants.length > 0) {
+      <section class="td-section">
+        <h2>Participants</h2>
+        <div class="td-roster">
+          @for (p of t.participants; track p.id) {
+            <div class="td-roster-item">
+              <div class="avatar avatar-md">
+                @if (p.avatarUrl) { <img [src]="p.avatarUrl" [alt]="p.name" class="avatar-img" /> } @else { {{ p.initials }} }
+              </div>
+              <span class="td-roster-name">{{ p.name }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (t.results.length > 0) {
+      <section class="td-section">
+        <h2>Classement final</h2>
+        <div class="td-results">
+          @for (r of t.results; track r.userId) {
+            <div class="td-result-row">
+              <span class="td-result-pos">{{ r.position ?? '—' }}</span>
+              <div class="avatar avatar-sm">
+                @if (r.user.avatarUrl) { <img [src]="r.user.avatarUrl" [alt]="r.user.name" class="avatar-img" /> } @else { {{ r.user.initials }} }
+              </div>
+              <span class="td-result-name">{{ r.user.name }}</span>
+              <span class="td-result-points">{{ r.points }} pts</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (t.bracketPublished) {
+      <section class="td-section">
+        <h2>Tableau</h2>
+        @if (bracket(); as b) {
+          @if (b.champion) {
+            <div class="td-champion">
+              <div class="avatar avatar-lg">
+                @if (b.champion.avatarUrl) { <img [src]="b.champion.avatarUrl" [alt]="b.champion.name" class="avatar-img" /> } @else { {{ b.champion.initials }} }
+              </div>
+              <div>
+                <span class="td-champion-label">Vainqueur</span>
+                <span class="td-champion-name">{{ b.champion.name }}</span>
+              </div>
+            </div>
+          }
+          <div class="td-bracket-scroll">
+            <div
+              class="td-bracket"
+              [style.grid-template-columns]="bracketColumns(b.totalRounds)"
+              [style.grid-template-rows]="bracketRows(b.totalRounds)"
+            >
+              @for (round of b.rounds; track round.round) {
+                <div class="td-round-label" [style.grid-column]="matchColumn(round.round)">{{ round.label }}</div>
+
+                @for (m of round.matches; track m.id) {
+                  @if (round.round < b.totalRounds) {
+                    <div
+                      class="td-conn"
+                      [class.td-conn-top]="m.slot % 2 === 0"
+                      [class.td-conn-bottom]="m.slot % 2 === 1"
+                      [class.td-conn-done]="!!m.winner"
+                      [style.grid-column]="connectorColumn(round.round)"
+                      [style.grid-row]="matchGridRow(m)"
+                    ></div>
+                  }
+
+                  <div
+                    class="td-match"
+                    [class.td-match-final]="round.round === b.totalRounds"
+                    [style.grid-column]="matchColumn(round.round)"
+                    [style.grid-row]="matchGridRow(m)"
+                  >
+                    <div
+                      class="td-match-player"
+                      [class.td-match-winner]="m.playerA && m.winner?.id === m.playerA.id"
+                      [class.td-match-loser]="m.winner && m.playerA && m.winner.id !== m.playerA.id"
+                    >
+                      @if (m.playerA) {
+                        <div class="avatar avatar-sm">
+                          @if (m.playerA.avatarUrl) { <img [src]="m.playerA.avatarUrl" [alt]="m.playerA.name" class="avatar-img" /> } @else { {{ m.playerA.initials }} }
+                        </div>
+                        <span class="td-match-name">{{ m.playerA.name }}</span>
+                      } @else {
+                        <span class="td-slot-empty" aria-hidden="true"></span>
+                        <span class="td-match-tbd">À déterminer</span>
+                      }
+                    </div>
+                    <div
+                      class="td-match-player"
+                      [class.td-match-winner]="m.playerB && m.winner?.id === m.playerB.id"
+                      [class.td-match-loser]="m.winner && m.playerB && m.winner.id !== m.playerB.id"
+                    >
+                      @if (m.playerB) {
+                        <div class="avatar avatar-sm">
+                          @if (m.playerB.avatarUrl) { <img [src]="m.playerB.avatarUrl" [alt]="m.playerB.name" class="avatar-img" /> } @else { {{ m.playerB.initials }} }
+                        </div>
+                        <span class="td-match-name">{{ m.playerB.name }}</span>
+                      } @else if (m.playerA) {
+                        <span class="td-slot-empty" aria-hidden="true"></span>
+                        <span class="td-match-tbd">Qualifié d'office</span>
+                      } @else {
+                        <span class="td-slot-empty" aria-hidden="true"></span>
+                        <span class="td-match-tbd">À déterminer</span>
+                      }
+                    </div>
+                    @if (m.scoreText) { <span class="td-match-score">{{ m.scoreText }}</span> }
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        } @else if (bracketLoading()) {
+          <p class="panel-loading">Chargement du tableau…</p>
+        }
+      </section>
+    }
+  } @else if (loading()) {
+    <div class="td-skeleton"></div>
+  } @else if (notFound()) {
+    <div class="td-empty">
+      <p class="td-empty-title">Tournoi introuvable</p>
+      <a class="btn btn-primary" routerLink="/tournois">Retour aux tournois</a>
+    </div>
+  }
+</div>

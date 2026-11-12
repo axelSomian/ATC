@@ -17,32 +17,32 @@ interface NavItem {
   template: `
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <span class="logo-mark">ATC</span>
-        <span class="logo-text">Abidjan Tennis</span>
+        <span class="logo-text">TenCI</span>
       </div>
 
       <nav class="sidebar-nav">
-        @for (item of navItems; track item.route) {
-          <a
-            [routerLink]="item.route"
-            routerLinkActive="active"
-            class="nav-item"
-          >
-            <span class="nav-icon" [innerHTML]="item.icon"></span>
-            <span>{{ item.label }}</span>
-          </a>
-        }
-        <a routerLink="/messages" routerLinkActive="active" class="nav-item">
-          <span class="nav-icon" [innerHTML]="messagesIcon"></span>
-          <span>Messages</span>
-          @if (messages.unreadTotal() > 0) {
-            <span class="nav-count">{{ messages.unreadTotal() > 9 ? '9+' : messages.unreadTotal() }}</span>
-          }
-        </a>
         @if (store.isAdmin()) {
           <a routerLink="/admin" routerLinkActive="active" class="nav-item">
             <span class="nav-icon" [innerHTML]="adminIcon"></span>
             <span>Administration</span>
+          </a>
+        } @else {
+          @for (item of navItems; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              class="nav-item"
+            >
+              <span class="nav-icon" [innerHTML]="item.icon"></span>
+              <span>{{ item.label }}</span>
+            </a>
+          }
+          <a routerLink="/messages" routerLinkActive="active" class="nav-item">
+            <span class="nav-icon" [innerHTML]="messagesIcon"></span>
+            <span>Messages</span>
+            @if (messages.unreadTotal() > 0) {
+              <span class="nav-count">{{ messages.unreadTotal() > 9 ? '9+' : messages.unreadTotal() }}</span>
+            }
           </a>
         }
       </nav>
@@ -108,6 +108,16 @@ export class SidebarComponent {
       label: 'Matchs',
       route: '/matchs',
       icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/><path d="M12 2c-2.76 4-2.76 16 0 20"/></svg>',
+    },
+    {
+      label: 'Licence',
+      route: '/licence',
+      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5.2 3.6 9.4 8 11 4.4-1.6 8-5.8 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg>',
+    },
+    {
+      label: 'Tournois',
+      route: '/tournois',
+      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>',
     },
     {
       label: 'Classement',

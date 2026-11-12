@@ -1,0 +1,61 @@
+<div class="tournaments-page">
+  <header class="tournaments-head">
+    <h1>Tournois</h1>
+    <p class="tournaments-intro">
+      Inscris-toi aux tournois officiels de la fédération — seuls leurs
+      résultats comptent désormais pour le classement fédéral.
+    </p>
+  </header>
+
+  @if (!loading() && tournaments().length === 0) {
+    <app-empty-state title="Aucun tournoi pour l'instant" hint="La fédération n'a pas encore publié de tournoi." />
+  }
+
+  <div class="tournament-list">
+    @for (t of tournaments(); track t.id) {
+      <a class="tournament-card" [routerLink]="['/tournois', t.id]">
+        <div class="tournament-card-main">
+          <div class="tournament-card-top">
+            <h2 class="tournament-name">{{ t.name }}</h2>
+            <span class="tournament-status" [class]="'status-' + t.status">{{ statusLabel(t) }}</span>
+            @if (t.rulesLabel) { <span class="tournament-rules">{{ t.rulesLabel }}</span> }
+          </div>
+
+          <p class="tournament-dates">
+            {{ t.startDate | date:'d MMM' }} – {{ t.endDate | date:'d MMM yyyy' }}
+            @if (t.location) { <span class="tournament-dot">·</span> {{ t.location }} }
+          </p>
+
+          @if (t.description) {
+            <p class="tournament-description">{{ t.description }}</p>
+          }
+
+          <p class="tournament-count">
+            {{ t.registrationsCount }} inscrit{{ t.registrationsCount === 1 ? '' : 's' }}
+            @if (t.maxPlayers) { / {{ t.maxPlayers }} places }
+            <span class="tournament-link">Voir la fiche ›</span>
+          </p>
+        </div>
+
+        <div class="tournament-card-action">
+          @if (t.status === 'open') {
+            @if (t.registered) {
+              <span class="tournament-registered">Inscrit ✓</span>
+              <button type="button" class="btn btn-ghost btn-sm" [disabled]="pendingId() === t.id" (click)="unregister(t, $event)">
+                Se désinscrire
+              </button>
+            } @else if (t.ineligibleReason) {
+              <span class="tournament-ineligible">{{ t.ineligibleReason }}</span>
+            } @else {
+              <button type="button" class="btn btn-primary btn-sm" [disabled]="pendingId() === t.id" (click)="register(t, $event)">
+                S'inscrire
+              </button>
+            }
+          } @else if (t.registered) {
+            <span class="tournament-registered">Inscrit ✓</span>
+          }
+        </div>
+      </a>
+    }
+  </div>
+</div>

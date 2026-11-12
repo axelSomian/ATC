@@ -29,6 +29,8 @@ import messagingRoutes from './modules/messaging/messaging.routes.js';
 import pushRoutes from './modules/push/push.routes.js';
 import badgesRoutes from './modules/badges/badges.routes.js';
 import { newsPublicRouter, newsAdminRouter, newsSyncRouter } from './modules/news/news.routes.js';
+import tournamentsRoutes from './modules/tournaments/tournaments.routes.js';
+import licenceRoutes from './modules/licence/licence.routes.js';
 import { promoteDuePosts } from './modules/news/news.service.js';
 
 const app = express();
@@ -136,6 +138,16 @@ const resetLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Vérification publique de licence (scan QR, pas d'auth) : le code est haute
+// entropie donc non devinable, mais on limite quand même l'énumération.
+const licenceVerifyLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  message: { error: 'Trop de vérifications, réessayez dans une minute' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/v1/auth/login', loginLimiter);
@@ -155,6 +167,9 @@ app.use('/api/v1/quick-matches', quickMatchesRoutes);
 app.use('/api/v1/conversations', messagingRoutes);
 app.use('/api/v1/push', pushRoutes);
 app.use('/api/v1/badges', badgesRoutes);
+app.use('/api/v1/tournaments', tournamentsRoutes);
+app.use('/api/v1/licence/verify', licenceVerifyLimiter);
+app.use('/api/v1/licence', licenceRoutes);
 app.use('/api/v1/news/rss', newsSyncRouter);
 app.use('/api/v1/news', newsPublicRouter);
 app.use('/api/v1/admin/news', newsAdminRouter);

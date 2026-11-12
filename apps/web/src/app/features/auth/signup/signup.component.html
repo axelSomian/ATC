@@ -1,10 +1,19 @@
 <div class="auth-page">
   <div class="auth-visual">
+    <svg class="visual-blueprint" viewBox="0 0 700 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect x="90" y="80" width="520" height="740" fill="none" stroke="#F4F5F1" stroke-width="2" />
+      <line x1="90" y1="450" x2="610" y2="450" stroke="#F4F5F1" stroke-width="2" />
+      <line x1="220" y1="80" x2="220" y2="820" stroke="#F4F5F1" stroke-width="2" />
+      <line x1="480" y1="80" x2="480" y2="820" stroke="#F4F5F1" stroke-width="2" />
+      <line x1="350" y1="260" x2="350" y2="640" stroke="#F4F5F1" stroke-width="2" />
+    </svg>
     <div class="visual-content">
-      <div class="visual-badge">ATC</div>
+      <div class="visual-brand">
+        <span class="visual-wordmark">TenCI</span>
+        <span class="visual-official">Plateforme officielle</span>
+      </div>
       <h1 class="visual-title">Rejoignez la<br>communauté.</h1>
       <p class="visual-sub">Trouvez des partenaires de jeu, publiez vos annonces et suivez vos matchs.</p>
-      <div class="ci-stripe"></div>
     </div>
   </div>
 
@@ -12,7 +21,7 @@
     <div class="auth-card">
       <div class="auth-header">
         <h2>Créer un compte</h2>
-        <p class="text-muted">Bienvenue dans Abidjan Tennis Community.</p>
+        <p class="text-muted">Bienvenue sur TenCI.</p>
       </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form" novalidate>
@@ -122,7 +131,7 @@
           </select>
         </div>
 
-        <label class="signup-consent">
+        <label class="signup-consent" [class.is-invalid]="submitted() && form.controls.acceptTerms.invalid">
           <input type="checkbox" formControlName="acceptTerms" />
           <span>
             J'ai lu et j'accepte les
@@ -131,11 +140,14 @@
             <a routerLink="/legal/confidentialite" target="_blank" rel="noopener" class="link-clay">politique de confidentialité</a>.
           </span>
         </label>
+        @if (submitted() && form.controls.acceptTerms.invalid) {
+          <span class="form-error">Tu dois accepter les CGU et la politique de confidentialité pour continuer.</span>
+        }
 
         <button
           type="submit"
           class="btn btn-primary btn-full btn-lg"
-          [disabled]="loading() || form.controls.acceptTerms.invalid"
+          [disabled]="loading()"
         >
           {{ loading() ? 'Création…' : 'Créer mon compte' }}
         </button>

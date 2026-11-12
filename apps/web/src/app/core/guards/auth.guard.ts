@@ -32,12 +32,37 @@ export const termsGuard: CanActivateFn = () => {
   );
 };
 
+/**
+ * Chaque persona a sa page d'arrivée : un admin fédé est renvoyé vers son
+ * tableau de bord (/admin), un membre vers /accueil. Au rechargement, le rôle
+ * n'est pas encore chargé : on force un /auth/me avant de trancher (comme
+ * adminGuard/termsGuard).
+ */
 export const guestGuard: CanActivateFn = () => {
   const store = inject(AuthStore);
+  const auth = inject(AuthService);
   const router = inject(Router);
+  const home = () => router.createUrlTree([store.isAdmin() ? '/admin' : '/accueil']);
 
   if (!store.isAuthenticated()) return true;
-  return router.createUrlTree(['/accueil']);
+  if (store.user()) return home();
+
+  return auth.getMe().pipe(
+    map(() => home()),
+    catchError(() => of(router.createUrlTree(['/accueil']))),
+  );
+};
+
+/**
+ * Un admin fédé n'administre : il n'a pas accès au reste de l'appli (joueur).
+ * Appliqué en canActivateChild sur le groupe de routes joueur ; termsGuard,
+ * exécuté avant au niveau parent, garantit que le profil (donc le rôle) est
+ * déjà chargé ici — pas besoin de /auth/me.
+ */
+export const memberGuard: CanActivateFn = () => {
+  const store = inject(AuthStore);
+  const router = inject(Router);
+  return store.isAdmin() ? router.createUrlTree(['/admin']) : true;
 };
 
 /**

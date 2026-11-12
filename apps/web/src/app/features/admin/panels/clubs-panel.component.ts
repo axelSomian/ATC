@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdminService } from '../../../core/services/admin.service';
@@ -7,14 +7,7 @@ import { CourtPickerComponent, type PickedPoint } from '../../../shared/court-pi
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-interface Editable extends AdminClub {
-  _busy?: boolean;
-  _msg?: string;
-  _ok?: boolean;
-  _photoBusy?: boolean;
-}
-
-const EMPTY_NEW = {
+const EMPTY_DRAFT = {
   slug: '',
   name: '',
   zone: '',
@@ -24,14 +17,17 @@ const EMPTY_NEW = {
   feesInfo: '' as string | null,
   phone: '' as string | null,
   website: '' as string | null,
+  imageUrl: null as string | null,
   lat: null as number | null,
   lng: null as number | null,
   sortOrder: 0,
   active: true,
 };
 
-/** Cible en cours d'édition sur la carte : le brouillon ou une ligne existante. */
-type PickTarget = { row: 'draft' | Editable; lat: number | null; lng: number | null };
+type Draft = typeof EMPTY_DRAFT;
+
+/** Cible en cours d'édition sur la carte : toujours le brouillon courant. */
+type PickTarget = { lat: number | null; lng: number | null };
 
 @Component({
   selector: 'app-clubs-panel',
@@ -40,132 +36,137 @@ type PickTarget = { row: 'draft' | Editable; lat: number | null; lng: number | n
   styleUrl: '../admin-shared.css',
   template: `
     <div class="panel">
-      <!-- Nouveau club -->
-      <div class="admin-card card">
-        <strong>Ajouter un club</strong>
-        <div class="field-row">
-          <label>Nom</label>
-          <input type="text" [(ngModel)]="draft.name" placeholder="Golf Tennis Club" />
-          <label>Slug</label>
-          <input type="text" [(ngModel)]="draft.slug" placeholder="golf" />
-          <label>Zone</label>
-          <input type="text" [(ngModel)]="draft.zone" placeholder="Cocody" />
-          <label>Lieu (libellé court)</label>
-          <input type="text" [(ngModel)]="draft.location" placeholder="Cocody – 2 Plateaux" />
-          <label>Adresse complète</label>
-          <input type="text" [(ngModel)]="draft.address" placeholder="Rue des Jardins, 2 Plateaux, Cocody" />
-          <label>Téléphone</label>
-          <input type="text" [(ngModel)]="draft.phone" placeholder="+225 07 00 00 00 00" />
-          <label>Site web</label>
-          <input type="text" [(ngModel)]="draft.website" placeholder="https://…" />
-          <label>Ordre</label>
-          <input type="number" [(ngModel)]="draft.sortOrder" />
-        </div>
-        <label class="field-block-label">Présentation</label>
-        <textarea rows="2" [(ngModel)]="draft.description" placeholder="Quelques lignes sur le club…"></textarea>
-        <label class="field-block-label">Honoraires / cotisation</label>
-        <textarea rows="2" [(ngModel)]="draft.feesInfo" placeholder="Ex : 15 000 F/mois · 120 000 F/an · cotisation ATC à part"></textarea>
-
-        <div class="court-pos">
-          <span class="court-pos-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            {{ posLabel(draft) }}
-          </span>
-          <button type="button" class="btn btn-outline btn-sm" (click)="openPicker('draft')">
-            {{ draft.lat != null ? 'Modifier la position' : 'Placer sur la carte' }}
-          </button>
-          @if (draft.lat != null) {
-            <button type="button" class="btn btn-ghost btn-sm" (click)="clearPos(draft)">Retirer</button>
-          }
-        </div>
-
-        @if (createMsg()) { <p class="form-msg err">{{ createMsg() }}</p> }
-        <div class="row-actions">
-          <button class="btn btn-primary btn-sm" [disabled]="creating()" (click)="create()">
-            {{ creating() ? 'Création…' : 'Créer' }}
-          </button>
-        </div>
+      <!-- ═══ LISTE ═══ -->
+      <div class="admin-toolbar">
+        <button class="btn btn-primary btn-sm" (click)="newClub()">Ajouter un club</button>
+        <span class="spacer"></span>
+        <input class="admin-search" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Rechercher…" />
       </div>
 
       @if (loading()) {
         <p class="panel-loading">Chargement…</p>
+      } @else if (visible().length === 0) {
+        <p class="panel-empty">Aucun club{{ search() ? ' pour cette recherche' : '' }}.</p>
       } @else {
-        @for (c of clubs(); track c.id) {
-          <div class="admin-card card">
-            <div class="admin-card-head">
-              <strong>{{ c.name || '(sans nom)' }}</strong>
-              @if (c.lat == null || c.lng == null) { <span class="pill-tag pill-inactive">Sans position</span> }
-              @if (!c.active) { <span class="pill-tag pill-inactive">Inactif</span> }
-            </div>
-
-            <div class="club-photo-row">
+        <div class="admin-table">
+          @for (c of visible(); track c.id) {
+            <button class="admin-table-row" (click)="edit(c)">
               @if (c.imageUrl) {
-                <img class="club-photo-thumb" [src]="c.imageUrl" [alt]="'Photo ' + c.name" />
+                <img class="admin-row-thumb" [src]="c.imageUrl" alt="" />
+              } @else {
+                <div class="admin-row-thumb admin-row-thumb-empty">Pas de photo</div>
+              }
+              <div class="admin-row-main">
+                <div class="admin-row-title">{{ c.name || '(sans nom)' }}</div>
+                <div class="admin-row-meta">
+                  <span class="status-text"><span class="status-dot" [class.on]="c.active" [class.off]="!c.active"></span>{{ c.active ? 'Actif' : 'Inactif' }}</span>
+                  @if (c.lat == null || c.lng == null) { <span>Sans position</span> }
+                  @if (c.zone) { <span>{{ c.zone }}</span> }
+                  @if (c.location) { <span>{{ c.location }}</span> }
+                </div>
+              </div>
+              <span class="admin-row-chevron">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    @if (editing()) {
+      <div class="admin-drawer-backdrop" (click)="cancel()">
+        <div class="admin-drawer" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+          <header class="admin-drawer-head">
+            <h2>{{ editingId() ? (draft.name || 'Club') : 'Ajouter un club' }}</h2>
+            <button type="button" class="admin-drawer-close" aria-label="Fermer" (click)="cancel()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </header>
+
+          <div class="admin-drawer-body">
+            <div class="club-photo-row">
+              @if (draft.imageUrl) {
+                <img class="club-photo-thumb" [src]="draft.imageUrl" [alt]="'Photo ' + draft.name" />
               } @else {
                 <div class="club-photo-thumb club-photo-empty">Pas de photo</div>
               }
               <div class="club-photo-actions">
                 <label class="btn btn-ghost btn-sm">
-                  {{ c._photoBusy ? 'Envoi…' : (c.imageUrl ? 'Changer la photo' : 'Ajouter une photo') }}
+                  {{ photoBusy() ? 'Envoi…' : (draft.imageUrl ? 'Changer la photo' : 'Ajouter une photo') }}
                   <input type="file" accept="image/*" hidden
-                    [disabled]="c._photoBusy" (change)="onImage(c, $event)" />
+                    [disabled]="photoBusy() || !editingId()" (change)="onImage($event)" />
                 </label>
-                @if (c.imageUrl) {
-                  <button class="btn btn-ghost btn-sm" [disabled]="c._photoBusy" (click)="removeImage(c)">Retirer</button>
+                @if (draft.imageUrl) {
+                  <button class="btn btn-ghost btn-sm" [disabled]="photoBusy()" (click)="removeImage()">Retirer</button>
                 }
-                <span class="club-photo-hint">JPG/PNG, max 5 Mo — recadré en 800×500</span>
+                <span class="club-photo-hint">
+                  JPG/PNG, max 5 Mo — recadré en 800×500
+                  @if (!editingId()) { · enregistrez d'abord le club pour ajouter une photo }
+                </span>
               </div>
             </div>
 
-            <div class="field-row">
-              <label>Nom</label>
-              <input type="text" [(ngModel)]="c.name" />
-              <label>Slug</label>
-              <input type="text" [(ngModel)]="c.slug" />
-              <label>Zone</label>
-              <input type="text" [(ngModel)]="c.zone" />
-              <label>Lieu (libellé court)</label>
-              <input type="text" [(ngModel)]="c.location" />
-              <label>Adresse complète</label>
-              <input type="text" [(ngModel)]="c.address" />
-              <label>Téléphone</label>
-              <input type="text" [(ngModel)]="c.phone" />
-              <label>Site web</label>
-              <input type="text" [(ngModel)]="c.website" />
-              <label>Ordre</label>
-              <input type="number" [(ngModel)]="c.sortOrder" />
-              <label>Actif</label>
-              <input type="checkbox" [(ngModel)]="c.active" style="width: auto; justify-self: start;" />
-            </div>
-            <label class="field-block-label">Présentation</label>
-            <textarea rows="2" [(ngModel)]="c.description"></textarea>
-            <label class="field-block-label">Honoraires / cotisation</label>
-            <textarea rows="2" [(ngModel)]="c.feesInfo"></textarea>
-
-            <div class="court-pos">
-              <span class="court-pos-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {{ posLabel(c) }}
-              </span>
-              <button type="button" class="btn btn-outline btn-sm" (click)="openPicker(c)">
-                {{ c.lat != null ? 'Modifier la position' : 'Placer sur la carte' }}
-              </button>
-              @if (c.lat != null) {
-                <button type="button" class="btn btn-ghost btn-sm" (click)="clearPos(c)">Retirer</button>
-              }
+            <div class="admin-section">
+              <div class="field-row">
+                <label>Nom</label>
+                <input type="text" [(ngModel)]="draft.name" placeholder="Golf Tennis Club" />
+                <label>Slug</label>
+                <input type="text" [(ngModel)]="draft.slug" placeholder="golf" />
+                <label>Zone</label>
+                <input type="text" [(ngModel)]="draft.zone" placeholder="Cocody" />
+                <label>Lieu (libellé court)</label>
+                <input type="text" [(ngModel)]="draft.location" placeholder="Cocody – 2 Plateaux" />
+                <label>Adresse complète</label>
+                <input type="text" [(ngModel)]="draft.address" placeholder="Rue des Jardins, 2 Plateaux, Cocody" />
+                <label>Téléphone</label>
+                <input type="text" [(ngModel)]="draft.phone" placeholder="+225 07 00 00 00 00" />
+                <label>Site web</label>
+                <input type="text" [(ngModel)]="draft.website" placeholder="https://…" />
+                <label>Ordre</label>
+                <input type="number" [(ngModel)]="draft.sortOrder" />
+                <label>Actif</label>
+                <input type="checkbox" [(ngModel)]="draft.active" style="width: auto; justify-self: start;" />
+              </div>
+              <label class="field-block-label">Présentation</label>
+              <textarea rows="2" [(ngModel)]="draft.description" placeholder="Quelques lignes sur le club…"></textarea>
+              <label class="field-block-label">Honoraires / cotisation</label>
+              <textarea rows="2" [(ngModel)]="draft.feesInfo" placeholder="Ex : 15 000 F/mois · 120 000 F/an"></textarea>
             </div>
 
-            @if (c._msg) { <p class="form-msg" [class.err]="!c._ok" [class.ok]="c._ok">{{ c._msg }}</p> }
-            <div class="row-actions">
-              <button class="btn btn-primary btn-sm" [disabled]="c._busy" (click)="save(c)">Enregistrer</button>
-              <button class="btn btn-ghost btn-sm" [disabled]="c._busy" (click)="remove(c)">Supprimer</button>
+            <div class="admin-section">
+              <strong>Position</strong>
+              <div class="court-pos">
+                <span class="court-pos-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {{ posLabel(draft) }}
+                </span>
+                <button type="button" class="btn btn-outline btn-sm" (click)="openPicker()">
+                  {{ draft.lat != null ? 'Modifier la position' : 'Placer sur la carte' }}
+                </button>
+                @if (draft.lat != null) {
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="clearPos()">Retirer</button>
+                }
+              </div>
             </div>
+
+            @if (msg()) { <p class="form-msg" [class.err]="!ok()" [class.ok]="ok()">{{ msg() }}</p> }
           </div>
-        }
-      }
-    </div>
 
-    @if (picking(); as p) {
+          <footer class="admin-drawer-footer">
+            <button class="btn btn-primary btn-sm" [disabled]="busy()" (click)="save()">
+              {{ busy() ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+            <span class="spacer"></span>
+            @if (editingId()) {
+              <button class="btn btn-ghost btn-sm" style="color:var(--color-error)" [disabled]="busy()" (click)="remove()">Supprimer</button>
+            }
+          </footer>
+        </div>
+      </div>
+    }
+
+    @if (picking()) {
       <div class="cp-backdrop" (click)="cancelPick()">
         <div class="cp-dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
           <header class="cp-dialog-head">
@@ -174,7 +175,7 @@ type PickTarget = { row: 'draft' | Editable; lat: number | null; lng: number | n
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </header>
-          <app-court-picker [lat]="p.lat" [lng]="p.lng" (picked)="onPicked($event)" />
+          <app-court-picker [lat]="picking()!.lat" [lng]="picking()!.lng" (picked)="onPicked($event)" />
           <div class="cp-dialog-actions">
             <button class="btn btn-primary btn-sm" [disabled]="!pendingPoint" (click)="confirmPick()">
               Enregistrer la position
@@ -192,7 +193,6 @@ type PickTarget = { row: 'draft' | Editable; lat: number | null; lng: number | n
         flex-wrap: wrap;
         align-items: center;
         gap: var(--space-2);
-        margin-top: var(--space-3);
       }
       .court-pos-label {
         display: inline-flex;
@@ -205,7 +205,7 @@ type PickTarget = { row: 'draft' | Editable; lat: number | null; lng: number | n
       .cp-backdrop {
         position: fixed;
         inset: 0;
-        z-index: 200;
+        z-index: 400;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -249,11 +249,24 @@ type PickTarget = { row: 'draft' | Editable; lat: number | null; lng: number | n
 export class ClubsPanelComponent implements OnInit {
   private readonly admin = inject(AdminService);
 
-  readonly clubs = signal<Editable[]>([]);
+  readonly clubs = signal<AdminClub[]>([]);
   readonly loading = signal(true);
-  readonly creating = signal(false);
-  readonly createMsg = signal('');
-  draft: typeof EMPTY_NEW = { ...EMPTY_NEW };
+  readonly search = signal('');
+
+  readonly visible = computed(() => {
+    const q = this.search().trim().toLowerCase();
+    if (!q) return this.clubs();
+    return this.clubs().filter((c) => `${c.name} ${c.zone} ${c.location}`.toLowerCase().includes(q));
+  });
+
+  readonly editing   = signal(false);
+  readonly editingId = signal<string | null>(null);
+  readonly busy      = signal(false);
+  readonly photoBusy = signal(false);
+  readonly msg       = signal('');
+  readonly ok        = signal(false);
+
+  draft: Draft = { ...EMPTY_DRAFT };
 
   readonly picking = signal<PickTarget | null>(null);
   pendingPoint: PickedPoint | null = null;
@@ -263,6 +276,7 @@ export class ClubsPanelComponent implements OnInit {
   }
 
   private reload(): void {
+    this.loading.set(true);
     this.admin.listClubs().subscribe({
       next: (list) => {
         this.clubs.set(list);
@@ -278,10 +292,32 @@ export class ClubsPanelComponent implements OnInit {
       : 'Position non renseignée';
   }
 
-  openPicker(row: 'draft' | Editable): void {
-    const src = row === 'draft' ? this.draft : row;
+  newClub(): void {
+    this.draft = { ...EMPTY_DRAFT };
+    this.editingId.set(null);
+    this.msg.set('');
+    this.editing.set(true);
+  }
+
+  edit(c: AdminClub): void {
+    this.draft = {
+      slug: c.slug, name: c.name, zone: c.zone, location: c.location,
+      address: c.address, description: c.description, feesInfo: c.feesInfo,
+      phone: c.phone, website: c.website, imageUrl: c.imageUrl,
+      lat: c.lat, lng: c.lng, sortOrder: c.sortOrder, active: c.active,
+    };
+    this.editingId.set(c.id);
+    this.msg.set('');
+    this.editing.set(true);
+  }
+
+  cancel(): void {
+    this.editing.set(false);
+  }
+
+  openPicker(): void {
     this.pendingPoint = null;
-    this.picking.set({ row, lat: src.lat, lng: src.lng });
+    this.picking.set({ lat: this.draft.lat, lng: this.draft.lng });
   }
 
   onPicked(p: PickedPoint): void {
@@ -289,13 +325,11 @@ export class ClubsPanelComponent implements OnInit {
   }
 
   confirmPick(): void {
-    const p = this.picking();
-    if (p && this.pendingPoint) {
-      const target = p.row === 'draft' ? this.draft : p.row;
-      target.lat = this.pendingPoint.lat;
-      target.lng = this.pendingPoint.lng;
-      if (this.pendingPoint.address && !(target.address ?? '').trim()) {
-        target.address = this.pendingPoint.address;
+    if (this.picking() && this.pendingPoint) {
+      this.draft.lat = this.pendingPoint.lat;
+      this.draft.lng = this.pendingPoint.lng;
+      if (this.pendingPoint.address && !(this.draft.address ?? '').trim()) {
+        this.draft.address = this.pendingPoint.address;
       }
     }
     this.picking.set(null);
@@ -307,104 +341,95 @@ export class ClubsPanelComponent implements OnInit {
     this.pendingPoint = null;
   }
 
-  clearPos(c: { lat: number | null; lng: number | null }): void {
-    c.lat = null;
-    c.lng = null;
+  clearPos(): void {
+    this.draft.lat = null;
+    this.draft.lng = null;
   }
 
-  create(): void {
-    this.creating.set(true);
-    this.createMsg.set('');
-    this.admin.createClub(this.toPayload(this.draft)).subscribe({
+  save(): void {
+    this.busy.set(true);
+    this.msg.set('');
+    const id = this.editingId();
+    const req = id ? this.admin.updateClub(id, this.toPayload(this.draft)) : this.admin.createClub(this.toPayload(this.draft));
+    req.subscribe({
       next: (club) => {
-        this.clubs.update((l) => [...l, club as Editable]);
-        this.draft = { ...EMPTY_NEW };
-        this.creating.set(false);
+        this.busy.set(false);
+        this.ok.set(true);
+        this.msg.set('Enregistré ✓');
+        this.editingId.set(club.id);
+        this.draft.imageUrl = club.imageUrl;
+        this.reload();
       },
-      error: (err: HttpErrorResponse) => {
-        this.creating.set(false);
-        this.createMsg.set(err.error?.error ?? 'Création impossible.');
-      },
+      error: (err: HttpErrorResponse) => this.fail(err.error?.error ?? 'Enregistrement impossible.'),
     });
   }
 
-  onImage(c: Editable, ev: Event): void {
+  remove(): void {
+    const id = this.editingId();
+    const c = this.clubs().find((x) => x.id === id);
+    if (!id || !confirm(`Supprimer « ${c?.name ?? 'ce club'} » ?`)) return;
+    this.busy.set(true);
+    this.admin.deleteClub(id).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.editing.set(false);
+        this.reload();
+      },
+      error: (err: HttpErrorResponse) => this.fail(err.error?.error ?? 'Suppression impossible.'),
+    });
+  }
+
+  onImage(ev: Event): void {
+    const id = this.editingId();
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) return;
+    if (!id || !file) return;
     if (file.size > MAX_IMAGE_BYTES) {
-      c._ok = false;
-      c._msg = 'Image trop lourde (max 5 Mo).';
+      this.ok.set(false);
+      this.msg.set('Image trop lourde (max 5 Mo).');
       return;
     }
-    c._photoBusy = true;
-    c._msg = undefined;
-    this.admin.uploadClubImage(c.id, file).subscribe({
+    this.photoBusy.set(true);
+    this.msg.set('');
+    this.admin.uploadClubImage(id, file).subscribe({
       next: (updated) => {
-        c._photoBusy = false;
-        c.imageUrl = updated.imageUrl;
-        c._ok = true;
-        c._msg = 'Photo mise à jour ✓';
+        this.photoBusy.set(false);
+        this.draft.imageUrl = updated.imageUrl;
+        this.ok.set(true);
+        this.msg.set('Photo mise à jour ✓');
+        this.reload();
       },
       error: (err: HttpErrorResponse) => {
-        c._photoBusy = false;
-        c._ok = false;
-        c._msg = err.error?.error ?? 'Envoi de la photo impossible.';
+        this.photoBusy.set(false);
+        this.ok.set(false);
+        this.msg.set(err.error?.error ?? 'Envoi de la photo impossible.');
       },
     });
   }
 
-  removeImage(c: Editable): void {
-    c._photoBusy = true;
-    c._msg = undefined;
-    this.admin.updateClub(c.id, { imageUrl: null }).subscribe({
+  removeImage(): void {
+    const id = this.editingId();
+    if (!id) return;
+    this.photoBusy.set(true);
+    this.msg.set('');
+    this.admin.updateClub(id, { imageUrl: null }).subscribe({
       next: () => {
-        c._photoBusy = false;
-        c.imageUrl = null;
-        c._ok = true;
-        c._msg = 'Photo retirée ✓';
+        this.photoBusy.set(false);
+        this.draft.imageUrl = null;
+        this.ok.set(true);
+        this.msg.set('Photo retirée ✓');
+        this.reload();
       },
       error: (err: HttpErrorResponse) => {
-        c._photoBusy = false;
-        c._ok = false;
-        c._msg = err.error?.error ?? 'Erreur.';
+        this.photoBusy.set(false);
+        this.ok.set(false);
+        this.msg.set(err.error?.error ?? 'Erreur.');
       },
     });
   }
 
-  save(c: Editable): void {
-    c._busy = true;
-    c._msg = undefined;
-    this.admin.updateClub(c.id, this.toPayload(c)).subscribe({
-      next: () => {
-        c._busy = false;
-        c._ok = true;
-        c._msg = 'Enregistré ✓';
-      },
-      error: (err: HttpErrorResponse) => {
-        c._busy = false;
-        c._ok = false;
-        c._msg = err.error?.error ?? 'Erreur.';
-      },
-    });
-  }
-
-  remove(c: Editable): void {
-    if (!confirm(`Supprimer « ${c.name} » ?`)) return;
-    c._busy = true;
-    c._msg = undefined;
-    this.admin.deleteClub(c.id).subscribe({
-      next: () => this.clubs.update((l) => l.filter((x) => x.id !== c.id)),
-      error: (err: HttpErrorResponse) => {
-        c._busy = false;
-        c._ok = false;
-        c._msg = err.error?.error ?? 'Suppression impossible.';
-      },
-    });
-  }
-
-  private toPayload(c: typeof EMPTY_NEW | Editable): ClubPayload {
+  private toPayload(c: Draft): ClubPayload {
     return {
       name: c.name,
       slug: c.slug,
@@ -420,5 +445,11 @@ export class ClubsPanelComponent implements OnInit {
       sortOrder: Number(c.sortOrder) || 0,
       active: c.active,
     };
+  }
+
+  private fail(m: string): void {
+    this.busy.set(false);
+    this.ok.set(false);
+    this.msg.set(m);
   }
 }

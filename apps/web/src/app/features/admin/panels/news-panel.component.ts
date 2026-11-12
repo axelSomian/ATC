@@ -17,6 +17,13 @@ const EDITOR_STATUSES: { value: PostStatus; label: string; hint: string }[] = [
   { value: 'published', label: 'Publié', hint: 'Visible de tous les membres, maintenant.' },
 ];
 
+const STATUS_DOT: Record<PostStatus, string> = {
+  draft: '',
+  scheduled: 'warn',
+  published: 'on',
+  archived: 'off',
+};
+
 function emptyDraft(): AdminPostPayload {
   return {
     category: 'atc', status: 'draft', title: '', summary: '', body: '',
@@ -53,70 +60,38 @@ function localToIso(v: string): string | null {
     }
     .np-switch button.on { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
-    .np-toolbar { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
-    .np-toolbar .spacer { flex: 1; }
-    .np-search {
-      min-width: 180px; padding: 7px 12px; border: 1px solid var(--color-border);
-      border-radius: var(--radius-full); font-size: var(--text-sm); font-family: var(--font-body);
-      background: var(--color-surface); color: var(--color-ink);
-    }
-    .np-filters { display: flex; gap: var(--space-1); flex-wrap: wrap; }
-    .np-chip {
-      padding: 4px 11px; border: 1px solid var(--color-border); border-radius: var(--radius-full);
-      background: transparent; font-size: var(--text-xs); cursor: pointer; color: var(--color-muted);
-    }
-    .np-chip.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
-
     /* ── Liste ── */
-    .np-list { display: flex; flex-direction: column; gap: var(--space-2); }
-    .np-row {
-      display: flex; align-items: stretch;
-      border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
-      background: var(--color-surface); overflow: hidden;
-    }
-    .np-row:hover { border-color: var(--color-accent); }
+    .np-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--color-border-light); }
+    .np-row:last-child { border-bottom: none; }
     .np-fav {
-      flex-shrink: 0; width: 40px; border: none; border-right: 1px solid var(--color-border-light);
-      background: transparent; cursor: pointer; font-size: 16px; color: var(--color-border);
+      flex-shrink: 0; width: 38px; border: none; border-right: 1px solid var(--color-border-light);
+      background: transparent; cursor: pointer; font-size: 15px; color: var(--color-border);
     }
     .np-fav:hover:not(:disabled) { color: var(--color-sand-beige); background: var(--color-cream); }
-    .np-fav.on { color: var(--color-accent); }
+    .np-fav.on { color: var(--color-accent-dark); }
     .np-fav:disabled { cursor: not-allowed; opacity: 0.4; }
     .np-row-open {
       flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-3);
-      padding: var(--space-3); background: transparent; border: none; cursor: pointer;
+      padding: var(--space-3) var(--space-4); background: transparent; border: none; cursor: pointer;
       text-align: left; font: inherit; color: var(--color-ink);
     }
-    .np-thumb { width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--color-cream); }
-    .np-row-main { flex: 1; min-width: 0; }
-    .np-row-title { font-weight: 600; font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .np-row-meta { font-size: var(--text-xs); color: var(--color-muted); display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: 2px; align-items: center; }
-    .np-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 6px; border-radius: var(--radius-full); }
-    .np-badge.draft { background: var(--color-cream); color: var(--color-muted); }
-    .np-badge.scheduled { background: #E8DFC8; color: var(--color-warning); }
-    .np-badge.published { background: var(--color-accent-alpha); color: var(--color-accent); }
-    .np-badge.archived { background: var(--color-cream); color: var(--color-ink-light); text-decoration: line-through; }
-    .np-fav-tag { color: var(--color-accent); font-weight: 700; }
+    .np-row-open:hover { background: var(--color-cream); }
+    .np-thumb { width: 36px; height: 36px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--color-cream); }
+    .np-fav-tag { color: var(--color-accent-dark); font-weight: 600; }
 
-    /* ── Éditeur ── */
-    .np-editor { display: flex; flex-direction: column; gap: var(--space-4); }
-    .np-editor-head { display: flex; align-items: center; gap: var(--space-3); }
-    .np-editor-head h2 { margin: 0; font-size: var(--text-lg); }
-    .np-back { background: transparent; border: none; cursor: pointer; font: inherit; color: var(--color-muted); font-size: var(--text-sm); padding: 4px 0; }
-    .np-back:hover { color: var(--color-ink); }
-
+    /* ── Éditeur (panneau latéral) ── */
     .np-section {
       border: 1px solid var(--color-border-light); border-radius: var(--radius-lg);
       background: var(--color-surface); padding: var(--space-4);
       display: flex; flex-direction: column; gap: var(--space-3);
     }
     .np-section > h3 {
-      margin: 0; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em;
+      margin: 0; font-size: var(--text-xs); letter-spacing: 0.02em;
       color: var(--color-muted); font-weight: 700;
     }
     details.np-section > summary {
-      list-style: none; cursor: pointer; font-size: var(--text-xs); text-transform: uppercase;
-      letter-spacing: 0.06em; color: var(--color-muted); font-weight: 700;
+      list-style: none; cursor: pointer; font-size: var(--text-xs);
+      color: var(--color-muted); font-weight: 700;
       display: flex; align-items: center; gap: var(--space-2);
     }
     details.np-section > summary::-webkit-details-marker { display: none; }
@@ -133,16 +108,15 @@ function localToIso(v: string): string | null {
     }
     .np-field textarea { resize: vertical; }
     .np-2col { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-    @media (max-width: 640px) { .np-2col { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { .np-2col { grid-template-columns: 1fr; } }
 
-    /* corps + aperçu côte à côte */
-    .np-body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: start; }
-    @media (max-width: 860px) { .np-body-grid { grid-template-columns: 1fr; } }
-    .np-body-grid textarea { min-height: 260px; line-height: 1.5; }
+    /* corps + aperçu */
+    .np-body-grid { display: flex; flex-direction: column; gap: var(--space-3); }
+    .np-body-grid textarea { min-height: 160px; line-height: 1.5; }
     .np-preview {
       border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
       padding: var(--space-3) var(--space-4); background: var(--color-cream);
-      font-size: var(--text-sm); line-height: 1.65; min-height: 260px; overflow-wrap: anywhere;
+      font-size: var(--text-sm); line-height: 1.65; overflow-wrap: anywhere;
     }
     .np-preview:empty::before { content: 'L\\'aperçu s\\'affiche ici.'; color: var(--color-muted); }
     .np-preview :is(h1,h2,h3,h4) { margin: 0.7em 0 0.3em; line-height: 1.25; }
@@ -151,7 +125,7 @@ function localToIso(v: string): string | null {
     .np-preview h3 { font-size: 1.05em; }
     .np-preview p { margin: 0 0 0.7em; }
     .np-preview ul, .np-preview ol { margin: 0 0 0.7em; padding-left: 1.3em; }
-    .np-preview a { color: var(--color-accent); }
+    .np-preview a { color: var(--color-accent-dark); }
     .np-preview img { border-radius: var(--radius-sm); max-width: 100%; }
 
     /* statut segmenté */
@@ -162,7 +136,7 @@ function localToIso(v: string): string | null {
       padding: 8px 18px; border-right: 1px solid var(--color-border);
     }
     .np-status button:last-child { border-right: none; }
-    .np-status button.on { background: var(--color-accent); color: #fff; }
+    .np-status button.on { background: var(--color-accent); color: var(--color-accent-dark); }
     .np-status-hint { font-size: var(--text-xs); color: var(--color-muted); }
     .np-archived-note {
       display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;
@@ -175,23 +149,14 @@ function localToIso(v: string): string | null {
     /* images */
     .np-gallery { display: flex; gap: var(--space-2); flex-wrap: wrap; }
     .np-gallery figure { position: relative; margin: 0; }
-    .np-gallery img { width: 96px; height: 72px; object-fit: cover; border-radius: var(--radius-sm); }
-    .np-cover img { width: 100%; max-width: 320px; height: auto; aspect-ratio: 16/9; object-fit: cover; border-radius: var(--radius-md); }
+    .np-gallery img { width: 88px; height: 66px; object-fit: cover; border-radius: var(--radius-sm); }
+    .np-cover img { width: 100%; max-width: 280px; height: auto; aspect-ratio: 16/9; object-fit: cover; border-radius: var(--radius-md); }
     .np-gallery button, .np-cover button {
       position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
-      border: none; background: var(--color-ink); color: #fff; cursor: pointer; font-size: 12px; line-height: 1;
+      border: none; background: var(--color-ink); color: var(--color-surface); cursor: pointer; font-size: 12px; line-height: 1;
     }
     .np-cover { position: relative; width: fit-content; }
     .np-file { font-size: var(--text-xs); color: var(--color-muted); }
-
-    /* barre d'action collante */
-    .np-actionbar {
-      position: sticky; bottom: 0; z-index: 2;
-      display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center;
-      padding: var(--space-3); margin: 0 calc(-1 * var(--space-1));
-      background: var(--color-bg); border-top: 1px solid var(--color-border);
-    }
-    .np-actionbar .spacer { flex: 1; }
 
     /* ── Sources RSS ── */
     .np-feed { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
@@ -208,164 +173,258 @@ function localToIso(v: string): string | null {
   `],
   template: `
     <div class="panel">
-      <!-- ═══ ÉDITEUR (écran dédié) ═══ -->
-      @if (editing()) {
-        <div class="np-editor">
-          <div class="np-editor-head">
-            <button class="np-back" (click)="cancel()">← Publications</button>
-          </div>
-          <h2 style="margin:0">{{ editingId() ? 'Modifier l\\'article' : 'Nouvel article' }}</h2>
+      <div class="np-switch">
+        <button [class.on]="mode() === 'publications'" (click)="mode.set('publications')">Publications</button>
+        <button [class.on]="mode() === 'feeds'" (click)="mode.set('feeds')">Sources RSS</button>
+      </div>
 
-          <!-- 1. Contenu -->
-          <div class="np-section">
-            <h3>Contenu</h3>
-            <div class="np-2col">
-              <div class="np-field">
-                <label>Catégorie</label>
-                <select [(ngModel)]="draft.category">
-                  @for (c of categories; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
-                </select>
+      @if (mode() === 'publications') {
+        <div class="admin-toolbar">
+          <button class="btn btn-primary btn-sm" (click)="newPost()">Nouvel article</button>
+          <span class="spacer"></span>
+          <input class="admin-search" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Rechercher…" />
+        </div>
+        <div class="admin-filters">
+          <button class="admin-chip" [class.active]="statusFilter() === null" (click)="statusFilter.set(null)">Tous</button>
+          @for (s of statuses; track s.value) {
+            <button class="admin-chip" [class.active]="statusFilter() === s.value" (click)="statusFilter.set(s.value)">{{ s.label }}</button>
+          }
+        </div>
+
+        @if (loading()) {
+          <p class="panel-loading">Chargement…</p>
+        } @else if (visible().length === 0) {
+          <p class="panel-empty">Aucun article{{ statusFilter() || search() ? ' pour ce filtre' : '' }}.</p>
+        } @else {
+          <div class="admin-table">
+            @for (p of visible(); track p.id) {
+              <div class="np-row">
+                <button
+                  class="np-fav" [class.on]="p.featured" [disabled]="favBusy() === p.id"
+                  [title]="p.featured ? 'Retirer de la une' : 'Mettre à la une'"
+                  (click)="toggleFeatured(p)">★</button>
+                <button class="np-row-open" (click)="edit(p)">
+                  <img class="np-thumb" [src]="p.coverImageUrl || placeholder" alt="" />
+                  <div class="admin-row-main">
+                    <div class="admin-row-title">{{ p.title }}</div>
+                    <div class="admin-row-meta">
+                      <span class="status-text"><span class="status-dot" [class]="statusDot(p.status)"></span>{{ statusLabel(p.status) }}</span>
+                      <span>{{ categoryLabel(p.category) }}</span>
+                      @if (p.featured) { <span class="np-fav-tag">À la une</span> }
+                      @if (p.publishedAt) { <span>{{ p.publishedAt | date: 'd MMM y, HH:mm' }}</span> }
+                    </div>
+                  </div>
+                </button>
               </div>
-              <div class="np-field">
-                <label>Titre</label>
-                <input type="text" [(ngModel)]="draft.title" placeholder="Titre de l'article" />
-              </div>
-            </div>
-
-            <div class="np-field">
-              <label>Résumé <span style="font-weight:400">— affiché sur les cartes du feed</span></label>
-              <textarea rows="2" [(ngModel)]="draft.summary" placeholder="1 à 2 phrases d'accroche"></textarea>
-            </div>
-
-            <div class="np-field">
-              <label>Contenu <span style="font-weight:400">— Markdown : # titre, **gras**, - liste, [lien](url)</span></label>
-              <div class="np-body-grid">
-                <textarea [(ngModel)]="draft.body" placeholder="# Titre&#10;&#10;Votre texte…"></textarea>
-                <div class="np-preview" [innerHTML]="preview()"></div>
-              </div>
-            </div>
-
-            <div class="np-field">
-              <label>Image de couverture</label>
-              @if (draft.coverImageUrl) {
-                <div class="np-cover">
-                  <img [src]="draft.coverImageUrl" alt="" />
-                  <button type="button" (click)="draft.coverImageUrl = null">×</button>
-                </div>
-              }
-              <input class="np-file" type="file" accept="image/*" (change)="upload($event, 'cover')" [disabled]="uploadBusy()" />
-            </div>
-          </div>
-
-          <!-- 2. Diffusion -->
-          <div class="np-section">
-            <h3>Diffusion</h3>
-
-            @if (draft.status === 'archived') {
-              <div class="np-archived-note">
-                <span>Cet article est archivé (invisible du public).</span>
-                <button class="btn btn-outline btn-sm" (click)="setStatus('published')">Le republier</button>
-              </div>
-            } @else {
-              <div class="np-field">
-                <label>Statut</label>
-                <div class="np-status">
-                  @for (s of editorStatuses; track s.value) {
-                    <button type="button" [class.on]="draft.status === s.value" (click)="setStatus(s.value)">{{ s.label }}</button>
-                  }
-                </div>
-                <span class="np-status-hint">{{ statusHint() }}</span>
-              </div>
-
-              @if (draft.status === 'scheduled') {
-                <div class="np-field" style="max-width:280px">
-                  <label>Date de publication</label>
-                  <input type="datetime-local" [ngModel]="publishedLocal()" (ngModelChange)="draft.publishedAt = toIso($event)" />
-                </div>
-              }
             }
+          </div>
+        }
+      } @else {
+        <!-- ── Sources RSS ── -->
+        <p class="panel-hint">
+          Flux « Infos Tennis » agrégés automatiquement. Les articles importés arrivent en
+          <strong>brouillon</strong> (à valider dans Publications) sauf si « auto-publier » est coché.
+          Seuls le titre, un extrait et le lien vers la source sont repris.
+        </p>
 
-            <div class="np-2col">
+        <div class="admin-section">
+          <div class="admin-card-head">
+            <strong>Flux configurés</strong>
+            <button class="btn btn-outline btn-sm" [disabled]="syncing()" (click)="syncFeeds()">
+              {{ syncing() ? 'Synchro…' : 'Synchroniser maintenant' }}
+            </button>
+          </div>
+          @if (syncMsg()) { <p class="form-msg" [class.err]="!syncOk()" [class.ok]="syncOk()">{{ syncMsg() }}</p> }
+
+          @if (feeds().length === 0) {
+            <p class="panel-empty">Aucun flux. Ajoutez-en un ci-dessous.</p>
+          }
+          @for (f of feeds(); track f.id) {
+            <div class="np-feed">
+              <div class="np-feed-main">
+                <span class="np-feed-label">{{ f.label }}</span>
+                <span class="np-feed-url">{{ f.url }}</span>
+                @if (f.lastError) { <span class="np-feed-err">⚠ {{ f.lastError }}</span> }
+                @else if (f.lastSyncAt) { <span class="np-feed-sync">synchro {{ f.lastSyncAt | date: 'd MMM, HH:mm' }}</span> }
+              </div>
+              <label class="np-check"><input type="checkbox" [checked]="f.autoPublish" (change)="toggleFeed(f, 'autoPublish', $any($event.target).checked)" /> auto-publier</label>
+              <label class="np-check"><input type="checkbox" [checked]="f.active" (change)="toggleFeed(f, 'active', $any($event.target).checked)" /> actif</label>
+              <button class="btn btn-ghost btn-sm" style="color:var(--color-error)" (click)="removeFeed(f)">Suppr.</button>
+            </div>
+          }
+
+          <div class="np-feed-add">
+            <input type="text" [(ngModel)]="newFeed.label" placeholder="Nom (ex : Tennis Majors)" />
+            <input type="text" [(ngModel)]="newFeed.url" placeholder="https://…/rss" />
+            <label class="np-check"><input type="checkbox" [(ngModel)]="newFeed.autoPublish" /> auto-publier</label>
+            <button class="btn btn-primary btn-sm" [disabled]="feedBusy()" (click)="addFeed()">Ajouter</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (editing()) {
+      <div class="admin-drawer-backdrop" (click)="cancel()">
+        <div class="admin-drawer" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+          <header class="admin-drawer-head">
+            <h2>{{ editingId() ? 'Modifier l\\'article' : 'Nouvel article' }}</h2>
+            <button type="button" class="admin-drawer-close" aria-label="Fermer" (click)="cancel()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </header>
+
+          <div class="admin-drawer-body">
+            <!-- 1. Contenu -->
+            <div class="np-section">
+              <h3>Contenu</h3>
+              <div class="np-2col">
+                <div class="np-field">
+                  <label>Catégorie</label>
+                  <select [(ngModel)]="draft.category">
+                    @for (c of categories; track c.value) { <option [value]="c.value">{{ c.label }}</option> }
+                  </select>
+                </div>
+                <div class="np-field">
+                  <label>Titre</label>
+                  <input type="text" [(ngModel)]="draft.title" placeholder="Titre de l'article" />
+                </div>
+              </div>
+
+              <div class="np-field">
+                <label>Résumé <span style="font-weight:400">— affiché sur les cartes du feed</span></label>
+                <textarea rows="2" [(ngModel)]="draft.summary" placeholder="1 à 2 phrases d'accroche"></textarea>
+              </div>
+
+              <div class="np-field">
+                <label>Contenu <span style="font-weight:400">— Markdown : # titre, **gras**, - liste, [lien](url)</span></label>
+                <div class="np-body-grid">
+                  <textarea [(ngModel)]="draft.body" placeholder="# Titre&#10;&#10;Votre texte…"></textarea>
+                  <div class="np-preview" [innerHTML]="preview()"></div>
+                </div>
+              </div>
+
+              <div class="np-field">
+                <label>Image de couverture</label>
+                @if (draft.coverImageUrl) {
+                  <div class="np-cover">
+                    <img [src]="draft.coverImageUrl" alt="" />
+                    <button type="button" (click)="draft.coverImageUrl = null">×</button>
+                  </div>
+                }
+                <input class="np-file" type="file" accept="image/*" (change)="upload($event, 'cover')" [disabled]="uploadBusy()" />
+              </div>
+            </div>
+
+            <!-- 2. Diffusion -->
+            <div class="np-section">
+              <h3>Diffusion</h3>
+
+              @if (draft.status === 'archived') {
+                <div class="np-archived-note">
+                  <span>Cet article est archivé (invisible du public).</span>
+                  <button class="btn btn-outline btn-sm" (click)="setStatus('published')">Le republier</button>
+                </div>
+              } @else {
+                <div class="np-field">
+                  <label>Statut</label>
+                  <div class="np-status">
+                    @for (s of editorStatuses; track s.value) {
+                      <button type="button" [class.on]="draft.status === s.value" (click)="setStatus(s.value)">{{ s.label }}</button>
+                    }
+                  </div>
+                  <span class="np-status-hint">{{ statusHint() }}</span>
+                </div>
+
+                @if (draft.status === 'scheduled') {
+                  <div class="np-field" style="max-width:280px">
+                    <label>Date de publication</label>
+                    <input type="datetime-local" [ngModel]="publishedLocal()" (ngModelChange)="draft.publishedAt = toIso($event)" />
+                  </div>
+                }
+              }
+
+              <div class="np-2col">
+                <label class="np-check">
+                  <input type="checkbox" [(ngModel)]="draft.featured" /> Mettre à la une (carrousel d'accueil)
+                </label>
+                @if (draft.featured) {
+                  <div class="np-field">
+                    <label>Ordre à la une <span style="font-weight:400">(0 = en premier)</span></label>
+                    <input type="number" [(ngModel)]="draft.featuredOrder" min="0" placeholder="0" />
+                  </div>
+                }
+              </div>
+
               <label class="np-check">
-                <input type="checkbox" [(ngModel)]="draft.featured" /> Mettre à la une (carrousel d'accueil)
+                <input type="checkbox" [(ngModel)]="draft.notifyOnPublish" /> Notifier tous les membres (push) à la publication
               </label>
-              @if (draft.featured) {
-                <div class="np-field">
-                  <label>Ordre à la une <span style="font-weight:400">(0 = en premier)</span></label>
-                  <input type="number" [(ngModel)]="draft.featuredOrder" min="0" placeholder="0" />
-                </div>
-              }
             </div>
 
-            <label class="np-check">
-              <input type="checkbox" [(ngModel)]="draft.notifyOnPublish" /> Notifier tous les membres (push) à la publication
-            </label>
+            <!-- 3. Détails (repliable) -->
+            <details class="np-section" [open]="detailsOpen()" (toggle)="detailsOpen.set($any($event.target).open)">
+              <summary>Détails complémentaires</summary>
+
+              <div class="np-2col">
+                <div class="np-field">
+                  <label>Lieu</label>
+                  <input type="text" [(ngModel)]="draft.location" placeholder="Club, ville" />
+                </div>
+                @if (draft.category === 'evenement' || draft.category === 'tournoi') {
+                  <div class="np-field">
+                    <label>Début</label>
+                    <input type="datetime-local" [ngModel]="startsLocal()" (ngModelChange)="draft.startsAt = toIso($event)" />
+                  </div>
+                }
+              </div>
+
+              @if (draft.category === 'evenement' || draft.category === 'tournoi') {
+                <div class="np-field" style="max-width:280px">
+                  <label>Fin</label>
+                  <input type="datetime-local" [ngModel]="endsLocal()" (ngModelChange)="draft.endsAt = toIso($event)" />
+                </div>
+              }
+
+              <div class="np-2col">
+                <div class="np-field">
+                  <label>Libellé du bouton (CTA)</label>
+                  <input type="text" [(ngModel)]="draft.ctaLabel" placeholder="En savoir plus" />
+                </div>
+                <div class="np-field">
+                  <label>Lien du bouton</label>
+                  <input type="text" [(ngModel)]="draft.ctaUrl" placeholder="https://… ou /matchs" />
+                </div>
+              </div>
+
+              @if (draft.category === 'partenariat') {
+                <div class="np-field" style="max-width:280px">
+                  <label>Code promo</label>
+                  <input type="text" [(ngModel)]="draft.promoCode" placeholder="ATC20" />
+                </div>
+              }
+              @if (draft.category === 'infos_tennis') {
+                <div class="np-field" style="max-width:280px">
+                  <label>Source</label>
+                  <input type="text" [(ngModel)]="draft.source" placeholder="RFI, L'Équipe, ATP…" />
+                </div>
+              }
+
+              <div class="np-field">
+                <label>Galerie photos</label>
+                @if (draft.gallery.length) {
+                  <div class="np-gallery">
+                    @for (g of draft.gallery; track g) {
+                      <figure><img [src]="g" alt="" /><button type="button" (click)="removeGallery(g)">×</button></figure>
+                    }
+                  </div>
+                }
+                <input class="np-file" type="file" accept="image/*" (change)="upload($event, 'gallery')" [disabled]="uploadBusy()" />
+              </div>
+            </details>
+
+            @if (msg()) { <p class="form-msg" [class.err]="!ok()" [class.ok]="ok()">{{ msg() }}</p> }
           </div>
 
-          <!-- 3. Détails (repliable) -->
-          <details class="np-section" [open]="detailsOpen()" (toggle)="detailsOpen.set($any($event.target).open)">
-            <summary>Détails complémentaires</summary>
-
-            <div class="np-2col">
-              <div class="np-field">
-                <label>Lieu</label>
-                <input type="text" [(ngModel)]="draft.location" placeholder="Club, ville" />
-              </div>
-              @if (draft.category === 'evenement' || draft.category === 'tournoi') {
-                <div class="np-field">
-                  <label>Début</label>
-                  <input type="datetime-local" [ngModel]="startsLocal()" (ngModelChange)="draft.startsAt = toIso($event)" />
-                </div>
-              }
-            </div>
-
-            @if (draft.category === 'evenement' || draft.category === 'tournoi') {
-              <div class="np-field" style="max-width:280px">
-                <label>Fin</label>
-                <input type="datetime-local" [ngModel]="endsLocal()" (ngModelChange)="draft.endsAt = toIso($event)" />
-              </div>
-            }
-
-            <div class="np-2col">
-              <div class="np-field">
-                <label>Libellé du bouton (CTA)</label>
-                <input type="text" [(ngModel)]="draft.ctaLabel" placeholder="En savoir plus" />
-              </div>
-              <div class="np-field">
-                <label>Lien du bouton</label>
-                <input type="text" [(ngModel)]="draft.ctaUrl" placeholder="https://… ou /matchs" />
-              </div>
-            </div>
-
-            @if (draft.category === 'partenariat') {
-              <div class="np-field" style="max-width:280px">
-                <label>Code promo</label>
-                <input type="text" [(ngModel)]="draft.promoCode" placeholder="ATC20" />
-              </div>
-            }
-            @if (draft.category === 'infos_tennis') {
-              <div class="np-field" style="max-width:280px">
-                <label>Source</label>
-                <input type="text" [(ngModel)]="draft.source" placeholder="RFI, L'Équipe, ATP…" />
-              </div>
-            }
-
-            <div class="np-field">
-              <label>Galerie photos</label>
-              @if (draft.gallery.length) {
-                <div class="np-gallery">
-                  @for (g of draft.gallery; track g) {
-                    <figure><img [src]="g" alt="" /><button type="button" (click)="removeGallery(g)">×</button></figure>
-                  }
-                </div>
-              }
-              <input class="np-file" type="file" accept="image/*" (change)="upload($event, 'gallery')" [disabled]="uploadBusy()" />
-            </div>
-          </details>
-
-          @if (msg()) { <p class="form-msg" [class.err]="!ok()" [class.ok]="ok()">{{ msg() }}</p> }
-
-          <div class="np-actionbar">
+          <footer class="admin-drawer-footer">
             <button class="btn btn-primary btn-sm" [disabled]="busy()" (click)="save()">
               {{ busy() ? 'Enregistrement…' : 'Enregistrer' }}
             </button>
@@ -376,105 +435,10 @@ function localToIso(v: string): string | null {
             @if (editingId()) {
               <button class="btn btn-ghost btn-sm" style="color:var(--color-error)" [disabled]="busy()" (click)="remove()">Supprimer</button>
             }
-          </div>
+          </footer>
         </div>
-      } @else {
-        <!-- ═══ GESTION ═══ -->
-        <div class="np-switch">
-          <button [class.on]="mode() === 'publications'" (click)="mode.set('publications')">Publications</button>
-          <button [class.on]="mode() === 'feeds'" (click)="mode.set('feeds')">Sources RSS</button>
-        </div>
-
-        @if (mode() === 'publications') {
-          <p class="panel-hint">
-            Les articles déjà créés. Un « Programmé » devient visible tout seul à sa date.
-            Cliquez sur une ligne pour l'ouvrir, ou <strong>Nouvel article</strong> pour en créer un.
-          </p>
-
-          <div class="np-toolbar">
-            <button class="btn btn-primary btn-sm" (click)="newPost()">Nouvel article</button>
-            <span class="spacer"></span>
-            <input class="np-search" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Rechercher…" />
-          </div>
-          <div class="np-filters">
-            <button class="np-chip" [class.active]="statusFilter() === null" (click)="statusFilter.set(null)">Tous</button>
-            @for (s of statuses; track s.value) {
-              <button class="np-chip" [class.active]="statusFilter() === s.value" (click)="statusFilter.set(s.value)">{{ s.label }}</button>
-            }
-          </div>
-
-          @if (loading()) {
-            <p class="panel-loading">Chargement…</p>
-          } @else if (visible().length === 0) {
-            <p class="panel-empty">Aucun article{{ statusFilter() || search() ? ' pour ce filtre' : '' }}.</p>
-          } @else {
-            <div class="np-list">
-              @for (p of visible(); track p.id) {
-                <div class="np-row">
-                  <button
-                    class="np-fav" [class.on]="p.featured" [disabled]="favBusy() === p.id"
-                    [title]="p.featured ? 'Retirer de la une' : 'Mettre à la une'"
-                    (click)="toggleFeatured(p)">★</button>
-                  <button class="np-row-open" (click)="edit(p)">
-                    <img class="np-thumb" [src]="p.coverImageUrl || placeholder" alt="" />
-                    <div class="np-row-main">
-                      <div class="np-row-title">{{ p.title }}</div>
-                      <div class="np-row-meta">
-                        <span class="np-badge" [class]="p.status">{{ statusLabel(p.status) }}</span>
-                        <span>{{ categoryLabel(p.category) }}</span>
-                        @if (p.featured) { <span class="np-fav-tag">À la une</span> }
-                        @if (p.publishedAt) { <span>{{ p.publishedAt | date: 'd MMM y, HH:mm' }}</span> }
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              }
-            </div>
-          }
-        } @else {
-          <!-- ── Sources RSS ── -->
-          <p class="panel-hint">
-            Flux « Infos Tennis » agrégés automatiquement. Les articles importés arrivent en
-            <strong>brouillon</strong> (à valider dans Publications) sauf si « auto-publier » est coché.
-            Seuls le titre, un extrait et le lien vers la source sont repris.
-          </p>
-
-          <div class="admin-card card">
-            <div class="admin-card-head">
-              <strong>Flux configurés</strong>
-              <button class="btn btn-outline btn-sm" [disabled]="syncing()" (click)="syncFeeds()">
-                {{ syncing() ? 'Synchro…' : 'Synchroniser maintenant' }}
-              </button>
-            </div>
-            @if (syncMsg()) { <p class="form-msg" [class.err]="!syncOk()" [class.ok]="syncOk()">{{ syncMsg() }}</p> }
-
-            @if (feeds().length === 0) {
-              <p class="panel-empty">Aucun flux. Ajoutez-en un ci-dessous.</p>
-            }
-            @for (f of feeds(); track f.id) {
-              <div class="np-feed">
-                <div class="np-feed-main">
-                  <span class="np-feed-label">{{ f.label }}</span>
-                  <span class="np-feed-url">{{ f.url }}</span>
-                  @if (f.lastError) { <span class="np-feed-err">⚠ {{ f.lastError }}</span> }
-                  @else if (f.lastSyncAt) { <span class="np-feed-sync">synchro {{ f.lastSyncAt | date: 'd MMM, HH:mm' }}</span> }
-                </div>
-                <label class="np-check"><input type="checkbox" [checked]="f.autoPublish" (change)="toggleFeed(f, 'autoPublish', $any($event.target).checked)" /> auto-publier</label>
-                <label class="np-check"><input type="checkbox" [checked]="f.active" (change)="toggleFeed(f, 'active', $any($event.target).checked)" /> actif</label>
-                <button class="btn btn-ghost btn-sm" style="color:var(--color-error)" (click)="removeFeed(f)">Suppr.</button>
-              </div>
-            }
-
-            <div class="np-feed-add">
-              <input type="text" [(ngModel)]="newFeed.label" placeholder="Nom (ex : Tennis Majors)" />
-              <input type="text" [(ngModel)]="newFeed.url" placeholder="https://…/rss" />
-              <label class="np-check"><input type="checkbox" [(ngModel)]="newFeed.autoPublish" /> auto-publier</label>
-              <button class="btn btn-primary btn-sm" [disabled]="feedBusy()" (click)="addFeed()">Ajouter</button>
-            </div>
-          </div>
-        }
-      }
-    </div>
+      </div>
+    }
   `,
 })
 export class NewsPanelComponent implements OnInit {
@@ -523,6 +487,10 @@ export class NewsPanelComponent implements OnInit {
   readonly startsLocal = () => isoToLocal(this.draft.startsAt);
   readonly endsLocal = () => isoToLocal(this.draft.endsAt);
   readonly toIso = (v: string) => localToIso(v);
+
+  statusDot(s: PostStatus): string {
+    return STATUS_DOT[s];
+  }
 
   statusHint(): string {
     return EDITOR_STATUSES.find((s) => s.value === this.draft.status)?.hint ?? '';

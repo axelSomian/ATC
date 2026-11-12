@@ -4,7 +4,7 @@
   <div class="rankings-hero">
     <div>
       <h1>Classement</h1>
-      <p class="text-muted">Classement établi sur les matchs confirmés · mis à jour à chaque résultat</p>
+      <p class="text-muted">Classement fédéral · établi sur les résultats de tournoi officiels</p>
     </div>
   </div>
 
@@ -17,13 +17,8 @@
       <div class="my-rank-body">
         <span class="my-rank-number">#{{ myRank()!.rank }}</span>
         <div class="my-rank-stats">
-          <span class="my-rank-record">{{ myRank()!.wins }}V · {{ myRank()!.losses }}D · {{ myRank()!.winRate }}%</span>
+          <span class="my-rank-record">{{ myRank()!.points }} pts tournoi</span>
         </div>
-        @if (myRank()!.ratingDelta !== 0) {
-          <span class="my-rank-delta" [class]="deltaCss(myRank()!.ratingDelta)">
-            {{ deltaArrow(myRank()!.ratingDelta) }} {{ deltaLabel(myRank()!.ratingDelta) }}
-          </span>
-        }
       </div>
     </div>
   }
@@ -37,7 +32,7 @@
   @if (!loading()) {
     @if (rankings().length === 0) {
       <app-empty-state title="Aucun joueur classé"
-        hint="Les joueurs apparaîtront ici après leurs premiers matchs confirmés.">
+        hint="Le classement se construit au fil des tournois officiels — inscris-toi sur /tournois.">
         <svg icon width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       </app-empty-state>
     } @else {
@@ -50,7 +45,7 @@
         <span class="col-wins">V</span>
         <span class="col-losses">D</span>
         <span class="col-pct">%V</span>
-        <span class="col-delta">Évol.</span>
+        <span class="col-delta">Points</span>
       </div>
 
       <div class="rank-list">
@@ -95,12 +90,9 @@
             <span class="col-losses stat-cell">{{ entry.losses }}</span>
             <span class="col-pct stat-cell" [class.pct-good]="entry.winRate >= 50">{{ entry.winRate }}%</span>
 
-            <!-- Évolution -->
-            <span class="col-delta delta-cell" [class]="deltaCss(entry.ratingDelta)">
-              <span class="delta-arrow">{{ deltaArrow(entry.ratingDelta) }}</span>
-              @if (entry.ratingDelta !== 0) {
-                <span class="delta-val">{{ deltaLabel(entry.ratingDelta) }}</span>
-              }
+            <!-- Points de tournoi -->
+            <span class="col-delta delta-cell">
+              <span class="delta-val">{{ entry.points }}</span>
             </span>
 
           </a>

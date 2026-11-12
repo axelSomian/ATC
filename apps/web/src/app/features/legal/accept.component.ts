@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
+import { AuthStore } from '../../core/stores/auth.store';
 
 /**
  * Écran bloquant : tant que le membre n'a pas accepté la version courante des
@@ -15,11 +16,11 @@ import { AuthService } from '../../core/services/auth.service';
   template: `
     <div class="accept-page">
       <div class="accept-card">
-        <span class="brand">ATC</span>
+        <span class="brand">TenCI</span>
         <h1>Avant de continuer</h1>
         <p>
-          Pour utiliser Abidjan Tennis Community, vous devez prendre connaissance et
-          accepter nos conditions d'utilisation et notre politique de confidentialité.
+          Pour utiliser TenCI, vous devez prendre connaissance et accepter nos
+          conditions d'utilisation et notre politique de confidentialité.
         </p>
 
         <div class="accept-links">
@@ -45,6 +46,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class LegalAcceptComponent {
   private readonly auth = inject(AuthService);
+  private readonly store = inject(AuthStore);
   private readonly router = inject(Router);
 
   readonly checked = signal(false);
@@ -56,7 +58,7 @@ export class LegalAcceptComponent {
     this.busy.set(true);
     this.error.set('');
     this.auth.acceptTerms().subscribe({
-      next: () => this.router.navigateByUrl('/accueil'),
+      next: () => this.router.navigateByUrl(this.store.isAdmin() ? '/admin' : '/accueil'),
       error: (err: HttpErrorResponse) => {
         this.busy.set(false);
         this.error.set(err.error?.error ?? "Impossible d'enregistrer votre acceptation.");

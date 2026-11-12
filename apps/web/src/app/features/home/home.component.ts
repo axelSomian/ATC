@@ -4,22 +4,23 @@ import { AuthStore } from '../../core/stores/auth.store';
 import { ReferenceService } from '../../core/services/reference.service';
 import { MatchesService, type MyStats } from '../../core/services/matches.service';
 import { PresenceService } from '../../core/services/presence.service';
+import { MessagesService } from '../../core/services/messages.service';
+import { NewsService } from '../../core/services/news.service';
+import { TournamentsService } from '../../core/services/tournaments.service';
+import { StatTileComponent } from '../../shared/ui/stat-tile.component';
+import { SectionTitleComponent } from '../../shared/ui/section-title.component';
 
-interface Widget {
-  id: string;
+interface QuickLink {
+  id: 'clubs' | 'actualite' | 'messages' | 'tournois' | 'classement';
   route: string;
-  query?: Record<string, string>;
-  title: string;
-  sub: string;
-  tone: 'green' | 'forest' | 'sage' | 'sand' | 'positive' | 'ivory';
-  img: string;
+  label: string;
   icon: string;
 }
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, StatTileComponent, SectionTitleComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
@@ -28,6 +29,9 @@ export class HomeComponent implements OnInit {
   private readonly reference = inject(ReferenceService);
   private readonly matchesSvc = inject(MatchesService);
   private readonly presence = inject(PresenceService);
+  readonly messages = inject(MessagesService);
+  private readonly news = inject(NewsService);
+  private readonly tournamentsSvc = inject(TournamentsService);
 
   readonly user = this.store.user;
   readonly firstName = computed(() => this.user()?.name?.split(' ')[0] ?? '');
@@ -36,97 +40,88 @@ export class HomeComponent implements OnInit {
 
   readonly stats = signal<MyStats | null>(null);
   readonly onlineCount = computed(() => this.presence.online().size);
+  readonly latestNewsTitle = signal<string | null>(null);
 
-  readonly widgets: Widget[] = [
+  readonly matchmakingHint = computed(() => {
+    const s = this.stats();
+    if (!s) return 'Publie ta dispo, trouve un adversaire';
+    if (s.upcomingCount > 0) {
+      return s.upcomingCount === 1 ? '1 match à venir' : `${s.upcomingCount} matchs à venir`;
+    }
+    return 'Publie ta dispo, trouve un adversaire';
+  });
+
+  readonly clubsCount = computed(() => this.reference.clubs().filter((c) => c.slug !== 'autre').length);
+  readonly openTournamentsCount = signal(0);
+
+  readonly quickLinks: QuickLink[] = [
     {
-      id: 'annonce',
-      route: '/matchs',
-      query: { vue: 'trouver' },
-      title: 'Créer une annonce',
-      sub: 'Publie ta dispo, trouve un adversaire',
-      tone: 'green',
-      img: 'w-annonce',
-      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+      id: 'clubs',
+      route: '/clubs',
+      label: 'Clubs',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/><path d="M9 11h.01M15 11h.01"/></svg>',
     },
     {
       id: 'actualite',
       route: '/actualite',
-      title: 'Actualité',
-      sub: 'Tournois, événements et infos tennis',
-      tone: 'forest',
-      img: '',
+      label: 'Actualité',
       icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z"/></svg>',
     },
     {
-      id: 'membres',
-      route: '/members',
-      title: 'Membres',
-      sub: 'Parcours l\'annuaire de la communauté',
-      tone: 'forest',
-      img: 'w-membres',
-      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+      id: 'messages',
+      route: '/messages',
+      label: 'Messages',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
     },
     {
-      id: 'clubs',
-      route: '/clubs',
-      title: 'Clubs',
-      sub: 'Les clubs de la communauté et leurs membres',
-      tone: 'ivory',
-      img: 'w-clubs',
-      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/><path d="M9 11h.01M15 11h.01"/></svg>',
+      id: 'tournois',
+      route: '/tournois',
+      label: 'Tournois',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>',
     },
     {
       id: 'classement',
       route: '/rankings',
-      title: 'Classement',
-      sub: 'Suis ta progression et celle des autres',
-      tone: 'sand',
-      img: 'w-classement',
+      label: 'Classement',
       icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
-    },
-    {
-      id: 'mes-matchs',
-      route: '/matchs',
-      query: { vue: 'mes-matchs' },
-      title: 'Mes matchs',
-      sub: 'Défis, matchs à venir et historique',
-      tone: 'sage',
-      img: 'w-matchs',
-      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
-    },
-    {
-      id: 'profil',
-      route: '/profile',
-      title: 'Mon profil',
-      sub: 'Tes infos, ton niveau, tes statistiques',
-      tone: 'positive',
-      img: 'w-profil',
-      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
     },
   ];
 
   ngOnInit(): void {
     this.matchesSvc.getMyStats().subscribe({ next: (s) => this.stats.set(s) });
+    this.news.featured().subscribe({
+      next: (posts) => this.latestNewsTitle.set(posts[0]?.title ?? null),
+      error: () => this.latestNewsTitle.set(null),
+    });
+    this.tournamentsSvc.getAll().subscribe({
+      next: (list) => this.openTournamentsCount.set(list.filter((t) => t.status === 'open').length),
+      error: () => this.openTournamentsCount.set(0),
+    });
   }
 
-  /** Petite info vivante affichée sur certains widgets. */
-  meta(id: string): string {
-    const s = this.stats();
+  hint(id: QuickLink['id']): string {
     switch (id) {
-      case 'membres': {
-        const n = this.onlineCount();
-        return n > 0 ? `${n} en ligne` : '';
+      case 'clubs':
+        return this.clubsCount() > 0 ? `${this.clubsCount()} clubs référencés` : 'L’annuaire des clubs';
+      case 'actualite':
+        return this.latestNewsTitle() ?? 'Tournois, événements, infos fédérales';
+      case 'messages': {
+        const n = this.messages.unreadTotal();
+        return n > 0 ? (n === 1 ? '1 message non lu' : `${n} messages non lus`) : 'Tes conversations de match';
       }
-      case 'clubs': {
-        const n = this.reference.clubs().filter((c) => c.slug !== 'autre').length;
-        return n > 0 ? `${n} clubs` : '';
-      }
+      case 'tournois':
+        return this.openTournamentsCount() > 0
+          ? `${this.openTournamentsCount()} tournoi${this.openTournamentsCount() > 1 ? 's' : ''} ouvert${this.openTournamentsCount() > 1 ? 's' : ''}`
+          : 'Les tournois fédéraux à venir';
       case 'classement':
-        return s?.rank != null ? `Tu es #${s.rank}` : '';
-      case 'mes-matchs':
-        return s && s.upcomingCount > 0 ? `${s.upcomingCount} à venir` : '';
-      default:
-        return '';
+        return 'Alimenté par les résultats de tournoi';
     }
+  }
+
+  badge(id: QuickLink['id']): string | null {
+    if (id === 'messages' && this.messages.unreadTotal() > 0) {
+      return this.messages.unreadTotal() > 9 ? '9+' : String(this.messages.unreadTotal());
+    }
+    return null;
   }
 }

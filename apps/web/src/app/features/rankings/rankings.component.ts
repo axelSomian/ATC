@@ -44,8 +44,4 @@ export class RankingsComponent implements OnInit {
     if (rank === 3) return '🥉';
     return '';
   }
-
-  deltaArrow(d: number): string { return d > 0 ? '↑' : d < 0 ? '↓' : '—'; }
-  deltaLabel(d: number): string { return d > 0 ? `+${d}` : d < 0 ? `${d}` : ''; }
-  deltaCss(d: number):   string { return d > 0 ? 'delta-up' : d < 0 ? 'delta-down' : 'delta-neutral'; }
 }

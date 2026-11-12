@@ -1,0 +1,168 @@
+<div class="licence-page">
+  <header class="licence-head">
+    <p class="licence-kicker">Saison 2026 · Licence-Assurance FIT</p>
+    <h1>Licence fédérale</h1>
+    <p class="licence-intro">
+      Obligatoire pour participer aux matchs et classements homologués par la
+      fédération. L'assurance est incluse dans toutes les catégories.
+    </p>
+  </header>
+
+  @if (!loading()) {
+    @if (licence(); as l) {
+    @if (l.active) {
+      <div class="doc-card">
+        <div class="doc-head">
+          <span class="doc-brand">TenCI</span>
+          <span class="doc-status" [class.expired]="l.expiresAt < nowIso">
+            {{ l.expiresAt < nowIso ? 'Expirée' : 'Active' }}
+          </span>
+        </div>
+
+        <div class="doc-body">
+          <img class="doc-photo" [src]="l.photoUrl" [alt]="fullName()" />
+
+          <div class="doc-identity">
+            <span class="licence-card-label">Titulaire</span>
+            <span class="doc-name">{{ fullName() }}</span>
+            <span class="licence-card-label doc-number-label">Numéro de licence</span>
+            <span class="doc-number">{{ l.licenceNumber }}</span>
+          </div>
+
+          <img class="doc-qr" [src]="l.qrCode" alt="QR code de vérification" />
+        </div>
+
+        <div class="doc-grid">
+          <div class="doc-field">
+            <span class="licence-card-label">Catégorie</span>
+            <span class="licence-card-value">{{ l.categoryLabel }}</span>
+          </div>
+          <div class="doc-field">
+            <span class="licence-card-label">Discipline{{ l.disciplines.length > 1 ? 's' : '' }}</span>
+            <span class="licence-card-value">{{ l.disciplines.join(' · ') }}</span>
+          </div>
+          <div class="doc-field">
+            <span class="licence-card-label">Réglée le</span>
+            <span class="licence-card-value">{{ l.paidAt | date:'d MMM yyyy' }}</span>
+          </div>
+          <div class="doc-field">
+            <span class="licence-card-label">Valable jusqu'au</span>
+            <span class="licence-card-value">{{ l.expiresAt | date:'d MMM yyyy' }}</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary licence-pay-btn" [disabled]="downloading()" (click)="download()">
+          @if (downloading()) {
+            Génération du document…
+          } @else {
+            Télécharger le document
+          }
+        </button>
+      </div>
+
+      <p class="licence-note">
+        Document généré automatiquement, identifiable par son numéro et son QR
+        code (vérifiable sans connexion sur <code>/licence/verifier/…</code>).
+      </p>
+    } @else {
+      <form class="licence-card" [formGroup]="form">
+        <strong class="licence-form-title">Tes informations</strong>
+
+        <div class="licence-field-row">
+          <label class="licence-field-label" for="profile">Profil</label>
+          <select id="profile" class="form-control" formControlName="profile">
+            <option value="joueur">Joueur — licence complète</option>
+            <option value="coach">Coach / entraîneur</option>
+            <option value="ecole">Enfant inscrit à l'école de tennis (≤ 14 ans)</option>
+            <option value="decouverte">Découverte — initiation (3 mois)</option>
+          </select>
+        </div>
+
+        <div class="licence-field-row">
+          <label class="licence-field-label" for="birthDate">Date de naissance</label>
+          <input id="birthDate" type="date" class="form-control" formControlName="birthDate" />
+        </div>
+
+        <div class="licence-field-row">
+          <label class="licence-field-label" for="birthPlace">Lieu de naissance</label>
+          <input id="birthPlace" type="text" class="form-control" formControlName="birthPlace" placeholder="Abidjan" />
+        </div>
+
+        <div class="licence-field-row" formGroupName="disciplines">
+          <label class="licence-field-label">Discipline</label>
+          <div class="licence-disciplines">
+            <label class="licence-checkbox"><input type="checkbox" formControlName="tennis" /> Tennis</label>
+            <label class="licence-checkbox"><input type="checkbox" formControlName="padel" /> Padel</label>
+          </div>
+        </div>
+
+        <div class="licence-uploads">
+          <div class="licence-upload">
+            <label class="licence-field-label" for="cni">Pièce justificative (CNI, passeport ou extrait)</label>
+            <label class="licence-upload-btn" for="cni">
+              {{ cniName() ?? 'Choisir un fichier…' }}
+            </label>
+            <input id="cni" type="file" accept="image/*" hidden (change)="onCniChange($event)" />
+          </div>
+
+          <div class="licence-upload">
+            <label class="licence-field-label" for="photo">Photo d'identité</label>
+            <label class="licence-upload-btn licence-upload-btn--photo" for="photo">
+              @if (photoPreview()) {
+                <img class="licence-photo-preview" [src]="photoPreview()" alt="Aperçu photo" />
+              } @else {
+                Choisir une photo…
+              }
+            </label>
+            <input id="photo" type="file" accept="image/*" hidden (change)="onPhotoChange($event)" />
+          </div>
+        </div>
+        @if (fileError()) { <p class="licence-error">{{ fileError() }}</p> }
+
+        <div class="licence-card-divider"></div>
+
+        @if (quoteError()) {
+          <p class="licence-error">{{ quoteError() }}</p>
+        } @else if (quote()) {
+          <div class="licence-quote">
+            <div>
+              <span class="licence-card-label">Catégorie attribuée</span>
+              <span class="licence-pay-value">{{ quote()!.label }}</span>
+              <span class="licence-quote-validity">{{ quote()!.validity }}</span>
+            </div>
+            <span class="licence-pay-value">{{ quote()!.amount | number }} FCFA</span>
+          </div>
+
+          <div class="licence-methods">
+            <button type="button" class="licence-method" [class.selected]="method() === 'wave'" (click)="method.set('wave')">Wave</button>
+            <button type="button" class="licence-method" [class.selected]="method() === 'cinetpay'" (click)="method.set('cinetpay')">CinetPay</button>
+          </div>
+
+          <button type="button" class="btn btn-primary licence-pay-btn" [disabled]="paying() || !canPay() || form.invalid" (click)="pay()">
+            @if (paying()) {
+              Traitement en cours…
+            } @else {
+              Payer {{ quote()!.amount | number }} FCFA
+            }
+          </button>
+
+          @if (!canPay() && !fileError()) {
+            <p class="licence-note">Ajoute ta pièce justificative et ta photo d'identité pour continuer.</p>
+          }
+          @if (error()) {
+            <p class="licence-error">{{ error() }}</p>
+          }
+        } @else {
+          <p class="licence-note">Complète la date de naissance pour voir la catégorie et le tarif.</p>
+        }
+      </form>
+
+      <p class="licence-note">
+        Paiement de démonstration pour la présentation à la fédération — aucun
+        prélèvement réel n'est effectué. Catégorie et tarif calculés selon la
+        grille officielle FIT 2026.
+      </p>
+    }
+    }
+  }
+</div>

@@ -1,0 +1,189 @@
+.td-page {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-muted);
+  text-decoration: none;
+}
+.back-link:hover { color: var(--color-accent); }
+
+/* ── États ── */
+.td-skeleton {
+  height: 320px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(90deg, var(--color-cream) 25%, var(--color-cream-dark) 50%, var(--color-cream) 75%);
+  background-size: 400% 100%;
+  animation: td-shimmer 1.4s ease infinite;
+}
+@keyframes td-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+.td-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-16) var(--space-4);
+  text-align: center;
+}
+.td-empty-title { font-weight: 600; font-size: var(--text-lg); }
+
+/* ── Hero ── */
+.td-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+  padding: var(--space-6);
+}
+.td-hero-top { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.td-hero-top h1 { font-size: var(--text-2xl); letter-spacing: -0.02em; }
+
+.tournament-status {
+  font-size: 11px; font-weight: 700; padding: 4px 10px;
+  border-radius: var(--radius-full); white-space: nowrap;
+}
+.status-open      { background: rgba(217, 236, 60, 0.18); color: var(--color-accent-dark); }
+.status-upcoming  { background: var(--color-cream); color: var(--color-muted); }
+.status-closed    { background: var(--color-cream); color: var(--color-muted); }
+.status-completed { background: rgba(30, 158, 100, 0.12); color: var(--color-positive); }
+
+.tournament-rules {
+  align-self: flex-start;
+  font-size: 11px; font-weight: 600; padding: 4px 10px;
+  border-radius: var(--radius-full); background: var(--color-cream); color: var(--color-muted);
+}
+
+.td-meta { font-size: var(--text-sm); color: var(--color-muted); }
+.tournament-dot { margin: 0 2px; }
+.td-description { font-size: var(--text-sm); color: var(--color-ink); line-height: 1.55; max-width: 60ch; }
+
+.td-action { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-2); }
+.tournament-registered { font-size: 12.5px; font-weight: 700; color: var(--color-positive); }
+.tournament-ineligible { font-size: 12.5px; color: var(--color-muted); }
+
+/* ── Stats ── */
+.td-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.td-stat {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: var(--space-4); border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg); background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+}
+.td-stat-label { font-size: 11px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 600; color: var(--color-muted); }
+.td-stat-value { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 700; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 480px) {
+  .td-stats { grid-template-columns: 1fr 1fr; }
+  .td-stat:last-child { grid-column: span 2; }
+}
+
+/* ── Sections ── */
+.td-section {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  background: var(--color-surface); border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl); padding: var(--space-6); box-shadow: var(--shadow-xs);
+}
+.td-section h2 { margin: 0; font-size: var(--text-lg); font-family: var(--font-display); }
+
+.td-roster { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.td-roster-item { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 72px; text-align: center; }
+.td-roster-name { font-size: 11.5px; color: var(--color-ink-light); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+
+.td-results { display: flex; flex-direction: column; gap: 8px; }
+.td-result-row { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+.td-result-pos { width: 22px; flex-shrink: 0; font-weight: 700; color: var(--color-muted); text-align: center; }
+.td-result-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-result-points { font-size: 12.5px; color: var(--color-muted); font-variant-numeric: tabular-nums; }
+
+/* ── Champion ── */
+.td-champion {
+  display: flex; align-items: center; gap: var(--space-3);
+  background: var(--color-ink); color: var(--color-surface);
+  border-radius: var(--radius-lg); padding: var(--space-4);
+}
+.td-champion .avatar { box-shadow: 0 0 0 2px var(--color-accent); }
+.td-champion-label { display: block; font-size: 11px; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 700; color: var(--color-accent); }
+.td-champion-name { display: block; font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; }
+
+/* ── Tableau ──
+ * Grille : colonnes « match » (200px+) alternées avec des colonnes « liaison »
+ * de 32px. Un match du tour r couvre 2^r lignes : il est donc centré pile entre
+ * ses deux matchs d'origine. Chaque cellule de liaison couvre les mêmes lignes
+ * que son match : celle d'un slot pair trace le haut du coude, celle d'un slot
+ * impair le bas ; les deux se rejoignent au centre du match suivant. */
+.td-bracket-scroll { overflow-x: auto; margin: 0 calc(-1 * var(--space-2)); padding: 0 var(--space-2) var(--space-2); }
+.td-bracket { display: grid; width: max-content; min-width: 100%; row-gap: 0; column-gap: 0; }
+
+.td-round-label {
+  grid-row: 1;
+  font-size: 11.5px; font-weight: 700; color: var(--color-muted);
+  padding: 0 4px var(--space-3);
+}
+
+.td-match {
+  align-self: center;
+  margin: 4px 0;
+  display: flex; flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.td-match-final { border-color: var(--color-ink); box-shadow: 0 0 0 1px var(--color-ink); }
+
+.td-match-player {
+  display: flex; align-items: center; gap: 8px;
+  height: 34px; padding: 0 10px;
+  font-size: 12.5px; color: var(--color-ink-light); min-width: 0;
+}
+.td-match-player + .td-match-player { border-top: 1px solid var(--color-border-light); }
+.td-match-player .avatar { flex-shrink: 0; }
+.td-match-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.td-match-winner { font-weight: 700; color: var(--color-ink); background: rgba(217, 236, 60, 0.16); }
+.td-match-winner .avatar { box-shadow: 0 0 0 2px var(--color-accent); }
+.td-match-loser { color: var(--color-muted); }
+.td-match-loser .avatar { opacity: 0.55; }
+
+.td-slot-empty {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+  border: 1px dashed var(--color-border);
+}
+.td-match-tbd { font-size: 11.5px; color: var(--color-muted); }
+
+.td-match-score {
+  padding: 4px 10px; font-size: 10.5px; color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+  border-top: 1px solid var(--color-border-light); background: var(--color-cream);
+}
+
+/* Traits de liaison */
+.td-conn { position: relative; }
+.td-conn::before,
+.td-conn::after { content: ''; position: absolute; border-color: var(--color-border); border-style: solid; border-width: 0; }
+
+/* Slot pair : trait depuis le centre du match vers la droite, puis vers le bas,
+ * puis amorce horizontale vers le match suivant (à la jonction). */
+.td-conn-top::before { left: 0; width: 50%; top: 50%; bottom: 0; border-top-width: 1px; border-right-width: 1px; }
+.td-conn-top::after  { left: 50%; right: 0; bottom: -1px; border-bottom-width: 1px; }
+/* Slot impair : trait depuis le centre du match vers la droite, puis vers le haut. */
+.td-conn-bottom::before { left: 0; width: 50%; top: 0; height: 50%; border-bottom-width: 1px; border-right-width: 1px; }
+
+.td-conn-done::before { border-color: var(--color-ink-light); }
+
+.panel-loading { font-size: var(--text-sm); color: var(--color-muted); }

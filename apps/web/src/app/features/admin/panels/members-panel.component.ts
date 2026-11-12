@@ -15,57 +15,55 @@ interface Row extends AdminMember {
   standalone: true,
   imports: [FormsModule],
   styleUrl: '../admin-shared.css',
+  styles: [`
+    .mp-row { align-items: center; cursor: default; }
+    .mp-identity { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .mp-identity strong { font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mp-identity span { font-size: var(--text-xs); color: var(--color-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  `],
   template: `
     <div class="panel">
-      <input
-        type="text"
-        class="member-search"
-        placeholder="Rechercher un membre…"
-        [ngModel]="q()"
-        (ngModelChange)="q.set($event)"
-      />
+      <div class="admin-toolbar">
+        <input
+          class="admin-search"
+          type="search"
+          [ngModel]="q()"
+          (ngModelChange)="q.set($event)"
+          placeholder="Rechercher un membre…"
+        />
+      </div>
 
       @if (loading()) {
         <p class="panel-loading">Chargement…</p>
+      } @else if (filtered().length === 0) {
+        <p class="panel-empty">Aucun membre{{ q() ? ' pour cette recherche' : '' }}.</p>
       } @else {
-        @for (m of filtered(); track m.id) {
-          <div class="admin-card card">
-            <div class="admin-card-head">
-              <div>
+        <div class="admin-table">
+          @for (m of filtered(); track m.id) {
+            <div class="admin-table-row mp-row">
+              <div class="mp-identity">
                 <strong>{{ m.name }}</strong>
-                @if (m.role === 'admin') { <span class="pill-tag pill-admin">Admin</span> }
-                <div class="text-muted" style="font-size: var(--text-xs);">
+                <span>
                   {{ m.email }} · Niv. {{ m.level }}@if (m.club) { · {{ m.club.name }} }
-                </div>
+                </span>
               </div>
-              <div class="row-actions">
-                @if (m.role === 'admin') {
-                  <button class="btn btn-ghost btn-sm" [disabled]="m._busy || m.id === myId()" (click)="setRole(m, 'member')">
-                    Retirer admin
-                  </button>
-                } @else {
-                  <button class="btn btn-outline btn-sm" [disabled]="m._busy" (click)="setRole(m, 'admin')">
-                    Promouvoir admin
-                  </button>
-                }
-              </div>
+              <span class="status-text"><span class="status-dot" [class.accent]="m.role === 'admin'"></span>{{ m.role === 'admin' ? 'Admin' : 'Membre' }}</span>
+              @if (m._err) { <span class="form-msg err">{{ m._err }}</span> }
+              @if (m.role === 'admin') {
+                <button class="btn btn-ghost btn-sm" [disabled]="m._busy || m.id === myId()" (click)="setRole(m, 'member')">
+                  Retirer admin
+                </button>
+              } @else {
+                <button class="btn btn-outline btn-sm" [disabled]="m._busy" (click)="setRole(m, 'admin')">
+                  Promouvoir admin
+                </button>
+              }
             </div>
-            @if (m._err) { <p class="form-msg err">{{ m._err }}</p> }
-          </div>
-        }
+          }
+        </div>
       }
     </div>
   `,
-  styles: [
-    `.member-search {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      font-size: var(--text-sm);
-      font-family: var(--font-body);
-    }`,
-  ],
 })
 export class MembersPanelComponent implements OnInit {
   private readonly admin = inject(AdminService);

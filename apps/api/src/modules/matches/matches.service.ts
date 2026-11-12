@@ -2,9 +2,10 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { createNotification } from '../notifications/notifications.service.js';
 import { sendScoreToValidate, sendScoreConfirmed, sendScoreDisputed } from '../mailer/mailer.service.js';
-import { computeElo, movFromScore, MIN_GAMES_TO_MOVE_LEVEL } from './elo.js';
-import { recordLevelUp, refreshAndNotify } from '../badges/badges.service.js';
+import { computeElo, movFromScore } from './elo.js';
+import { refreshAndNotify } from '../badges/badges.service.js';
 import { bg } from '../../lib/bg.js';
+import { getRankByTournamentPoints } from '../../lib/ranking.js';
 import type { RecordMatchDto, ValidateMatchDto, MyMatchesQueryDto } from './matches.schema.js';
 
 const PLAYER_SELECT = {
@@ -19,7 +20,7 @@ const MATCH_INCLUDE = {
 export async function getMyStats(userId: string) {
   const windowStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const [matchesPlayed, wins, upcomingDispos, upcomingQuick, membersTotal, me] = await Promise.all([
+  const [matchesPlayed, wins, upcomingDispos, upcomingQuick, membersTotal, me, rank] = await Promise.all([
     prisma.match.count({
       where: { OR: [{ hostId: userId }, { guestId: userId }], status: 'confirmed' },
     }),
@@ -45,16 +46,13 @@ export async function getMyStats(userId: string) {
     prisma.user.count(),
     prisma.user.findUnique({
       where: { id: userId },
-      select: { rating: true, ratingGames: true, ratingDelta: true },
+      select: { ratingDelta: true },
     }),
+    getRankByTournamentPoints(userId),
   ]);
 
   const losses  = matchesPlayed - wins;
   const winRate = matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 100) : 0;
-
-  const rank = (me && me.ratingGames >= 5)
-    ? await prisma.user.count({ where: { rating: { gt: me.rating }, ratingGames: { gte: 5 } } }) + 1
-    : null;
 
   return {
     matchesPlayed, wins, losses, winRate,
@@ -182,8 +180,8 @@ export async function applyEloUpdate(
   matchId?: string,
 ): Promise<void> {
   const [host, guest] = await Promise.all([
-    prisma.user.findUnique({ where: { id: hostId },  select: { rating: true, ratingGames: true, level: true, bestRanking: true } }),
-    prisma.user.findUnique({ where: { id: guestId }, select: { rating: true, ratingGames: true, level: true, bestRanking: true } }),
+    prisma.user.findUnique({ where: { id: hostId },  select: { rating: true, ratingGames: true } }),
+    prisma.user.findUnique({ where: { id: guestId }, select: { rating: true, ratingGames: true } }),
   ]);
   if (!host || !guest) return;
 
@@ -194,17 +192,16 @@ export async function applyEloUpdate(
   const hostResult  = computeElo(host.rating,  host.ratingGames,  guest.rating, winnerId === hostId,  mov);
   const guestResult = computeElo(guest.rating, guest.ratingGames, host.rating,  winnerId === guestId, mov);
 
-  // Le niveau ne bouge qu'à partir du MIN_GAMES_TO_MOVE_LEVEL-ième match confirmé.
-  // Avant, on ne touche pas `level` : le niveau auto-déclaré à l'inscription reste.
-  const hostMovesLevel  = host.ratingGames  + 1 >= MIN_GAMES_TO_MOVE_LEVEL;
-  const guestMovesLevel = guest.ratingGames + 1 >= MIN_GAMES_TO_MOVE_LEVEL;
-
+  // Pivot fédéral (nov. 2026) : le niveau affiché est déclaratif (choisi par le
+  // joueur à l'inscription / dans son profil) — l'ELO continue de tourner en
+  // coulisses (enjeu de match, badges, cartes partageables) mais ne modifie
+  // plus jamais `level`, et n'alimente plus le classement officiel (voir
+  // TournamentResult / getRankings).
   await prisma.$transaction([
     prisma.user.update({
       where: { id: hostId },
       data:  {
         rating: hostResult.newRating,
-        ...(hostMovesLevel ? { level: hostResult.newLevel } : {}),
         ratingGames: { increment: 1 },
         ratingDelta: hostResult.delta,
       },
@@ -213,7 +210,6 @@ export async function applyEloUpdate(
       where: { id: guestId },
       data:  {
         rating: guestResult.newRating,
-        ...(guestMovesLevel ? { level: guestResult.newLevel } : {}),
         ratingGames: { increment: 1 },
         ratingDelta: guestResult.delta,
       },
@@ -227,34 +223,12 @@ export async function applyEloUpdate(
       : []),
   ]);
 
-  // « Palier franchi » — écrit au moment exact du changement de niveau.
-  if (hostMovesLevel && hostResult.newLevel !== host.level) {
-    bg(recordLevelUp(hostId, host.level, hostResult.newLevel), 'badges.levelup', { userId: hostId });
-  }
-  if (guestMovesLevel && guestResult.newLevel !== guest.level) {
-    bg(recordLevelUp(guestId, guest.level, guestResult.newLevel), 'badges.levelup', { userId: guestId });
-  }
-
   // Recalcul des hauts faits « historique » + notif des nouveaux.
   bg(refreshAndNotify(hostId),  'badges.refresh', { userId: hostId });
   bg(refreshAndNotify(guestId), 'badges.refresh', { userId: guestId });
-
-  // Mettre à jour bestRanking si le nouveau rang est meilleur (plus petit)
-  const newHostGames  = host.ratingGames + 1;
-  const newGuestGames = guest.ratingGames + 1;
-  await Promise.all([
-    newHostGames >= 5  ? updateBestRanking(hostId,  hostResult.newRating,  host.bestRanking)  : Promise.resolve(),
-    newGuestGames >= 5 ? updateBestRanking(guestId, guestResult.newRating, guest.bestRanking) : Promise.resolve(),
-  ]);
-}
-
-async function updateBestRanking(userId: string, newRating: number, currentBest: number | null): Promise<void> {
-  const rank = await prisma.user.count({
-    where: { rating: { gt: newRating }, ratingGames: { gte: 5 } },
-  }) + 1;
-  if (currentBest === null || rank < currentBest) {
-    await prisma.user.update({ where: { id: userId }, data: { bestRanking: rank } });
-  }
+  // `bestRanking` (meilleur classement officiel atteint) ne bouge plus ici — il
+  // n'est mis à jour qu'à la saisie des résultats de tournoi (voir
+  // updateBestRankingFromPoints dans admin.service.ts), seule source du classement.
 }
 
 export async function validateMatch(matchId: string, userId: string, dto: ValidateMatchDto) {

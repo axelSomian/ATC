@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATC et son moteur de niveau</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>*{box-sizing:border-box}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<style>
+  :root {
+    --bg:       #F1EBDF;
+    --surface:  #F8F6F1;
+    --cream:    #EDE5D8;
+    --line:     #DED3BF;
+    --line-soft:#E7E0D0;
+    --ink:      #1C1C1A;
+    --ink-soft: #3B3A35;
+    --muted:    #6E695C;
+    --accent:   #1F5A45;
+    --forest:   #163F32;
+    --sage:     #8FAE9B;
+    --sand:     #CDBDA7;
+    --win:      #2F6B4F;
+    --loss:     #B23B2E;
+    --ball:     #B07D3C;
+
+    --hero-bg:  #163F32;
+    --hero-ink: #F4EFE3;
+    --hero-sub: #B9C9BE;
+
+    --display: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+    --body:    "Inter", "Segoe UI", sans-serif;
+    --mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --maxw: 860px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:      #10281F;
+      --surface: #163829;
+      --cream:   #1C4032;
+      --line:    #2C5344;
+      --line-soft:#244638;
+      --ink:     #EEE8DA;
+      --ink-soft:#CFD8CF;
+      --muted:   #9DB0A4;
+      --accent:  #8FAE9B;
+      --forest:  #0C1F18;
+      --sage:    #A9C4B4;
+      --sand:    #C7B79F;
+      --win:     #6FB48C;
+      --loss:    #E08B7E;
+      --ball:    #D6A868;
+      --hero-bg: #0C1F18;
+      --hero-ink:#F1ECDF;
+      --hero-sub:#9DB0A4;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:      #10281F;
+    --surface: #163829;
+    --cream:   #1C4032;
+    --line:    #2C5344;
+    --line-soft:#244638;
+    --ink:     #EEE8DA;
+    --ink-soft:#CFD8CF;
+    --muted:   #9DB0A4;
+    --accent:  #8FAE9B;
+    --forest:  #0C1F18;
+    --sage:    #A9C4B4;
+    --sand:    #C7B79F;
+    --win:     #6FB48C;
+    --loss:    #E08B7E;
+    --ball:    #D6A868;
+    --hero-bg: #0C1F18;
+    --hero-ink:#F1ECDF;
+    --hero-sub:#9DB0A4;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16.5px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  /* progress / nav */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .topbar .wrap {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 46px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .topbar b { color: var(--accent); font-weight: 500; }
+  .topbar .prog { color: var(--muted); }
+  .bar { height: 2px; background: var(--accent); width: 0; transition: width 0.2s ease; }
+
+  /* hero */
+  .hero {
+    background: var(--hero-bg); color: var(--hero-ink);
+    padding: 72px 0 60px;
+    border-bottom: 3px solid var(--accent);
+  }
+  .hero .wrap { display: flex; flex-direction: column; gap: 22px; }
+  .hero .ey {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--sage); margin: 0;
+  }
+  .hero h1 {
+    font-family: var(--display); font-weight: 800;
+    font-size: clamp(2.1rem, 6vw, 3.3rem); line-height: 1.06; letter-spacing: -0.02em;
+    margin: 0; text-wrap: balance;
+  }
+  .hero .lede { margin: 0; max-width: 52ch; font-size: 1.1rem; color: var(--hero-sub); }
+  .hero .meta {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;
+    font-family: var(--mono); font-size: 11px;
+  }
+  .hero .meta span {
+    border: 1px solid rgba(255,255,255,0.16); border-radius: 999px;
+    padding: 4px 11px; color: var(--hero-sub);
+  }
+
+  /* sections */
+  main { padding-bottom: 40px; }
+  .slide {
+    padding: 58px 0 54px;
+    border-top: 1px solid var(--line-soft);
+    scroll-margin-top: 46px;
+  }
+  .slide:first-child { border-top: 0; }
+  .part-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ball); margin: 0 0 30px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .part-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  .num {
+    font-family: var(--mono); font-size: 12px; color: var(--accent);
+    letter-spacing: 0.1em; margin: 0 0 10px;
+  }
+  h2 {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(1.5rem, 3.6vw, 2rem); line-height: 1.16; letter-spacing: -0.015em;
+    margin: 0 0 18px; text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--display); font-weight: 600; font-size: 1.06rem;
+    margin: 26px 0 8px;
+  }
+  p { margin: 0 0 15px; }
+  strong { font-weight: 600; }
+  .lead { font-size: 1.12rem; color: var(--ink); }
+  em.t { font-style: normal; font-weight: 600; color: var(--accent); }
+  .muted { color: var(--muted); }
+
+  ul.clean { list-style: none; padding: 0; margin: 8px 0 0; }
+  ul.clean li {
+    position: relative; padding: 10px 0 10px 22px;
+    border-bottom: 1px solid var(--line-soft); font-size: 0.98rem;
+  }
+  ul.clean li:last-child { border-bottom: 0; }
+  ul.clean li::before {
+    content: ""; position: absolute; left: 3px; top: 18px;
+    width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  }
+
+  .note {
+    font-size: 0.92rem; color: var(--muted);
+    border-left: 2px solid var(--sand); padding-left: 14px; margin: 16px 0;
+  }
+  .callout {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--ball); border-radius: 10px;
+    padding: 14px 18px; margin: 16px 0; font-size: 0.96rem;
+  }
+
+  /* feature grid */
+  .grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 8px;
+  }
+  @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } }
+  .cell {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; padding: 14px 16px;
+  }
+  .cell b { font-family: var(--display); font-weight: 700; font-size: 0.98rem; display: block; margin-bottom: 3px; }
+  .cell span { font-size: 0.88rem; color: var(--muted); }
+
+  /* formula */
+  .formula {
+    background: var(--forest); color: var(--hero-ink);
+    border-radius: 12px; padding: 20px 22px; margin: 16px 0;
+    font-family: var(--mono); font-size: 0.95rem; line-height: 1.85; overflow-x: auto;
+  }
+  .formula .big { font-size: 1.12rem; color: #fff; }
+  .formula .gl { color: var(--sage); font-size: 0.82rem; }
+
+  /* tables */
+  .tw { overflow-x: auto; margin: 14px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); white-space: nowrap; }
+  th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); font-weight: 500;
+  }
+  td.n, th.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  tbody tr:hover { background: var(--surface); }
+  .pos { color: var(--win); font-weight: 600; }
+  .neg { color: var(--loss); font-weight: 600; }
+  .zero { color: var(--muted); }
+
+  /* dots */
+  .dots { display: inline-flex; gap: 3px; vertical-align: middle; }
+  .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: inline-block; }
+  .dots i.on { background: var(--accent); }
+
+  /* calculator */
+  .calc {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 16px; padding: 20px; margin: 18px 0 6px;
+  }
+  .calc-players { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 620px) { .calc-players { grid-template-columns: 1fr; } }
+  .pl { background: var(--cream); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .pl.win { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+  .pl h4 { margin: 0 0 10px; font-family: var(--display); font-weight: 700; font-size: 0.98rem; }
+  .fld { margin-top: 12px; }
+  .fld label {
+    display: flex; justify-content: space-between;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 5px;
+  }
+  .fld label b { color: var(--ink); font-weight: 500; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  input[type="number"], input[type="text"] {
+    width: 100%; font-family: var(--mono); font-size: 0.92rem;
+    padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px;
+    background: var(--surface); color: var(--ink);
+  }
+  .winpick { display: flex; gap: 8px; margin-top: 16px; background: var(--cream); border: 1px solid var(--line); border-radius: 10px; padding: 5px; }
+  .winpick label { flex: 1; text-align: center; font-size: 0.88rem; font-weight: 600; padding: 7px 5px; border-radius: 7px; cursor: pointer; color: var(--muted); }
+  .winpick label.on { background: var(--accent); color: #fff; }
+  .winpick input { position: absolute; opacity: 0; pointer-events: none; }
+  .calc-score { margin-top: 14px; }
+  .calc-out { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 620px) { .calc-out { grid-template-columns: 1fr; } }
+  .oc { border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; background: var(--bg); }
+  .oc .nm { font-family: var(--display); font-weight: 700; margin-bottom: 6px; }
+  .oc .ln { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.82rem; padding: 2px 0; }
+  .oc .ln span:first-child { color: var(--muted); }
+  .oc .dl { font-family: var(--display); font-weight: 800; font-size: 1.5rem; margin: 5px 0 2px; font-variant-numeric: tabular-nums; }
+  .oc .ar { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+  .oc .lv { margin-top: 8px; font-family: var(--mono); font-size: 0.74rem; color: var(--muted); }
+  .oc .frozen { color: var(--ball); }
+  .calc-case {
+    margin-top: 14px; padding: 10px 14px; border-radius: 9px;
+    background: var(--accent); color: #fff;
+    font-family: var(--mono); font-size: 0.82rem; text-align: center;
+  }
+
+  /* recap / faq */
+  .faq { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-top: 8px; }
+  .faq > div { padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+  .faq > div:last-child { border-bottom: 0; }
+  .faq q { display: block; font-weight: 600; font-style: normal; margin-bottom: 3px; }
+  .faq q::before { content: "— "; color: var(--accent); }
+  .faq p { margin: 0; font-size: 0.94rem; color: var(--ink-soft); }
+
+  footer {
+    max-width: var(--maxw); margin: 0 auto; padding: 32px 24px 60px;
+    font-family: var(--mono); font-size: 0.78rem; color: var(--muted); line-height: 1.7;
+  }
+  footer code { background: var(--cream); padding: 1px 5px; border-radius: 4px; }
+
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bar { transition: none; }
+    * { scroll-behavior: auto !important; }
+  }
+
+  @media print {
+    .topbar { display: none; }
+    .slide { break-inside: avoid; border-top: 1px solid #ccc; }
+    .hero { background: #163F32 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+
+<div class="topbar">
+  <div class="wrap"><b>ATC</b><span class="prog" id="prog">01 / 20</span></div>
+  <div class="bar" id="bar"></div>
+</div>
+
+<header class="hero" id="s0">
+  <div class="wrap">
+    <p class="ey">Abidjan Tennis Community — présentation projet</p>
+    <h1>ATC : la communauté de tennis d'Abidjan, et le moteur qui classe ses joueurs</h1>
+    <p class="lede">Une application web qui met en relation les passionné·es de tennis d'Abidjan : profils, annonces de match, scores validés entre joueurs, et un <strong>niveau calculé automatiquement</strong> à partir des résultats — le cœur technique du projet.</p>
+    <div class="meta">
+      <span>Trouver un match</span>
+      <span>Scores validés entre joueurs</span>
+      <span>Niveau calculé automatiquement</span>
+      <span>Abidjan · français</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ═══════════ PARTIE A — LE PROJET ═══════════ -->
+
+  <section class="slide" id="s1">
+    <p class="part-label">Partie A · Le produit</p>
+    <p class="num">01</p>
+    <h2>Le constat, et ce qu'ATC change</h2>
+    <p class="lead">À Abidjan, les joueurs de tennis sont dispersés entre une dizaine de clubs. Trouver un partenaire <em class="t">de son niveau</em>, disponible au bon créneau, sur un court accessible — ça se fait au bouche-à-oreille, ou pas du tout.</p>
+    <h3>La mission</h3>
+    <p>ATC rassemble ces joueurs dans un seul espace : un annuaire, des annonces de match, un historique, et un niveau fiable qui permet de proposer des matchs équilibrés — donc plus de matchs joués.</p>
+    <ul class="clean">
+      <li><strong>Voir qui joue</strong> — annuaire filtrable (niveau, ville, club, en ligne)</li>
+      <li><strong>Organiser un match</strong> — publier une dispo ou défier quelqu'un directement</li>
+      <li><strong>Garder une trace</strong> — scores validés, historique, statistiques</li>
+      <li><strong>Se situer</strong> — un niveau 1→5 qui reflète les résultats réels, pas une auto-évaluation</li>
+    </ul>
+  </section>
+
+  <section class="slide" id="s2">
+    <p class="num">02</p>
+    <h2>Qui utilise ATC, et le parcours type</h2>
+    <div class="grid">
+      <div class="cell"><b>Le joueur régulier</b><span>Veut des partenaires de son niveau sans relancer 10 personnes. Publie ses créneaux.</span></div>
+      <div class="cell"><b>Le nouveau à Abidjan</b><span>Ne connaît personne. Cherche un club et des joueurs abordables.</span></div>
+      <div class="cell"><b>Le compétiteur</b><span>Veut mesurer sa progression, viser le haut du classement.</span></div>
+      <div class="cell"><b>L'admin ATC</b><span>Gère les clubs, arbitre les litiges de score, anime la communauté.</span></div>
+    </div>
+    <h3>Le parcours, du premier jour au match joué</h3>
+    <div class="formula">
+      <span class="gl">1</span>  Inscription (e-mail ou Google) → niveau déclaré provisoire<br>
+      <span class="gl">2</span>  Profil : club, raquette, créneaux, ville<br>
+      <span class="gl">3</span>  Feed d'annonces → « je veux participer » → l'auteur accepte<br>
+      <span class="gl">4</span>  Conversation 1-to-1 ouverte automatiquement → on cale les détails<br>
+      <span class="gl">5</span>  Match joué → un joueur saisit le score → l'autre confirme<br>
+      <span class="gl">6</span>  Rating des deux joueurs mis à jour → niveau ajusté
+    </div>
+  </section>
+
+  <section class="slide" id="s3">
+    <p class="num">03</p>
+    <h2>Les fonctionnalités — panorama</h2>
+    <div class="grid">
+      <div class="cell"><b>Profils &amp; niveau</b><span>5 dots (N1 Débutant → N5 Professionnel), stats, historique, meilleur classement atteint.</span></div>
+      <div class="cell"><b>Annuaire membres</b><span>Recherche + filtres niveau / ville / club / en ligne.</span></div>
+      <div class="cell"><b>Clubs = lieux de jeu</b><span>Annuaire visuel, fiche par club (adresse, honoraires, contact), favoris, carte OpenStreetMap.</span></div>
+      <div class="cell"><b>Annonces de match</b><span>Créneau + court + type, demandes de participation, un invité retenu, changement d'adversaire possible.</span></div>
+      <div class="cell"><b>Défis rapides</b><span>Défier un membre en direct sans passer par le feed.</span></div>
+      <div class="cell"><b>Score &amp; validation</b><span>Saisie par set, double confirmation, litige tranché par un admin.</span></div>
+      <div class="cell"><b>Messagerie 1-to-1</b><span>Une conversation par binôme, ouverte à l'acceptation d'un match.</span></div>
+      <div class="cell"><b>Notifications + rappels push</b><span>En temps réel dans l'app, et sur le téléphone (l'app s'installe depuis le navigateur, iOS compris).</span></div>
+      <div class="cell"><b>Actualité</b><span>Rubrique news : articles, événements, visibilité calculée à la lecture, flux RSS.</span></div>
+      <div class="cell"><b>Carte d'enjeu</b><span>Sur un match à venir : ce que le résultat peut rapporter, formulé pour motiver.</span></div>
+      <div class="cell"><b>Espace admin</b><span>CRUD clubs, libellés de niveau, résolution de litiges, rôles, push groupé.</span></div>
+      <div class="cell"><b>Conformité</b><span>Politique de confidentialité + CGU + consentement bloquant à l'inscription.</span></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s4">
+    <p class="num">04</p>
+    <h2>Trouver et organiser un match</h2>
+    <h3>L'annonce (DispoPost)</h3>
+    <p>Un membre publie un créneau : date/heure, durée, court, type (simple / double / mixte), note libre. L'annonce arrive <strong>en temps réel</strong> dans le feed des autres membres.</p>
+    <h3>La demande et l'acceptation</h3>
+    <ul class="clean">
+      <li>Plusieurs joueurs peuvent demander à participer</li>
+      <li>L'auteur en retient <strong>un seul</strong> — les autres demandes passent en « refusée »</li>
+      <li>Il peut <strong>changer d'adversaire</strong> ensuite : l'ancien est prévenu, la conversation est réinitialisée</li>
+      <li>Le double / mixte reste géré comme un simple pour l'instant (1 invité retenu)</li>
+    </ul>
+    <div class="callout">Le <strong>club est le lieu de jeu</strong> : plus de table « courts » séparée. Le nom du court saisi sur l'annonce est rapproché d'un club (adresse, coordonnées) pour afficher la carte et l'itinéraire.</div>
+  </section>
+
+  <section class="slide" id="s5">
+    <p class="num">05</p>
+    <h2>Jouer, saisir le score, le valider</h2>
+    <div class="formula">
+      <span class="gl">saisie</span>   un des deux joueurs entre le score, set par set (entiers 0–7)<br>
+      <span class="gl">pending</span>  l'adversaire reçoit une notif + un e-mail → <span style="color:#fff">aucun effet sur le rating</span><br>
+      <span class="gl">confirmé</span> l'adversaire valide → <span style="color:#fff">le rating des deux joueurs est recalculé</span><br>
+      <span class="gl">litige</span>   l'adversaire conteste → un admin trance (peut corriger le score)<br>
+      <span class="gl">résolu</span>   le rating est appliqué avec <span style="color:#fff">le score retenu par l'admin</span>, même barème
+    </div>
+    <p class="note">Seuls les matchs <strong>confirmés</strong> comptent. Un match en attente ou contesté n'a aucun impact tant qu'il n'est pas tranché.</p>
+  </section>
+
+  <!-- ═══════════ PARTIE B — LE RATING ═══════════ -->
+
+  <section class="slide" id="s8">
+    <p class="part-label">Partie B · Le moteur de niveau</p>
+    <p class="num">06</p>
+    <h2>Pourquoi un rating, et pas l'auto-déclaration</h2>
+    <p class="lead">Si chacun choisit son niveau, tout le monde se met « intermédiaire » ou se surestime. Les matchs proposés sont déséquilibrés, personne ne rejoue.</p>
+    <p>ATC calcule le niveau <strong>à partir des résultats confirmés</strong>, avec un système à la ELO — le même principe qu'aux échecs et au classement ITF.</p>
+    <ul class="clean">
+      <li>Le niveau déclaré à l'inscription n'est qu'un <strong>affichage provisoire</strong></li>
+      <li>Tout le monde démarre au <strong>même rating : 1000</strong> — le niveau déclaré n'avantage personne</li>
+      <li>Après 5 matchs confirmés, le niveau affiché suit le rating calculé</li>
+    </ul>
+  </section>
+
+  <section class="slide" id="s9">
+    <p class="num">07</p>
+    <h2>Le principe : un score caché, un niveau visible</h2>
+    <p>Chaque joueur porte un <em class="t">rating</em> interne, un nombre <strong>entre 600 et 2000</strong>. Il n'est <strong>jamais affiché</strong> — ni sur le profil, ni dans le classement, ni dans la carte d'enjeu. Le joueur voit ses <strong>5 dots</strong>, qui sont une simple traduction par tranches :</p>
+    <div class="tw"><table>
+      <thead><tr><th>Rating</th><th>Niveau</th><th>Libellé</th></tr></thead>
+      <tbody>
+        <tr><td class="n">600 – 899</td><td class="n">N1</td><td>Débutant</td></tr>
+        <tr><td class="n">900 – 1099</td><td class="n">N2</td><td>Intermédiaire</td></tr>
+        <tr><td class="n">1100 – 1299</td><td class="n">N3</td><td>Avancé</td></tr>
+        <tr><td class="n">1300 – 1499</td><td class="n">N4</td><td>Compétiteur</td></tr>
+        <tr><td class="n">1500 – 2000</td><td class="n">N5</td><td>Professionnel</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Garder le chiffre interne évite la course au point et les débats sur « 3 points d'écart ». Les libellés des 5 niveaux sont éditables par un admin ; seules les bornes de rating vivent dans le code.</p>
+  </section>
+
+  <section class="slide" id="s10">
+    <p class="num">08</p>
+    <h2>Formule 1 — la probabilité de victoire</h2>
+    <p>Avant le match, on estime la chance de gagner de chaque joueur à partir du <strong>seul écart de rating</strong> :</p>
+    <div class="formula">
+      <span class="big">E = 1 / ( 1 + 10<sup>(adversaire − moi) / 400</sup> )</span><br>
+      <span class="gl">« adversaire » et « moi » = les ratings, en points (pas la place au classement)</span>
+    </div>
+    <p>Le <strong>400</strong> est le facteur d'échelle standard : il fixe la traduction « écart de points → probabilité ».</p>
+    <div class="tw"><table>
+      <thead><tr><th class="n">Écart en ma faveur</th><th class="n">Ma proba E</th></tr></thead>
+      <tbody>
+        <tr><td class="n">0</td><td class="n">50 %</td></tr>
+        <tr><td class="n">+100</td><td class="n">64 %</td></tr>
+        <tr><td class="n">+200</td><td class="n">76 %</td></tr>
+        <tr><td class="n">+400</td><td class="n">91 %</td></tr>
+        <tr><td class="n">+800</td><td class="n">99 %</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="font-size:0.9rem">Dans un match, <code>E_A + E_B = 1</code>.</p>
+  </section>
+
+  <section class="slide" id="s11">
+    <p class="num">09</p>
+    <h2>Formule 2 — le gain ou la perte</h2>
+    <div class="formula">
+      <span class="big">Δ = K × ( S − E ) × marge</span><br>
+      <span class="gl">S = 1 si victoire, 0 si défaite</span><br>
+      <span class="gl">nouveau rating = ancien + Δ, borné entre 600 et 2000</span>
+    </div>
+    <p>La logique en une phrase : <strong>battre plus fort que soi rapporte beaucoup, battre plus faible rapporte peu</strong> — et perdre contre plus faible coûte cher.</p>
+    <h3>Exemple — deux joueurs à égalité (1000 vs 1000, K = 40, marge neutre)</h3>
+    <div class="tw"><table>
+      <thead><tr><th>Joueur</th><th>Calcul</th><th class="n">Δ</th></tr></thead>
+      <tbody>
+        <tr><td>Vainqueur</td><td class="n">40 × (1 − 0,5)</td><td class="n pos">+20 → 1020</td></tr>
+        <tr><td>Perdant</td><td class="n">40 × (0 − 0,5)</td><td class="n neg">−20 → 980</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Somme des deux Δ = 0 : les points gagnés par l'un sont exactement ceux perdus par l'autre. Le système ne crée pas de points.</p>
+  </section>
+
+  <section class="slide" id="s12">
+    <p class="num">10</p>
+    <h2>Le facteur K — se caler vite, puis se stabiliser</h2>
+    <p>K fixe l'amplitude d'un ajustement. Il est <strong>propre à chaque joueur</strong>, calculé sur <strong>son</strong> nombre de matchs classés (pas celui de l'adversaire, pas un total commun).</p>
+    <div class="tw"><table>
+      <thead><tr><th>Matchs joués</th><th class="n">K</th><th>Effet</th><th class="n">Δ à égalité (victoire)</th></tr></thead>
+      <tbody>
+        <tr><td>0 – 9</td><td class="n">40</td><td>Calibrage rapide</td><td class="n">+20</td></tr>
+        <tr><td>10 – 29</td><td class="n">25</td><td>Stabilisation</td><td class="n">+13</td></tr>
+        <tr><td>30 et +</td><td class="n">15</td><td>Joueur établi</td><td class="n">+8</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout">Dans un même match, un débutant (K 40) peut bouger de +20 pendant que son adversaire chevronné (K 15) ne bouge que de −8. C'est voulu — et c'est aussi ce qui rend la somme des Δ « quasi » nulle plutôt qu'exactement nulle quand les K diffèrent.</div>
+  </section>
+
+  <section class="slide" id="s13">
+    <p class="num">11</p>
+    <h2>La marge du score</h2>
+    <p>Le résultat seul ne dit pas tout : <strong>6-0 6-0</strong> n'est pas <strong>7-6 7-6</strong>. On multiplie le Δ par un facteur <strong>entre 1,0 et 1,4</strong>, calculé sur l'écart de jeux.</p>
+    <div class="formula">
+      <span class="big">dominance = (jeux gagnés − jeux perdus) / total des jeux</span><br>
+      <span class="big">marge = 1 + dominance × 0,4   (plafonné à 1,4)</span>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Score</th><th class="n">Jeux</th><th class="n">Marge</th><th class="n">Δ vainqueur (dep. 1000, K40)</th></tr></thead>
+      <tbody>
+        <tr><td>7-6 7-6</td><td class="n">14–12</td><td class="n">1,03</td><td class="n pos">+21</td></tr>
+        <tr><td>6-4 6-4</td><td class="n">12–8</td><td class="n">1,08</td><td class="n pos">+22</td></tr>
+        <tr><td>6-2 6-2</td><td class="n">12–4</td><td class="n">1,20</td><td class="n pos">+24</td></tr>
+        <tr><td>6-0 6-0</td><td class="n">12–0</td><td class="n">1,40</td><td class="n pos">+28</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="clean">
+      <li>Le <strong>même</strong> facteur s'applique aux deux joueurs → somme des Δ toujours quasi nulle</li>
+      <li>Marge <strong>≥ 1 toujours</strong> : une victoire serrée reste une victoire pleine, jamais dévaluée</li>
+      <li>Score illisible ou « abandon » → marge = 1 (aucun plantage)</li>
+    </ul>
+  </section>
+
+  <section class="slide" id="s14">
+    <p class="num">12</p>
+    <h2>Du rating au niveau — le seuil des 5 matchs</h2>
+    <p>Le niveau est une pure fonction du rating <strong>mais il ne bouge pas tant que le joueur n'a pas 5 matchs confirmés</strong>. Avant ça, on garde le niveau déclaré — un seul match ne fait basculer personne.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Situation</th><th>Rating</th><th>Niveau affiché</th></tr></thead>
+      <tbody>
+        <tr><td>Inscription</td><td class="n">1000</td><td>niveau déclaré (provisoire)</td></tr>
+        <tr><td>Matchs 1 → 4</td><td class="n">bouge</td><td>niveau déclaré (figé)</td></tr>
+        <tr><td>5<sup>e</sup> match confirmé</td><td class="n">bouge</td><td class="pos">recalculé d'un coup depuis le rating</td></tr>
+        <tr><td>Ensuite</td><td class="n">bouge</td><td>suit le rating à chaque match</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Le seuil de 5 matchs vaut aussi pour apparaître au classement public et pour enregistrer un « meilleur classement atteint ».</p>
+  </section>
+
+  <section class="slide" id="s15">
+    <p class="num">13 · tous les cas</p>
+    <h2>Selon le rapport de force</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Situation</th><th>Résultat</th><th class="n">Δ vainqueur</th><th class="n">Δ perdant</th></tr></thead>
+      <tbody>
+        <tr><td>Égaux (1000 / 1000)</td><td>—</td><td class="n pos">+20</td><td class="n neg">−20</td></tr>
+        <tr><td>Favori (1200) bat outsider (1000)</td><td>attendu</td><td class="n pos">+6</td><td class="n neg">−10</td></tr>
+        <tr><td>Outsider (1000) bat favori (1200)</td><td><strong>upset</strong></td><td class="n pos">+30</td><td class="n neg">−19</td></tr>
+        <tr><td>Écart extrême (1500) bat (700)</td><td>attendu</td><td class="n zero">+0</td><td class="n zero">0</td></tr>
+        <tr><td>Écart extrême — (700) bat (1500)</td><td><strong>choc</strong></td><td class="n pos">+40</td><td class="n neg">−40</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="clean">
+      <li>Le favori qui gagne le match attendu gagne <strong>peu</strong> ; s'il le perd, il perd <strong>gros</strong></li>
+      <li>Au-delà de ~400 points d'écart, la victoire attendue ne rapporte <strong>presque rien</strong> (arrondi à 0)</li>
+      <li>Une défaite « impossible » ne pénalise <strong>pas</strong> (0), mais un vrai exploit rapporte jusqu'à K entier</li>
+      <li>Perdre contre plus faible coûte toujours plus cher que perdre contre plus fort</li>
+    </ul>
+  </section>
+
+  <section class="slide" id="s16">
+    <p class="num">14 · tous les cas</p>
+    <h2>Selon l'état du joueur</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Cas</th><th>Ce qui se passe</th></tr></thead>
+      <tbody>
+        <tr><td>Nouveau (&lt; 5 matchs)</td><td>Le rating bouge (K 40, gros mouvements) mais le <strong>niveau reste figé</strong> au déclaré.</td></tr>
+        <tr><td>5<sup>e</sup> match</td><td>Le niveau se met à jour d'un coup. Ex. après 5 victoires nettes : <strong>N2 → N3</strong> directement.</td></tr>
+        <tr><td>Joueur établi (30+)</td><td>K 15 : ±8 sur un match serré. Un mauvais résultat ne fait <strong>pas</strong> dégringoler.</td></tr>
+        <tr><td>Montée de palier</td><td>Le rating franchit 1100 (ou 1300, 1500…) → un dot s'allume au match suivant.</td></tr>
+        <tr><td>Descente de palier</td><td>Symétrique : le rating repasse sous un seuil → le niveau baisse.</td></tr>
+        <tr><td>Beaucoup de défaites</td><td>Le rating <strong>ne descend jamais sous 600</strong> (plancher). Le Δ « brut » reste enregistré même quand il est écrêté.</td></tr>
+        <tr><td>Très haut niveau</td><td>Le rating <strong>ne dépasse jamais 2000</strong> (plafond).</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout"><strong>Passage de palier concret :</strong> un joueur à 1088 (4 matchs), gagne 6-4 6-4 son 5<sup>e</sup> match → +22 → 1110 → il passe <strong>N3</strong>. Le même joueur à son 4<sup>e</sup> match : rating identique (1110) mais le niveau <strong>ne bouge pas encore</strong>.</div>
+  </section>
+
+  <section class="slide" id="s17">
+    <p class="num">15 · tous les cas</p>
+    <h2>Selon le cycle de vie du match</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Statut du match</th><th>Effet sur le rating</th></tr></thead>
+      <tbody>
+        <tr><td><strong>pending</strong> — saisi, pas encore validé</td><td class="zero">Aucun. Les deux ratings sont intacts.</td></tr>
+        <tr><td><strong>confirmed</strong> — validé par l'adversaire</td><td class="pos">Recalcul immédiat des deux ratings.</td></tr>
+        <tr><td><strong>disputed</strong> — contesté</td><td class="zero">Aucun tant que non résolu.</td></tr>
+        <tr><td><strong>résolu par l'admin</strong></td><td class="pos">Appliqué avec le score retenu par l'admin — <strong>même barème</strong>, marge du score comprise.</td></tr>
+        <tr><td>Score illisible / abandon</td><td>Calcul normal avec <strong>marge = 1</strong>.</td></tr>
+        <tr><td>Double / mixte</td><td>Traité comme un simple entre les deux joueurs « hôte » et « invité ».</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="slide" id="s18">
+    <p class="num">16</p>
+    <h2>Simulateur — faites tourner n'importe quel cas</h2>
+    <p>Réglez les deux ratings, le nombre de matchs déjà joués, le vainqueur et le score. Le calcul est <strong>exactement</strong> celui de l'application.</p>
+
+    <div class="calc">
+      <div class="calc-players">
+        <div class="pl" id="pA">
+          <h4>Joueur A</h4>
+          <div class="fld">
+            <label>Rating <b data-rl>1180</b></label>
+            <input type="range" min="600" max="2000" step="10" value="1180" data-range>
+          </div>
+          <div class="fld">
+            <label>Matchs déjà joués <b data-gl>12</b></label>
+            <input type="number" min="0" max="200" value="12" data-games>
+          </div>
+        </div>
+        <div class="pl" id="pB">
+          <h4>Joueur B</h4>
+          <div class="fld">
+            <label>Rating <b data-rl>1300</b></label>
+            <input type="range" min="600" max="2000" step="10" value="1300" data-range>
+          </div>
+          <div class="fld">
+            <label>Matchs déjà joués <b data-gl>6</b></label>
+            <input type="number" min="0" max="200" value="6" data-games>
+          </div>
+        </div>
+      </div>
+
+      <div class="winpick" role="radiogroup" aria-label="Vainqueur">
+        <label id="lA" class="on"><input type="radio" name="w" value="A" checked> A gagne</label>
+        <label id="lB"><input type="radio" name="w" value="B"> B gagne</label>
+      </div>
+
+      <div class="calc-score fld">
+        <label for="sc">Score du vainqueur</label>
+        <input type="text" id="sc" value="6-3 6-4" spellcheck="false" autocomplete="off">
+      </div>
+
+      <div class="calc-out">
+        <div class="oc" id="oA">
+          <div class="nm">Joueur A</div>
+          <div class="ln"><span>Proba de victoire</span><span data-e>—</span></div>
+          <div class="ln"><span>Facteur K</span><span data-k>—</span></div>
+          <div class="ln"><span>Marge du score</span><span data-m>—</span></div>
+          <div class="dl" data-d>—</div>
+          <div class="ar" data-a>—</div>
+          <div class="lv"><span class="dots" data-dots></span> <span data-lv></span></div>
+        </div>
+        <div class="oc" id="oB">
+          <div class="nm">Joueur B</div>
+          <div class="ln"><span>Proba de victoire</span><span data-e>—</span></div>
+          <div class="ln"><span>Facteur K</span><span data-k>—</span></div>
+          <div class="ln"><span>Marge du score</span><span data-m>—</span></div>
+          <div class="dl" data-d>—</div>
+          <div class="ar" data-a>—</div>
+          <div class="lv"><span class="dots" data-dots></span> <span data-lv></span></div>
+        </div>
+      </div>
+
+      <div class="calc-case" id="case">—</div>
+    </div>
+  </section>
+
+  <section class="slide" id="s19">
+    <p class="num">17</p>
+    <h2>Le cas qui fâche : deux joueurs qui ne jouent qu'entre eux</h2>
+    <p class="lead">« Si A gagne toujours contre B, A ne monte pas à l'infini ? » — <strong>Non, le système s'auto-limite.</strong></p>
+    <p>Plus l'écart grandit, plus la victoire de A est « attendue » (E → 1), donc <code>K × (1 − E)</code> tend vers 0.</p>
+    <div class="tw"><table>
+      <thead><tr><th class="n">Après…</th><th class="n">Rating A</th><th class="n">Rating B</th><th class="n">Δ du dernier match</th></tr></thead>
+      <tbody>
+        <tr><td class="n">5 matchs</td><td class="n">1104 (N3)</td><td class="n">896 (N1)</td><td class="n">+15</td></tr>
+        <tr><td class="n">15 matchs</td><td class="n">1179</td><td class="n">821</td><td class="n">+4</td></tr>
+        <tr><td class="n">30 matchs</td><td class="n">1226</td><td class="n">774</td><td class="n">+2</td></tr>
+        <tr><td class="n">120 matchs</td><td class="n">1316 (N4)</td><td class="n">684</td><td class="n">~0</td></tr>
+        <tr><td class="n">plafond</td><td class="n">~1323</td><td class="n">~677</td><td class="n">0</td></tr>
+      </tbody>
+    </table></div>
+    <p>En grindant <strong>une seule</strong> personne (et en gagnant 6-0 6-0 à chaque fois), A plafonne vers <strong>1323 — à peine l'entrée du N4, jamais le N5</strong>, et il faut ~100 matchs parfaits pour y arriver.</p>
+    <div class="callout"><strong>Ce qui reste à surveiller</strong> : la paire « flotte » détachée du reste (le rating de B ne veut rien dire s'il ne joue personne d'autre) ; et la collusion via faux comptes. → Pistes : porte de diversité (≥ 3–4 adversaires distincts pour le classement / au-delà de N3), rendements décroissants par paire.</p>
+  </section>
+
+  <section class="slide" id="s20">
+    <p class="num">18</p>
+    <h2>Rendre le rating motivant — la carte d'enjeu</h2>
+    <p>Sur un match à venir (simple, deux joueurs à ≥ 5 matchs classés), un encart affiche <strong>l'enjeu, pas une cote</strong>. Le pourcentage brut n'est jamais montré — c'est l'asymétrie des points qui parle.</p>
+    <div class="grid">
+      <div class="cell"><b>Vous êtes outsider</b><span>« L'occasion de créer la surprise » — Victoire +21 · Défaite −4. Tout à gagner, presque rien à perdre.</span></div>
+      <div class="cell"><b>Match équilibré</b><span>« Ça va se jouer sur des détails » — ±13. Le genre de match qui se gagne dans la tête.</span></div>
+      <div class="cell"><b>Vous êtes favori</b><span>« À vous de confirmer » — Victoire +4 · Défaite −21. Le piège : sous-estimer l'adversaire.</span></div>
+      <div class="cell"><b>Jamais</b><span>« Vous allez gagner » — pas de complaisance, et du respect pour l'adversaire.</span></div>
+    </div>
+    <p class="note">Le rating chiffré n'est jamais envoyé à l'application : ce calcul reste caché, seul l'enjeu formulé en mots est affiché.</p>
+  </section>
+
+  <section class="slide" id="s21">
+    <p class="num">19</p>
+    <h2>Limites connues &amp; pistes v2</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Limite</th><th>Piste</th></tr></thead>
+      <tbody>
+        <tr><td>Pools déconnectés (Cocody joue Cocody…)</td><td>Inciter les matchs inter-clubs ; porte de diversité d'adversaires.</td></tr>
+        <tr><td>Pas de decay — un N5 inactif reste N5</td><td>Glissement lent vers 1000 après X mois, ou modèle Glicko (incertitude).</td></tr>
+        <tr><td>Collusion / faux comptes</td><td>Plafond de points nets par paire ; signalement admin des paires à sens unique.</td></tr>
+        <tr><td>Double / mixte ≈ simple</td><td>Modèle d'équipe dédié.</td></tr>
+        <tr><td>K et bornes posés à la main</td><td>Recalibrer sur le vrai taux de surprises après quelques mois de données.</td></tr>
+        <tr><td>Yo-yo aux frontières de palier</td><td>Bande morte (hystérésis) autour des seuils.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="font-size:0.9rem"><code>MOV_SLOPE = 0</code> rétablit instantanément le calcul sans marge — le moteur reste ajustable.</p>
+  </section>
+
+  <section class="slide" id="s22">
+    <p class="num">20</p>
+    <h2>Les questions qu'on va vous poser</h2>
+    <div class="faq">
+      <div><q>Le rating, c'est un nombre de points ou une place au classement ?</q><p>Un nombre de points (600–2000). La place au classement en est dérivée pour l'affichage, elle n'entre jamais dans le calcul.</p></div>
+      <div><q>Pourquoi diviser par 400 ?</q><p>Facteur d'échelle standard (échecs / ITF) : 200 points d'écart ≈ 75/25, 400 points ≈ 90/10.</p></div>
+      <div><q>Le K, il dépend de qui ?</q><p>De chaque joueur séparément, sur son propre nombre de matchs classés. Deux K différents dans un même match, c'est normal.</p></div>
+      <div><q>Un joueur peut-il monter à l'infini en battant toujours le même ?</q><p>Non. Auto-limitation : le gain tend vers 0 quand l'écart grandit. Plafond réel ~1323 en grindant une personne.</p></div>
+      <div><q>Que se passe-t-il avant 5 matchs ?</q><p>Le rating bouge, le niveau affiché reste le niveau déclaré. Au 5<sup>e</sup> match confirmé, il se recale.</p></div>
+      <div><q>Un score contesté fausse-t-il le classement ?</q><p>Non : aucun effet tant qu'un admin n'a pas tranché. Il applique alors le barème normal sur le score retenu.</p></div>
+      <div><q>Le rating est-il visible quelque part ?</q><p>Jamais. Ni profil, ni classement, ni carte d'enjeu. Le joueur ne voit que ses 5 dots et ses statistiques.</p></div>
+      <div><q>Et le score du match, il compte ?</q><p>Oui, via la marge : 6-0 6-0 vaut ~×1,4, 7-6 7-6 ~×1,03. Même facteur pour les deux joueurs.</p></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  ATC — Abidjan Tennis Community. Le moteur de niveau est couvert par 100 cas de test automatisés.<br>
+  Tous les chiffres de cette présentation sont issus du calcul réel de l'application.
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ── progress bar + section counter ──
+  var slides = [].slice.call(document.querySelectorAll(".slide, .hero"));
+  var bar = document.getElementById("bar");
+  var prog = document.getElementById("prog");
+  var total = document.querySelectorAll(".slide").length;
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var i = slides.indexOf(e.target);
+      var shown = Math.min(Math.max(i, 1), total); // hero → 01
+      prog.textContent = pad(shown) + " / " + pad(total);
+      bar.style.width = (shown / total * 100) + "%";
+    });
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  slides.forEach(function (s) { io.observe(s); });
+
+  // ── keyboard nav ──
+  document.addEventListener("keydown", function (e) {
+    if (/input|textarea/i.test((e.target.tagName || ""))) return;
+    var dir = 0;
+    if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") dir = 1;
+    if (e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "PageUp") dir = -1;
+    if (!dir) return;
+    e.preventDefault();
+    var y = window.scrollY + window.innerHeight * 0.35;
+    var targets = slides.filter(function (s) { return dir === 1 ? s.offsetTop > y + 4 : s.offsetTop < y - 4; });
+    var next = dir === 1 ? targets[0] : targets[targets.length - 1];
+    if (next) next.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  });
+
+  // ── ELO engine (miroir exact de elo.ts) ──
+  function kFactor(g) { return g < 10 ? 40 : g < 30 ? 25 : 15; }
+  function expected(me, opp) { return 1 / (1 + Math.pow(10, (opp - me) / 400)); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function ratingToLevel(r) {
+    if (r < 900) return 1; if (r < 1100) return 2; if (r < 1300) return 3; if (r < 1500) return 4; return 5;
+  }
+  function gamesFromScore(s) {
+    var h = 0, g = 0, ok = false;
+    s.trim().split(/[\s,]+/).forEach(function (set) {
+      var m = /^(\d{1,2})-(\d{1,2})(?:\(\d+\))?$/.exec(set);
+      if (!m) return;
+      h += +m[1]; g += +m[2]; ok = true;
+    });
+    return ok ? [h, g] : null;
+  }
+  function movMultiplier(gw, gl) {
+    var t = gw + gl; if (t <= 0) return 1;
+    var d = Math.max(0, gw - gl) / t;
+    return clamp(1 + d * 0.4, 1, 1.4);
+  }
+  function computeElo(r, g, opp, won, mov) {
+    var e = expected(r, opp), s = won ? 1 : 0;
+    var delta = Math.round(kFactor(g) * (s - e) * mov);
+    return { delta: delta, newRating: clamp(r + delta, 600, 2000), e: e };
+  }
+  var MIN_GAMES = 5;
+  var LABELS = { 1: "N1 Débutant", 2: "N2 Intermédiaire", 3: "N3 Avancé", 4: "N4 Compétiteur", 5: "N5 Professionnel" };
+
+  var pA = document.getElementById("pA"), pB = document.getElementById("pB");
+  var oA = document.getElementById("oA"), oB = document.getElementById("oB");
+  var lA = document.getElementById("lA"), lB = document.getElementById("lB");
+  var sc = document.getElementById("sc");
+  var caseEl = document.getElementById("case");
+
+  function read(el) {
+    return {
+      rating: +el.querySelector("[data-range]").value,
+      games: Math.max(0, parseInt(el.querySelector("[data-games]").value, 10) || 0)
+    };
+  }
+  function dotsHTML(l) {
+    var o = ""; for (var i = 1; i <= 5; i++) o += '<i class="' + (i <= l ? "on" : "") + '"></i>'; return o;
+  }
+  function caseLabel(a, b, aWon) {
+    var diff = Math.abs(a.rating - b.rating);
+    var favRating = a.rating >= b.rating ? a.rating : b.rating;
+    var favWon = (a.rating >= b.rating) === aWon;
+    var kind = diff < 60 ? "Matchup équilibré"
+      : diff >= 500 ? "Écart extrême"
+      : "Favori / outsider";
+    if (diff >= 60 && !favWon) return kind + " — UPSET (l'outsider l'emporte)";
+    if (diff >= 500 && favWon) return kind + " — victoire attendue, gain ~nul";
+    return kind;
+  }
+
+  function paint(oc, before, res, games, mov) {
+    oc.querySelector("[data-e]").textContent = Math.round(res.e * 100) + " %";
+    oc.querySelector("[data-k]").textContent = kFactor(games);
+    oc.querySelector("[data-m]").textContent = "×" + mov.toFixed(2);
+    var d = oc.querySelector("[data-d]");
+    d.textContent = (res.delta > 0 ? "+" : res.delta < 0 ? "" : "±") + res.delta;
+    d.className = "dl " + (res.delta > 0 ? "pos" : res.delta < 0 ? "neg" : "zero");
+    oc.querySelector("[data-a]").textContent = before + "  →  " + res.newRating;
+    var moves = games + 1 >= MIN_GAMES;
+    var lvlEl = oc.querySelector("[data-lv]");
+    var dotsEl = oc.querySelector("[data-dots]");
+    if (moves) {
+      var lv = ratingToLevel(res.newRating);
+      dotsEl.innerHTML = dotsHTML(lv);
+      lvlEl.textContent = LABELS[lv];
+      lvlEl.className = "";
+    } else {
+      dotsEl.innerHTML = dotsHTML(0);
+      lvlEl.textContent = "niveau figé — " + (games + 1) + "/" + MIN_GAMES + " matchs";
+      lvlEl.className = "frozen";
+    }
+  }
+
+  function recompute() {
+    var a = read(pA), b = read(pB);
+    var aWon = document.querySelector('input[name="w"]:checked').value === "A";
+
+    pA.querySelector("[data-rl]").textContent = a.rating;
+    pB.querySelector("[data-rl]").textContent = b.rating;
+    pA.querySelector("[data-gl]").textContent = a.games;
+    pB.querySelector("[data-gl]").textContent = b.games;
+    pA.classList.toggle("win", aWon); pB.classList.toggle("win", !aWon);
+    lA.classList.toggle("on", aWon); lB.classList.toggle("on", !aWon);
+
+    var games = gamesFromScore(sc.value);
+    var mov = 1;
+    if (games) {
+      var winnerGames = aWon ? games[0] : games[1];
+      var loserGames = aWon ? games[1] : games[0];
+      mov = movMultiplier(winnerGames, loserGames);
+    }
+
+    paint(oA, a.rating, computeElo(a.rating, a.games, b.rating, aWon, mov), a.games, mov);
+    paint(oB, b.rating, computeElo(b.rating, b.games, a.rating, !aWon, mov), b.games, mov);
+
+    caseEl.textContent = caseLabel(a, b, aWon) + (games ? "" : "  ·  score illisible → marge 1");
+  }
+
+  [].slice.call(document.querySelectorAll('[data-range],[data-games],input[name="w"],#sc'))
+    .forEach(function (el) { el.addEventListener("input", recompute); el.addEventListener("change", recompute); });
+  recompute();
+})();
+</script>
+</body>
+</html>

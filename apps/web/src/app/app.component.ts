@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter, take } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +8,19 @@ import { RouterOutlet } from '@angular/router';
   imports: [RouterOutlet],
   templateUrl: './app.component.html',
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor() {
+    const router = inject(Router);
+    router.events
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        take(1),
+      )
+      .subscribe(() => {
+        const splash = document.getElementById('boot-splash');
+        if (!splash) return;
+        splash.classList.add('is-hidden');
+        setTimeout(() => splash.remove(), 400);
+      });
+  }
+}

@@ -8,6 +8,7 @@ export interface UpdateProfilePayload {
   name?: string;
   bio?: string | null;
   age?: number | null;
+  gender?: 'homme' | 'femme' | null;
   phone?: string | null;
   city?: string | null;
   clubId?: string | null;
@@ -42,7 +43,7 @@ export interface RankingEntry {
   initials:      string;
   avatarUrl:     string | null;
   level:         number;
-  ratingDelta:   number;
+  points:        number;
   matchesPlayed: number;
   wins:          number;
   losses:        number;

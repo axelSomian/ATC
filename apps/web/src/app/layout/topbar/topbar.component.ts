@@ -14,7 +14,7 @@ import type { AppNotification } from '../../core/models/notification.model';
   styleUrl: './topbar.component.css',
 })
 export class TopbarComponent {
-  private readonly store   = inject(AuthStore);
+  protected readonly store = inject(AuthStore);
   readonly notifService    = inject(NotificationsService);
   readonly messages        = inject(MessagesService);
   readonly user            = this.store.user;

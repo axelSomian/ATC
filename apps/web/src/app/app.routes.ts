@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, adminGuard, termsGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard, adminGuard, termsGuard, memberGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Page d'accueil publique (visiteur non connecté) : explique TenCI, renvoie vers
@@ -46,80 +46,111 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/legal/accept.component').then((m) => m.LegalAcceptComponent),
   },
+  // Page publique ouverte en scannant le QR d'une licence — aucune auth requise.
+  {
+    path: 'licence/verifier/:code',
+    loadComponent: () =>
+      import('./features/licence-verify/licence-verify.component').then((m) => m.LicenceVerifyComponent),
+  },
   {
     path: '',
     canActivate: [authGuard, termsGuard],
     loadComponent: () =>
       import('./layout/main-layout/main-layout.component').then((m) => m.MainLayoutComponent),
     children: [
+      // Appli joueur : un admin fédé n'y a pas accès, il administre uniquement
+      // (memberGuard le renvoie vers /admin).
       {
-        path: 'accueil',
-        loadComponent: () =>
-          import('./features/home/home.component').then((m) => m.HomeComponent),
-      },
-      {
-        path: 'members',
-        loadChildren: () =>
-          import('./features/members/members.routes').then((m) => m.MEMBERS_ROUTES),
-      },
-      {
-        path: 'clubs',
-        loadComponent: () =>
-          import('./features/clubs/clubs.component').then((m) => m.ClubsComponent),
-      },
-      {
-        path: 'clubs/:slug',
-        loadComponent: () =>
-          import('./features/clubs/club-detail/club-detail.component').then(
-            (m) => m.ClubDetailComponent,
-          ),
-      },
-      {
-        path: 'profile',
-        loadComponent: () =>
-          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
-      },
-      {
-        path: 'matchs',
-        loadComponent: () =>
-          import('./features/matches-hub/matches-hub.component').then((m) => m.MatchesHubComponent),
-      },
-      { path: 'matchmaking', redirectTo: 'matchs', pathMatch: 'full' },
-      { path: 'my-matches', redirectTo: 'matchs', pathMatch: 'full' },
-      {
-        path: 'actualite',
-        loadComponent: () =>
-          import('./features/news/news.component').then((m) => m.NewsComponent),
-      },
-      {
-        path: 'actualite/evenements',
-        loadComponent: () =>
-          import('./features/news/events.component').then((m) => m.NewsEventsComponent),
-      },
-      {
-        path: 'actualite/:slug',
-        loadComponent: () =>
-          import('./features/news/news-detail.component').then((m) => m.NewsDetailComponent),
-      },
-      {
-        path: 'messages',
-        loadComponent: () =>
-          import('./features/messages/messages.component').then((m) => m.MessagesComponent),
-      },
-      {
-        path: 'messages/:id',
-        loadComponent: () =>
-          import('./features/messages/conversation.component').then((m) => m.ConversationComponent),
-      },
-      {
-        path: 'notifications',
-        loadComponent: () =>
-          import('./features/notifications/notifications.component').then((m) => m.NotificationsComponent),
-      },
-      {
-        path: 'rankings',
-        loadComponent: () =>
-          import('./features/rankings/rankings.component').then((m) => m.RankingsComponent),
+        path: '',
+        canActivateChild: [memberGuard],
+        children: [
+          {
+            path: 'accueil',
+            loadComponent: () =>
+              import('./features/home/home.component').then((m) => m.HomeComponent),
+          },
+          {
+            path: 'members',
+            loadChildren: () =>
+              import('./features/members/members.routes').then((m) => m.MEMBERS_ROUTES),
+          },
+          {
+            path: 'clubs',
+            loadComponent: () =>
+              import('./features/clubs/clubs.component').then((m) => m.ClubsComponent),
+          },
+          {
+            path: 'clubs/:slug',
+            loadComponent: () =>
+              import('./features/clubs/club-detail/club-detail.component').then(
+                (m) => m.ClubDetailComponent,
+              ),
+          },
+          {
+            path: 'profile',
+            loadComponent: () =>
+              import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+          },
+          {
+            path: 'matchs',
+            loadComponent: () =>
+              import('./features/matches-hub/matches-hub.component').then((m) => m.MatchesHubComponent),
+          },
+          { path: 'matchmaking', redirectTo: 'matchs', pathMatch: 'full' },
+          { path: 'my-matches', redirectTo: 'matchs', pathMatch: 'full' },
+          {
+            path: 'licence',
+            loadComponent: () =>
+              import('./features/licence/licence.component').then((m) => m.LicenceComponent),
+          },
+          {
+            path: 'tournois',
+            loadComponent: () =>
+              import('./features/tournaments/tournaments.component').then((m) => m.TournamentsComponent),
+          },
+          {
+            path: 'tournois/:id',
+            loadComponent: () =>
+              import('./features/tournaments/tournament-detail/tournament-detail.component').then(
+                (m) => m.TournamentDetailComponent,
+              ),
+          },
+          {
+            path: 'actualite',
+            loadComponent: () =>
+              import('./features/news/news.component').then((m) => m.NewsComponent),
+          },
+          {
+            path: 'actualite/evenements',
+            loadComponent: () =>
+              import('./features/news/events.component').then((m) => m.NewsEventsComponent),
+          },
+          {
+            path: 'actualite/:slug',
+            loadComponent: () =>
+              import('./features/news/news-detail.component').then((m) => m.NewsDetailComponent),
+          },
+          {
+            path: 'messages',
+            loadComponent: () =>
+              import('./features/messages/messages.component').then((m) => m.MessagesComponent),
+          },
+          {
+            path: 'messages/:id',
+            loadComponent: () =>
+              import('./features/messages/conversation.component').then((m) => m.ConversationComponent),
+          },
+          {
+            path: 'notifications',
+            loadComponent: () =>
+              import('./features/notifications/notifications.component').then((m) => m.NotificationsComponent),
+          },
+          {
+            path: 'rankings',
+            loadComponent: () =>
+              import('./features/rankings/rankings.component').then((m) => m.RankingsComponent),
+          },
+        ],
       },
       {
         path: 'admin',

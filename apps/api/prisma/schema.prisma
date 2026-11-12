@@ -12,31 +12,33 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  phone           String?  @unique
+  id              String    @id @default(cuid())
+  email           String    @unique
+  phone           String?   @unique
   passwordHash    String? // null pour les comptes créés via Google
-  googleId        String?  @unique
+  googleId        String?   @unique
   name            String
   initials        String
   avatarUrl       String?
   level           Int // 1..5 — voir model Level
   age             Int?
+  gender          String? // 'homme' | 'femme', auto-déclaratif — utilisé pour les tournois réservés (ex. féminin)
   bio             String?
   city            String?
   clubId          String?
   racquet         String?
   preferredCourts String[]
   preferredTimes  String[]
-  joinedAt        DateTime @default(now())
-  online          Boolean  @default(false)
-  emailVerified   Boolean  @default(false) // e-mail confirmé (Google = true d'office)
+  joinedAt        DateTime  @default(now())
+  online          Boolean   @default(false)
+  emailVerified   Boolean   @default(false) // e-mail confirmé (Google = true d'office)
   termsAcceptedAt DateTime? // date d'acceptation des CGU + politique de confidentialité
-  termsVersion    String?   // version des textes acceptée (voir src/lib/legal.ts)
-  role            String   @default("member") // 'member' | 'admin'
-  rating          Int      @default(1000)
-  ratingGames     Int      @default(0)
-  ratingDelta     Int      @default(0)
+  termsVersion    String? // version des textes acceptée (voir src/lib/legal.ts)
+  role            String    @default("member") // 'member' | 'admin'
+  isGuest         Boolean   @default(false) // inscrit à un tournoi par un admin, sans compte réel — exclu des listes membres/classement
+  rating          Int       @default(1000)
+  ratingGames     Int       @default(0)
+  ratingDelta     Int       @default(0)
   bestRanking     Int?
 
   club                     Club?                     @relation(fields: [clubId], references: [id])
@@ -52,6 +54,12 @@ model User {
   passwordResetTokens      PasswordResetToken[]
   emailVerificationTokens  EmailVerificationToken[]
   achievements             Achievement[]
+  tournamentRegistrations  TournamentRegistration[]
+  tournamentResults        TournamentResult[]
+  tournamentMatchesAsPlayerA TournamentMatch[]       @relation("tournamentMatchPlayerA")
+  tournamentMatchesAsPlayerB TournamentMatch[]       @relation("tournamentMatchPlayerB")
+  tournamentMatchesWon       TournamentMatch[]       @relation("tournamentMatchWinner")
+  licences                 Licence[]
 
   @@index([rating, ratingGames])
   @@index([level, online])
@@ -146,28 +154,28 @@ model QuickMatch {
 }
 
 model Match {
-  id           String      @id @default(cuid())
-  hostId       String
-  guestId      String
-  playedAt     DateTime
-  court        String
-  type         String
-  scoreHost    String
-  scoreGuest   String
-  winnerId     String
-  status       String      @default("confirmed") // 'pending' | 'confirmed' | 'disputed'
-  recordedBy   String? // userId who submitted the score
+  id                String      @id @default(cuid())
+  hostId            String
+  guestId           String
+  playedAt          DateTime
+  court             String
+  type              String
+  scoreHost         String
+  scoreGuest        String
+  winnerId          String
+  status            String      @default("confirmed") // 'pending' | 'confirmed' | 'disputed'
+  recordedBy        String? // userId who submitted the score
   // Contexte figé au moment où l'ELO s'applique (confirmation / résolution) —
   // sert au calcul des badges (outsider, tombeur…). Null = match d'avant la feature.
   hostRatingBefore  Int?
   guestRatingBefore Int?
-  wasDisputed       Boolean @default(false) // a transité par 'disputed' au moins une fois
-  dispoPostId  String?     @unique
-  quickMatchId String?     @unique
-  host         User        @relation("host", fields: [hostId], references: [id])
-  guest        User        @relation("guest", fields: [guestId], references: [id])
-  dispoPost    DispoPost?  @relation(fields: [dispoPostId], references: [id])
-  quickMatch   QuickMatch? @relation(fields: [quickMatchId], references: [id])
+  wasDisputed       Boolean     @default(false) // a transité par 'disputed' au moins une fois
+  dispoPostId       String?     @unique
+  quickMatchId      String?     @unique
+  host              User        @relation("host", fields: [hostId], references: [id])
+  guest             User        @relation("guest", fields: [guestId], references: [id])
+  dispoPost         DispoPost?  @relation(fields: [dispoPostId], references: [id])
+  quickMatch        QuickMatch? @relation(fields: [quickMatchId], references: [id])
 
   @@index([hostId, status, playedAt])
   @@index([guestId, status, playedAt])
@@ -268,12 +276,12 @@ model PushSubscription {
 //   status = 'published'  OU  (status = 'scheduled' ET publishedAt <= now())
 model Post {
   id              String    @id @default(cuid())
-  category        String    // 'tournoi' | 'evenement' | 'partenariat' | 'infos_tennis' | 'atc'
+  category        String // 'tournoi' | 'evenement' | 'partenariat' | 'infos_tennis' | 'atc'
   status          String    @default("draft") // 'draft' | 'scheduled' | 'published' | 'archived'
   title           String
   slug            String    @unique
   summary         String
-  body            String    // markdown
+  body            String // markdown
   coverImageUrl   String?
   gallery         String[]  @default([]) // URLs Cloudinary
   publishedAt     DateTime? // date de publication effective ou programmée
@@ -281,12 +289,12 @@ model Post {
   endsAt          DateTime? // événements : fin
   location        String?
   ctaLabel        String?
-  ctaUrl          String?   // https://… ou chemin interne (/matchs…)
+  ctaUrl          String? // https://… ou chemin interne (/matchs…)
   featured        Boolean   @default(false)
-  featuredOrder   Int?      // ordre dans le carrousel « à la une »
-  promoCode       String?   // partenariats
-  source          String?   // infos_tennis : nom de la source (RSS ou saisi)
-  sourceUrl       String?   // infos_tennis : lien vers l'article d'origine
+  featuredOrder   Int? // ordre dans le carrousel « à la une »
+  promoCode       String? // partenariats
+  source          String? // infos_tennis : nom de la source (RSS ou saisi)
+  sourceUrl       String? // infos_tennis : lien vers l'article d'origine
   externalId      String?   @unique // guid RSS — dédupe des imports
   notifyOnPublish Boolean   @default(false)
   notifiedAt      DateTime? // anti double-envoi du push
@@ -338,4 +346,115 @@ model EmailVerificationToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// Classement fédéral — pivot produit (nov. 2026) : les matchs amicaux
+// (`User.rating`) n'alimentent plus le classement officiel, seuls les
+// résultats de tournoi comptent. Créé par un admin fédé, ouvert aux
+// inscriptions, puis clos et résulté (points par joueur) à la fin.
+model Tournament {
+  id                   String    @id @default(cuid())
+  name                 String
+  description          String?
+  location             String?
+  startDate            DateTime
+  endDate              DateTime
+  registrationDeadline DateTime?
+  status               String    @default("upcoming") // 'upcoming' | 'open' | 'closed' | 'completed'
+  // Règles d'éligibilité à l'inscription — contrôlées côté serveur, jamais
+  // juste indicatives (ex. tournoi féminin, tournoi débutants).
+  genderRule           String? // null (mixte) | 'homme' | 'femme'
+  minLevel             Int? // null = pas de minimum (1..5)
+  maxLevel             Int? // null = pas de maximum (1..5)
+  maxPlayers           Int? // null = pas de plafond ; capacité du tableau
+  allowedLicenceCategories String[] @default([]) // [] = pas de restriction ; sinon valeurs LicenceCategory (adulte, jeunes, ...)
+  bracketPublished     Boolean   @default(false) // le tableau n'est visible des joueurs qu'une fois publié par l'admin
+  createdAt            DateTime  @default(now())
+
+  registrations TournamentRegistration[]
+  results       TournamentResult[]
+  matches       TournamentMatch[]
+
+  @@index([status, startDate])
+}
+
+// Tableau à élimination directe généré par tirage au sort pour un tournoi.
+// `round` 1 = premier tour (peut contenir des « byes » si l'effectif n'est
+// pas une puissance de 2) ; le round le plus élevé est la finale. `slot`
+// indexe la position dans le round (base 0) ; le vainqueur du match
+// (round, slot) alimente automatiquement le match (round+1, floor(slot/2)).
+model TournamentMatch {
+  id           String    @id @default(cuid())
+  tournamentId String
+  round        Int
+  slot         Int
+  playerAId    String?
+  playerBId    String?
+  winnerId     String?
+  scoreText    String?
+  playedAt     DateTime?
+  createdAt    DateTime  @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  playerA    User?      @relation("tournamentMatchPlayerA", fields: [playerAId], references: [id], onDelete: SetNull)
+  playerB    User?      @relation("tournamentMatchPlayerB", fields: [playerBId], references: [id], onDelete: SetNull)
+  winner     User?      @relation("tournamentMatchWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+
+  @@unique([tournamentId, round, slot])
+  @@index([tournamentId])
+}
+
+model TournamentRegistration {
+  id           String   @id @default(cuid())
+  tournamentId String
+  userId       String
+  registeredAt DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, userId])
+}
+
+// Points attribués par un admin fédé une fois le tournoi terminé — seule
+// source du classement officiel (`GET /members/rankings`).
+model TournamentResult {
+  id           String   @id @default(cuid())
+  tournamentId String
+  userId       String
+  points       Int
+  position     Int?
+  createdAt    DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, userId])
+}
+
+// Licence-assurance FIT 2026 — grille officielle (doc fédération, nov. 2026) :
+// 6 catégories, tarif + validité déterminés automatiquement par date de
+// naissance + profil déclaré (jamais choisis librement par l'usager — voir
+// resolveLicenceCategory). Paiement simulé pour le MVP de démonstration
+// (aucun prestataire réel branché) ; pièce justificative/OCR/listes de
+// contrôle club (coach, école) volontairement hors scope pour l'instant.
+model Licence {
+  id               String   @id @default(cuid())
+  userId           String
+  season           String
+  category         String // 'adulte' | 'jeunes' | 'coach' | 'ecole' | 'decouverte_jeunes' | 'decouverte_adultes'
+  disciplines      String[] // 'tennis' | 'padel'
+  birthDate        DateTime
+  birthPlace       String
+  cniUrl           String // pièce justificative (CNI/passeport/extrait) — Cloudinary, non exposée publiquement
+  photoUrl         String // photo d'identité
+  licenceNumber    String   @unique // identifiant lisible, affiché sur le document (ex. FIT-2026-AB12CD)
+  verificationCode String   @unique // jeton haute entropie encodé dans le QR — seul moyen d'authentifier le document
+  amount           Int // FCFA — figé au moment du paiement (grille peut évoluer)
+  paidAt           DateTime @default(now())
+  expiresAt        DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, season])
 }

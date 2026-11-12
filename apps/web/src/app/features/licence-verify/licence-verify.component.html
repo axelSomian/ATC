@@ -1,0 +1,47 @@
+<div class="verify-page">
+  <div class="verify-card">
+    <span class="verify-brand">TenCI · Fédération</span>
+
+    @if (loading()) {
+      <p class="verify-loading">Vérification…</p>
+    } @else if (result()) {
+      <div class="verify-badge" [class.expired]="result()!.status === 'expired'">
+        @if (result()!.status === 'active') {
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+          <span>Licence valide</span>
+        } @else {
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <span>Licence expirée</span>
+        }
+      </div>
+
+      <h1>{{ result()!.holderName }}</h1>
+      <p class="verify-number">{{ result()!.licenceNumber }}</p>
+
+      <div class="verify-details">
+        <div class="verify-row">
+          <span>Catégorie</span>
+          <strong>{{ result()!.categoryLabel }}</strong>
+        </div>
+        <div class="verify-row">
+          <span>Discipline{{ result()!.disciplines.length > 1 ? 's' : '' }}</span>
+          <strong>{{ result()!.disciplines.join(' · ') }}</strong>
+        </div>
+        <div class="verify-row">
+          <span>Saison</span>
+          <strong>{{ result()!.season }}</strong>
+        </div>
+        <div class="verify-row">
+          <span>Valable jusqu'au</span>
+          <strong>{{ result()!.expiresAt | date:'d MMMM yyyy' }}</strong>
+        </div>
+      </div>
+    } @else {
+      <div class="verify-badge expired">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        <span>Document invalide</span>
+      </div>
+      <p class="verify-error">{{ error() }}</p>
+    }
+  </div>
+</div>

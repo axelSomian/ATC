@@ -24,6 +24,7 @@ export const updateMeSchema = z.object({
   phone: phoneField.optional().nullable(),
   bio: z.string().max(500).optional().nullable(),
   age: z.number().int().min(10).max(100).optional().nullable(),
+  gender: z.enum(['homme', 'femme']).optional().nullable(),
   city: z.string().optional().nullable(),
   clubId: z.string().optional().nullable(),
   racquet: z.string().optional().nullable(),

@@ -3,6 +3,7 @@ import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthStore } from '../../../core/stores/auth.store';
 import { GoogleAuthButtonComponent } from '../../../shared/google-auth-button/google-auth-button.component';
 import { environment } from '../../../../environments/environment';
 
@@ -16,6 +17,7 @@ import { environment } from '../../../../environments/environment';
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
+  private readonly store = inject(AuthStore);
   private readonly router = inject(Router);
 
   readonly googleEnabled = !!environment.googleClientId;
@@ -34,7 +36,8 @@ export class LoginComponent {
     this.loading.set(true);
 
     this.authService.login(this.form.getRawValue()).subscribe({
-      next: () => this.router.navigate(['/accueil']),
+      // Chaque persona a sa page d'arrivée : admin fédé → /admin, membre → /accueil.
+      next: () => this.router.navigate([this.store.isAdmin() ? '/admin' : '/accueil']),
       error: (err: HttpErrorResponse) => {
         this.error.set(err.error?.error ?? 'Erreur de connexion');
         this.loading.set(false);

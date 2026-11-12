@@ -40,6 +40,7 @@ export class SignupComponent {
 
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly submitted = signal(false);
 
   levelName(level: number): string {
     return this.reference.levelLabel(level);
@@ -54,7 +55,11 @@ export class SignupComponent {
   }
 
   submit(): void {
-    if (this.form.invalid || this.loading()) return;
+    this.submitted.set(true);
+    if (this.form.invalid || this.loading()) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.error.set('');
     this.loading.set(true);
 

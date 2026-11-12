@@ -3,6 +3,7 @@ import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthStore } from '../../../core/stores/auth.store';
 
 @Component({
   selector: 'app-reset-password',
@@ -12,11 +13,20 @@ import { AuthService } from '../../../core/services/auth.service';
   template: `
     <div class="auth-page">
       <div class="auth-visual">
+        <svg class="visual-blueprint" viewBox="0 0 700 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect x="90" y="80" width="520" height="740" fill="none" stroke="#F4F5F1" stroke-width="2" />
+          <line x1="90" y1="450" x2="610" y2="450" stroke="#F4F5F1" stroke-width="2" />
+          <line x1="220" y1="80" x2="220" y2="820" stroke="#F4F5F1" stroke-width="2" />
+          <line x1="480" y1="80" x2="480" y2="820" stroke="#F4F5F1" stroke-width="2" />
+          <line x1="350" y1="260" x2="350" y2="640" stroke="#F4F5F1" stroke-width="2" />
+        </svg>
         <div class="visual-content">
-          <div class="visual-badge">ATC</div>
-          <h1 class="visual-title">Abidjan Tennis<br />Community</h1>
-          <p class="visual-sub">La plateforme de référence pour les joueuses et joueurs de tennis à Abidjan.</p>
-          <div class="ci-stripe"></div>
+          <div class="visual-brand">
+            <span class="visual-wordmark">TenCI</span>
+            <span class="visual-official">Plateforme officielle</span>
+          </div>
+          <h1 class="visual-title">Le tennis ivoirien,<br />à armes égales.</h1>
+          <p class="visual-sub">Retrouvez vos matchs, votre niveau et vos clubs.</p>
         </div>
       </div>
 
@@ -80,6 +90,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class ResetPasswordComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly store = inject(AuthStore);
   private readonly router = inject(Router);
 
   readonly token = inject(ActivatedRoute).snapshot.queryParamMap.get('token') ?? '';
@@ -101,7 +112,7 @@ export class ResetPasswordComponent {
     this.error.set('');
     this.loading.set(true);
     this.auth.resetPassword(this.token, this.form.getRawValue().password).subscribe({
-      next: () => this.router.navigate(['/accueil']),
+      next: () => this.router.navigate([this.store.isAdmin() ? '/admin' : '/accueil']),
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.error.set(err.error?.error ?? 'Lien invalide ou expiré. Refaites une demande.');

@@ -19,16 +19,21 @@ const LINKS = [
   styleUrl: '../admin-shared.css',
   template: `
     <div class="panel">
-      <div class="admin-card card">
-        <div class="admin-card-head"><strong>Notification à tous les membres</strong></div>
+      @if (stats(); as s) {
+        <div class="kpi-board secondary">
+          <div class="kpi">
+            <span class="kpi-value">{{ s.subscriptions }}</span>
+            <span class="kpi-label">Appareil{{ s.subscriptions > 1 ? 's' : '' }} abonné{{ s.subscriptions > 1 ? 's' : '' }}</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-value">{{ s.users }}</span>
+            <span class="kpi-label">Membre{{ s.users > 1 ? 's' : '' }} concerné{{ s.users > 1 ? 's' : '' }}</span>
+          </div>
+        </div>
+      }
 
-        @if (stats(); as s) {
-          <p class="text-muted" style="font-size:var(--text-sm);margin:0 0 var(--space-4)">
-            {{ s.subscriptions }} appareil{{ s.subscriptions > 1 ? 's' : '' }} abonné{{ s.subscriptions > 1 ? 's' : '' }}
-            · {{ s.users }} membre{{ s.users > 1 ? 's' : '' }}
-          </p>
-        }
-
+      <div class="admin-section">
+        <strong>Notification à tous les membres</strong>
         <div class="field-row">
           <label>Titre</label>
           <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)"

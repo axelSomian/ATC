@@ -4,12 +4,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AdminService } from '../../../core/services/admin.service';
 import type { AdminLevel, LevelPayload } from '../../../core/models/admin.model';
 
-interface Editable extends AdminLevel {
-  _busy?: boolean;
-  _msg?: string;
-  _ok?: boolean;
-}
-
 @Component({
   selector: 'app-levels-panel',
   standalone: true,
@@ -20,38 +14,74 @@ interface Editable extends AdminLevel {
       @if (loading()) {
         <p class="panel-loading">Chargement…</p>
       } @else {
-        @for (l of levels(); track l.level) {
-          <div class="admin-card card">
-            <div class="admin-card-head">
-              <strong>Niveau {{ l.level }} — {{ l.nom }}</strong>
-            </div>
-            <div class="field-row">
-              <label>Code</label>
-              <input type="text" [(ngModel)]="l.code" />
-              <label>Nom</label>
-              <input type="text" [(ngModel)]="l.nom" />
-              <label>Profil</label>
-              <textarea [(ngModel)]="l.profil"></textarea>
-              <label>Match / jeu</label>
-              <textarea [(ngModel)]="l.jeu"></textarea>
-            </div>
-            @if (l._msg) { <p class="form-msg" [class.err]="!l._ok" [class.ok]="l._ok">{{ l._msg }}</p> }
-            <div class="row-actions">
-              <button class="btn btn-primary btn-sm" [disabled]="l._busy" (click)="save(l)">Enregistrer</button>
-            </div>
-          </div>
-        }
+        <div class="admin-table">
+          @for (l of levels(); track l.level) {
+            <button class="admin-table-row" (click)="edit(l)">
+              <div class="admin-row-main">
+                <div class="admin-row-title">Niveau {{ l.level }} — {{ l.nom }}</div>
+                <div class="admin-row-meta"><span>{{ l.profil }}</span></div>
+              </div>
+              <span class="admin-row-chevron">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </span>
+            </button>
+          }
+        </div>
       }
     </div>
+
+    @if (editing(); as draft) {
+      <div class="admin-drawer-backdrop" (click)="cancel()">
+        <div class="admin-drawer" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+          <header class="admin-drawer-head">
+            <h2>Niveau {{ draft.level }}</h2>
+            <button type="button" class="admin-drawer-close" aria-label="Fermer" (click)="cancel()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </header>
+
+          <div class="admin-drawer-body">
+            <div class="admin-section">
+              <div class="field-row">
+                <label>Code</label>
+                <input type="text" [(ngModel)]="draft.code" />
+                <label>Nom</label>
+                <input type="text" [(ngModel)]="draft.nom" />
+              </div>
+              <label class="field-block-label">Profil</label>
+              <textarea rows="3" [(ngModel)]="draft.profil"></textarea>
+              <label class="field-block-label">Match / jeu</label>
+              <textarea rows="3" [(ngModel)]="draft.jeu"></textarea>
+            </div>
+            @if (msg()) { <p class="form-msg" [class.err]="!ok()" [class.ok]="ok()">{{ msg() }}</p> }
+          </div>
+
+          <footer class="admin-drawer-footer">
+            <button class="btn btn-primary btn-sm" [disabled]="busy()" (click)="save(draft)">
+              {{ busy() ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+          </footer>
+        </div>
+      </div>
+    }
   `,
 })
 export class LevelsPanelComponent implements OnInit {
   private readonly admin = inject(AdminService);
 
-  readonly levels = signal<Editable[]>([]);
+  readonly levels = signal<AdminLevel[]>([]);
   readonly loading = signal(true);
 
+  readonly editing = signal<AdminLevel | null>(null);
+  readonly busy = signal(false);
+  readonly msg = signal('');
+  readonly ok = signal(false);
+
   ngOnInit(): void {
+    this.reload();
+  }
+
+  private reload(): void {
     this.admin.listLevels().subscribe({
       next: (list) => {
         this.levels.set(list);
@@ -61,20 +91,30 @@ export class LevelsPanelComponent implements OnInit {
     });
   }
 
-  save(l: Editable): void {
-    l._busy = true;
-    l._msg = undefined;
-    const payload: LevelPayload = { code: l.code, nom: l.nom, profil: l.profil, jeu: l.jeu };
-    this.admin.updateLevel(l.level, payload).subscribe({
+  edit(l: AdminLevel): void {
+    this.editing.set({ ...l });
+    this.msg.set('');
+  }
+
+  cancel(): void {
+    this.editing.set(null);
+  }
+
+  save(draft: AdminLevel): void {
+    this.busy.set(true);
+    this.msg.set('');
+    const payload: LevelPayload = { code: draft.code, nom: draft.nom, profil: draft.profil, jeu: draft.jeu };
+    this.admin.updateLevel(draft.level, payload).subscribe({
       next: () => {
-        l._busy = false;
-        l._ok = true;
-        l._msg = 'Enregistré ✓';
+        this.busy.set(false);
+        this.ok.set(true);
+        this.msg.set('Enregistré ✓');
+        this.reload();
       },
       error: (err: HttpErrorResponse) => {
-        l._busy = false;
-        l._ok = false;
-        l._msg = err.error?.error ?? 'Erreur.';
+        this.busy.set(false);
+        this.ok.set(false);
+        this.msg.set(err.error?.error ?? 'Erreur.');
       },
     });
   }

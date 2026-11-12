@@ -1,45 +1,73 @@
 <div class="home-page">
 
-  <header class="home-greeting">
-    <p class="home-hello">Bonjour</p>
-    <h1 class="home-name">{{ firstName() }}</h1>
-    <div class="home-sub">
-      <span class="home-level">
-        <span class="level-dots">
-          @for (d of dots; track d) {
-            <span class="level-dot" [class.active]="d <= (user()?.level ?? 1)"></span>
-          }
-        </span>
-        <span class="home-level-label">{{ levelLabel() }}</span>
+  <header class="home-head">
+    <div class="home-greeting">
+      <p class="home-hello">Bonjour</p>
+      <h1 class="home-name">{{ firstName() }}</h1>
+    </div>
+    <div class="home-level">
+      <span class="level-dots">
+        @for (d of dots; track d) {
+          <span class="level-dot" [class.active]="d <= (user()?.level ?? 1)"></span>
+        }
       </span>
-      @if (onlineCount() > 0) {
-        <span class="home-online">
-          <span class="online-dot"></span>
-          {{ onlineCount() }} {{ onlineCount() > 1 ? 'membres en ligne' : 'membre en ligne' }}
-        </span>
-      }
+      <span class="home-level-label">{{ levelLabel() }}</span>
     </div>
   </header>
 
-  <div class="widget-grid">
-    @for (w of widgets; track w.id) {
-      <a
-        [routerLink]="w.route"
-        [queryParams]="w.query ?? null"
-        class="widget"
-        [attr.data-tone]="w.tone"
-        [style.background-image]="w.img ? 'url(/assets/img/w/' + w.img + '.webp)' : null"
-      >
-        <span class="widget-icon" [innerHTML]="w.icon"></span>
-        <span class="widget-text">
-          <span class="widget-title">{{ w.title }}</span>
-          <span class="widget-sub">{{ w.sub }}</span>
-          @if (meta(w.id); as m) {
-            <span class="widget-meta">{{ m }}</span>
+  <a routerLink="/licence" class="licence-strip">
+    <span class="licence-strip-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5.2 3.6 9.4 8 11 4.4-1.6 8-5.8 8-11V5z"/></svg>
+    </span>
+    <span class="licence-strip-text">
+      <span class="licence-strip-title">Licence fédérale 2026</span>
+      <span class="licence-strip-sub">Obligatoire pour les matchs officiels</span>
+    </span>
+    <span class="licence-strip-cta">
+      Activer
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>
+    </span>
+  </a>
+
+  <a routerLink="/matchs" [queryParams]="{ vue: 'trouver' }" class="action-card">
+    <span class="action-card-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </span>
+    <span class="action-card-text">
+      <span class="action-card-title">Trouver un adversaire</span>
+      <span class="action-card-sub">{{ matchmakingHint() }}</span>
+    </span>
+    <span class="action-card-cta">
+      Lancer une annonce
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>
+    </span>
+  </a>
+
+  @if (stats(); as s) {
+    <div class="brief-row">
+      <app-stat-tile label="Classement" [value]="s.rank != null ? '#' + s.rank : '—'" tone="gold" [plain]="true" />
+      <app-stat-tile label="Victoires" [value]="s.winRate + '%'" tone="positive" [plain]="true" />
+      <app-stat-tile label="Matchs joués" [value]="s.matchesPlayed" [plain]="true" />
+    </div>
+  }
+
+  <section class="quick-section">
+    <app-section-title label="Accès rapide" />
+    <div class="quick-list">
+      @for (l of quickLinks; track l.id) {
+        <a [routerLink]="l.route" class="quick-row">
+          <span class="quick-row-icon" [innerHTML]="l.icon"></span>
+          <span class="quick-row-text">
+            <span class="quick-row-title">{{ l.label }}</span>
+            <span class="quick-row-hint">{{ hint(l.id) }}</span>
+          </span>
+          @if (badge(l.id); as b) {
+            <span class="quick-row-badge">{{ b }}</span>
           }
-        </span>
-      </a>
-    }
-  </div>
+          <svg class="quick-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+        </a>
+      }
+    </div>
+  </section>
 
 </div>

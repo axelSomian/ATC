@@ -34,9 +34,12 @@ export interface UserPublic {
   joinedAt: string;
 }
 
+export type Gender = 'homme' | 'femme';
+
 export interface UserProfile extends UserPublic {
   bio?: string;
   age?: number;
+  gender?: Gender | null;
   racquet?: string;
   preferredCourts: string[];
   preferredTimes: string[];

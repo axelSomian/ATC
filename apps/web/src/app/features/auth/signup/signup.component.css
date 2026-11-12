@@ -14,6 +14,8 @@
 }
 .signup-consent input { margin-top: 2px; flex-shrink: 0; width: 16px; height: 16px; }
 .signup-consent a { font-weight: 500; }
+.signup-consent.is-invalid { color: var(--color-error); }
+.signup-consent.is-invalid input { outline: 2px solid var(--color-error); outline-offset: 2px; }
 
 .auth-page {
   display: flex;
@@ -22,16 +24,12 @@
   background: var(--color-surface);
 }
 
-/* ── Panneau visuel (photo) ── */
+/* ── Panneau visuel (navy + filigrane, même famille que la page d'accueil) ── */
 .auth-visual {
   position: relative;
   flex: 1;
   min-width: 0;
-  background-color: var(--color-deep-forest);
-  background-image: url('/assets/img/court-editorial.webp');
-  background-size: cover;
-  background-position: 30% 56%;
-  background-repeat: no-repeat;
+  background: var(--color-ink);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -39,16 +37,18 @@
   overflow: hidden;
 }
 
+.visual-blueprint {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
 .auth-visual::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(16, 36, 61, 0.25) 0%,
-    rgba(16, 36, 61, 0.50) 44%,
-    rgba(10, 20, 42, 0.92) 100%
-  );
+  background: linear-gradient(180deg, transparent 0%, rgba(10, 20, 42, 0.55) 100%);
 }
 
 .visual-content {
@@ -57,33 +57,36 @@
   max-width: 440px;
 }
 
-.visual-badge {
-  display: inline-flex;
+.visual-brand {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font-family: var(--font-logo);
-  background: rgba(255, 255, 255, 0.10);
+  gap: 12px;
+  margin-bottom: 30px;
+}
+.visual-wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
   color: #fff;
+  letter-spacing: -0.01em;
+}
+.visual-official {
   font-size: 11px;
   font-weight: 700;
-  padding: 6px 13px;
+  color: var(--color-accent);
+  border: 1px solid rgba(217, 236, 60, 0.4);
   border-radius: var(--radius-full);
-  margin-bottom: 26px;
-  letter-spacing: 0.14em;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  text-transform: uppercase;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  padding: 4px 11px;
 }
 
 .visual-title {
-  font-size: clamp(32px, 3.6vw, 48px);
-  font-weight: 700;
-  line-height: 1.06;
-  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 3.6vw, 46px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
   color: #fff;
   margin-bottom: 20px;
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.25);
 }
 
 .visual-sub {
@@ -93,21 +96,6 @@
   line-height: 1.6;
   margin-bottom: 34px;
 }
-
-.ci-stripe {
-  display: flex;
-  gap: 6px;
-  width: 44px;
-}
-.ci-stripe::before,
-.ci-stripe::after {
-  content: '';
-  height: 3px;
-  flex: 1;
-  border-radius: 2px;
-}
-.ci-stripe::before { background: var(--color-sage); }
-.ci-stripe::after  { background: rgba(255, 255, 255, 0.22); }
 
 /* ── Panneau formulaire ── */
 .auth-panel {
@@ -247,23 +235,13 @@
     min-height: 200px;
     max-height: 280px;
     padding: 22px 24px 44px;
-    background-position: 34% 62%;
   }
-  .auth-visual::before {
-    background: linear-gradient(
-      180deg,
-      rgba(16, 36, 61, 0.15) 0%,
-      rgba(16, 36, 61, 0.42) 42%,
-      rgba(10, 20, 42, 0.88) 100%
-    );
-  }
-  .visual-badge { margin-bottom: 12px; }
+  .visual-brand { margin-bottom: 12px; }
   .visual-title {
     font-size: 26px;
     margin-bottom: 0;
   }
   .visual-sub { display: none; }
-  .ci-stripe { display: none; }
 
   .auth-panel {
     width: 100%;

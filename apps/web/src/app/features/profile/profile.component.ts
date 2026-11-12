@@ -111,6 +111,7 @@ export class ProfileComponent implements OnInit {
     name:    ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
     bio:     [''],
     age:     this.fb.control<number | null>(null),
+    gender:  this.fb.control<'homme' | 'femme' | ''>(''),
     phone:   [''],
     city:    [''],
     clubId:  [''],
@@ -136,7 +137,7 @@ export class ProfileComponent implements OnInit {
     const p = this.profile();
     if (!p) return;
     this.form.patchValue({
-      name: p.name, bio: p.bio ?? '', age: p.age ?? null,
+      name: p.name, bio: p.bio ?? '', age: p.age ?? null, gender: p.gender ?? '',
       phone: p.phone ?? '', city: p.city ?? '', clubId: p.club?.id ?? '', racquet: p.racquet ?? '',
     });
     this.selectedLevel.set(p.level);
@@ -196,6 +197,7 @@ export class ProfileComponent implements OnInit {
       name:    raw.name ?? undefined,
       bio:     raw.bio     || null,
       age:     raw.age     || null,
+      gender:  raw.gender  || null,
       phone:   raw.phone   || null,
       city:    raw.city    || null,
       clubId:  raw.clubId  || null,
