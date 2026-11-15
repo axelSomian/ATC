@@ -1,5 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import type { PointsBreakdown } from '../../core/models/ranking.model';
 import { MembersService, type RankingEntry } from '../../core/services/members.service';
 import { AuthStore } from '../../core/stores/auth.store';
 import { ReferenceService } from '../../core/services/reference.service';
@@ -9,7 +11,7 @@ import { EmptyStateComponent } from '../../shared/empty-state/empty-state.compon
 @Component({
   selector: 'app-rankings',
   standalone: true,
-  imports: [RouterLink, LevelLegendComponent, EmptyStateComponent],
+  imports: [RouterLink, DatePipe, LevelLegendComponent, EmptyStateComponent],
   templateUrl: './rankings.component.html',
   styleUrl: './rankings.component.css',
 })
@@ -20,6 +22,7 @@ export class RankingsComponent implements OnInit {
 
   readonly rankings = signal<RankingEntry[]>([]);
   readonly loading  = signal(true);
+  readonly myPoints = signal<PointsBreakdown | null>(null);
 
   readonly currentUserId = computed(() => this.authStore.user()?.id ?? '');
 
@@ -32,6 +35,8 @@ export class RankingsComponent implements OnInit {
       next:  r => { this.rankings.set(r); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
+    const me = this.currentUserId();
+    if (me) this.membersSvc.getPoints(me).subscribe({ next: (p) => this.myPoints.set(p) });
   }
 
   levelLabel(level: number): string {

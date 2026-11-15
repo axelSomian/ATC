@@ -10,7 +10,10 @@
         <h1>{{ t.name }}</h1>
         <span class="tournament-status" [class]="'status-' + t.status">{{ statusLabel(t) }}</span>
       </div>
-      @if (t.rulesLabel) { <span class="tournament-rules">{{ t.rulesLabel }}</span> }
+      <div class="td-tags">
+        <span class="tournament-category">{{ t.categoryLabel }}</span>
+        @if (t.rulesLabel) { <span class="tournament-rules">{{ t.rulesLabel }}</span> }
+      </div>
       <p class="td-meta">
         {{ t.startDate | date:'d MMMM' }} – {{ t.endDate | date:'d MMMM yyyy' }}
         @if (t.location) { <span class="tournament-dot">·</span> {{ t.location }} }
@@ -51,6 +54,22 @@
         <span class="td-stat-label">Restantes</span>
       </div>
     </div>
+
+    <section class="td-section">
+      <h2>Points en jeu</h2>
+      <p class="td-points-hint">
+        Points de classement fédéral selon le tour atteint (tournoi {{ t.categoryLabel }}, niveau {{ t.rankingLevel }}).
+        Le classement retient tes 6 meilleurs résultats des 12 derniers mois.
+      </p>
+      <div class="td-points">
+        @for (row of t.pointsAtStake; track row.label) {
+          <div class="td-points-row" [class.td-points-top]="$first">
+            <span>{{ row.label }}</span>
+            <strong>{{ row.points }}</strong>
+          </div>
+        }
+      </div>
+    </section>
 
     @if (t.participants.length > 0) {
       <section class="td-section">
@@ -138,6 +157,7 @@
                           @if (m.playerA.avatarUrl) { <img [src]="m.playerA.avatarUrl" [alt]="m.playerA.name" class="avatar-img" /> } @else { {{ m.playerA.initials }} }
                         </div>
                         <span class="td-match-name">{{ m.playerA.name }}</span>
+                        @if (b.seeds[m.playerA.id]) { <span class="td-seed" title="Tête de série">TS {{ b.seeds[m.playerA.id] }}</span> }
                       } @else {
                         <span class="td-slot-empty" aria-hidden="true"></span>
                         <span class="td-match-tbd">À déterminer</span>
@@ -153,6 +173,7 @@
                           @if (m.playerB.avatarUrl) { <img [src]="m.playerB.avatarUrl" [alt]="m.playerB.name" class="avatar-img" /> } @else { {{ m.playerB.initials }} }
                         </div>
                         <span class="td-match-name">{{ m.playerB.name }}</span>
+                        @if (b.seeds[m.playerB.id]) { <span class="td-seed" title="Tête de série">TS {{ b.seeds[m.playerB.id] }}</span> }
                       } @else if (m.playerA) {
                         <span class="td-slot-empty" aria-hidden="true"></span>
                         <span class="td-match-tbd">Qualifié d'office</span>

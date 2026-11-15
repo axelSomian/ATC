@@ -18,6 +18,7 @@
           <div class="tournament-card-top">
             <h2 class="tournament-name">{{ t.name }}</h2>
             <span class="tournament-status" [class]="'status-' + t.status">{{ statusLabel(t) }}</span>
+            <span class="tournament-category">{{ t.categoryLabel }}</span>
             @if (t.rulesLabel) { <span class="tournament-rules">{{ t.rulesLabel }}</span> }
           </div>
 

@@ -1,5 +1,7 @@
 import type { UserRole } from './user.model';
 import type { LicenceCategory } from '../services/licence.service';
+import type { TournamentCategory } from './ranking.model';
+export type { TournamentCategory };
 
 export interface AdminClub {
   id: string;
@@ -82,6 +84,19 @@ export interface BroadcastPushResult {
 export type TournamentStatus = 'upcoming' | 'open' | 'closed' | 'completed';
 export type TournamentGenderRule = 'homme' | 'femme' | null;
 
+export interface LevelChange {
+  id: string;
+  user: { id: string; name: string; initials: string; avatarUrl: string | null; level: number };
+  fromLevel: number;
+  toLevel: number;
+  source: 'auto' | 'admin';
+  reason: string | null;
+  tournaments: { id: string; name: string }[];
+  createdAt: string;
+  revertedAt: string | null;
+  revertible: boolean;
+}
+
 export interface AdminTournament {
   id: string;
   name: string;
@@ -92,8 +107,9 @@ export interface AdminTournament {
   registrationDeadline: string | null;
   status: TournamentStatus;
   genderRule: TournamentGenderRule;
-  minLevel: number | null;
+  /** Niveau du tournoi ; null = open (compté N5). */
   maxLevel: number | null;
+  category: TournamentCategory;
   maxPlayers: number | null;
   allowedLicenceCategories: LicenceCategory[];
   bracketPublished: boolean;
@@ -110,8 +126,8 @@ export type TournamentPayload = Partial<{
   registrationDeadline: string | null;
   status: TournamentStatus;
   genderRule: TournamentGenderRule;
-  minLevel: number | null;
   maxLevel: number | null;
+  category: TournamentCategory;
   allowedLicenceCategories: LicenceCategory[];
   maxPlayers: number | null;
 }>;
@@ -119,7 +135,7 @@ export type TournamentPayload = Partial<{
 export interface TournamentRegistrant {
   user: { id: string; name: string; initials: string; avatarUrl: string | null; level: number; isGuest: boolean };
   registeredAt: string;
-  result: { points: number; position: number | null } | null;
+  result: { points: number; position: number | null; source: 'auto' | 'manual' } | null;
 }
 
 export interface TournamentRegistrationsView {
@@ -167,6 +183,8 @@ export interface Bracket {
   totalRounds: number;
   champion: BracketPlayer | null;
   rounds: BracketRound[];
+  /** Têtes de série fixées au tirage : userId → numéro. */
+  seeds: Record<string, number>;
 }
 
 export interface SetMatchResultPayload {

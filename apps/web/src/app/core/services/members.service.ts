@@ -1,3 +1,4 @@
+import type { PointsBreakdown } from '../models/ranking.model';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { UserMe, UserProfile } from '../models/user.model';
@@ -72,6 +73,11 @@ export class MembersService {
       if (v !== undefined && v !== null && v !== '') clean[k] = v as string | number | boolean;
     }
     return this.http.get<MembersPage>(`${API}/members`, { params: clean });
+  }
+
+  /** Détail des points de classement d'un joueur (6 meilleurs résultats sur 12 mois). */
+  getPoints(id: string) {
+    return this.http.get<PointsBreakdown>(`/api/v1/members/${id}/points`);
   }
 
   getRankings() {

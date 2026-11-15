@@ -28,6 +28,10 @@ function pushContent(type: string, p: Record<string, unknown>): { title: string;
       return { title: 'Score contesté', body: 'Le score de votre match a été contesté', url: `${MATCHS}?vue=mes-matchs&tab=history` };
     case 'score_resolved':
       return { title: 'Litige tranché', body: 'Un administrateur a tranché le litige de votre match', url: `${MATCHS}?vue=mes-matchs&tab=history` };
+    case 'level_up':
+      return { title: 'Tu montes de niveau', body: `Tes victoires en tournoi te font passer niveau ${p['toLevel']}`, url: '/profile' };
+    case 'level_changed':
+      return { title: 'Niveau modifié', body: `La fédération a fixé ton niveau à ${p['toLevel']}`, url: '/profile' };
     case 'badge_unlocked': {
       const label = (p['label'] as string | undefined) ?? 'un nouveau badge';
       return { title: 'Badge débloqué', body: `Tu viens de débloquer « ${label} »`, url: '/profile?tab=badges' };

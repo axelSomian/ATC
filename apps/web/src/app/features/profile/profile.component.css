@@ -375,3 +375,7 @@ textarea.form-control.bio-input { min-height: 100px; }
   .stats-row { grid-template-columns: 1fr 1fr; }
   .stats-row app-stat-tile:first-child { grid-column: 1 / -1; }
 }
+
+/* Niveau verrouillé après le 1er tournoi (évolue avec les résultats) */
+.level-picker-locked .level-btn { cursor: not-allowed; }
+.level-picker-locked .level-btn:hover .level-dot-lg { transform: none; }

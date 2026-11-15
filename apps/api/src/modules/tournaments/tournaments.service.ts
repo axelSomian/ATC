@@ -2,6 +2,24 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { categoryLabel, type LicenceCategory } from '../licence/licence.rules.js';
+import { CATEGORY_LABEL, categoryOf, tournamentLevel, pointsTable, CATEGORY_MIN_PLAYERS } from './ranking.rules.js';
+
+/** Infos de classement d'un tournoi : catégorie, niveau qui compte, points en jeu. */
+function rankingInfo(t: { maxLevel: number | null; category: string; maxPlayers: number | null }, players: number) {
+  const category = categoryOf(t.category);
+  const level = tournamentLevel(t.maxLevel);
+  // Taille du tableau : le plafond s'il existe, sinon le nombre d'inscrits (minimum de la catégorie).
+  const size = Math.max(t.maxPlayers ?? players, CATEGORY_MIN_PLAYERS[category], 2);
+  const totalRounds = Math.ceil(Math.log2(size));
+  return {
+    categoryLabel: CATEGORY_LABEL[category],
+    rankingLevel: level,
+    pointsAtStake: pointsTable(level, category, totalRounds).map((row) => ({
+      label: row.isChampion ? 'Vainqueur' : roundLabel(row.roundReached, totalRounds, true),
+      points: row.points,
+    })),
+  };
+}
 
 const TOURNAMENT_SELECT = {
   id: true,
@@ -13,8 +31,8 @@ const TOURNAMENT_SELECT = {
   registrationDeadline: true,
   status: true,
   genderRule: true,
-  minLevel: true,
   maxLevel: true,
+  category: true,
   maxPlayers: true,
   allowedLicenceCategories: true,
   bracketPublished: true,
@@ -22,7 +40,6 @@ const TOURNAMENT_SELECT = {
 
 interface Rules {
   genderRule: string | null;
-  minLevel: number | null;
   maxLevel: number | null;
   maxPlayers: number | null;
   allowedLicenceCategories: string[];
@@ -32,9 +49,8 @@ interface Rules {
 function rulesLabel(t: Rules): string | null {
   const parts: string[] = [];
   if (t.genderRule) parts.push(t.genderRule === 'femme' ? 'Réservé aux femmes' : 'Réservé aux hommes');
-  if (t.minLevel != null && t.maxLevel != null) parts.push(`Niveau ${t.minLevel}-${t.maxLevel}`);
-  else if (t.minLevel != null) parts.push(`Niveau ${t.minLevel}+`);
-  else if (t.maxLevel != null) parts.push(`Niveau ${t.maxLevel} max`);
+  // Surclassement autorisé : un tournoi N3 est ouvert aux N1, N2 et N3.
+  if (t.maxLevel != null) parts.push(t.maxLevel === 1 ? 'Niveau 1' : `Niveau 1 à ${t.maxLevel}`);
   if (t.allowedLicenceCategories.length) {
     parts.push(`Licence ${t.allowedLicenceCategories.map((c) => categoryLabel(c as LicenceCategory)).join(' ou ')}`);
   }
@@ -50,8 +66,9 @@ function ineligibilityReason(
   if (t.genderRule && t.genderRule !== user.gender) {
     return `Réservé aux ${t.genderRule === 'femme' ? 'femmes' : 'hommes'} (renseigne ton genre dans ton profil)`;
   }
-  if (t.minLevel != null && user.level < t.minLevel) return `Niveau ${t.minLevel} minimum requis`;
-  if (t.maxLevel != null && user.level > t.maxLevel) return `Niveau ${t.maxLevel} maximum autorisé`;
+  if (t.maxLevel != null && user.level > t.maxLevel) {
+    return `Tournoi de niveau ${t.maxLevel} : on peut jouer au-dessus de son niveau, jamais en dessous`;
+  }
   if (t.allowedLicenceCategories.length && !t.allowedLicenceCategories.includes(user.licenceCategory ?? '')) {
     const labels = t.allowedLicenceCategories.map((c) => categoryLabel(c as LicenceCategory)).join(', ');
     return `Réservé aux détenteurs d'une licence active : ${labels}`;
@@ -91,6 +108,7 @@ export async function listTournaments(userId: string) {
     registered: registrations.length > 0,
     rulesLabel: rulesLabel(t),
     ineligibleReason: ineligibilityReason(t, user, _count.registrations),
+    categoryLabel: CATEGORY_LABEL[categoryOf(t.category)],
   }));
 }
 
@@ -119,6 +137,7 @@ export async function getTournament(id: string, userId: string) {
     ...rest,
     registered: registrations.some((r) => r.userId === userId),
     participants: registrations.map((r) => r.user),
+    ...rankingInfo(tournament, registrations.length),
     rulesLabel: rulesLabel(tournament),
     ineligibleReason: ineligibilityReason(tournament, user, registrations.length),
   };
@@ -165,8 +184,19 @@ export async function unregisterFromTournament(tournamentId: string, userId: str
 
 const PLAYER_SELECT = { id: true, name: true, initials: true, avatarUrl: true } as const;
 
-function roundLabel(round: number, totalRounds: number): string {
+/** Nom du tour ; `asResult` = libellé du joueur éliminé à ce tour (« Finaliste », « Demi-finaliste »...). */
+function roundLabel(round: number, totalRounds: number, asResult = false): string {
   const distance = totalRounds - round;
+  if (asResult) {
+    switch (distance) {
+      case 0: return 'Finaliste';
+      case 1: return 'Demi-finaliste';
+      case 2: return 'Quart de finale';
+      case 3: return 'Huitième de finale';
+      case 4: return 'Seizième de finale';
+      default: return `Tour ${round}`;
+    }
+  }
   switch (distance) {
     case 0: return 'Finale';
     case 1: return 'Demi-finale';
@@ -187,7 +217,14 @@ export async function getBracket(tournamentId: string) {
     orderBy: [{ round: 'asc' }, { slot: 'asc' }],
     include: { playerA: { select: PLAYER_SELECT }, playerB: { select: PLAYER_SELECT }, winner: { select: PLAYER_SELECT } },
   });
-  if (matches.length === 0) return { generated: false as const, totalRounds: 0, champion: null, rounds: [] };
+  if (matches.length === 0) return { generated: false as const, totalRounds: 0, champion: null, rounds: [], seeds: {} as Record<string, number> };
+
+  // Têtes de série fixées au tirage (userId → numéro), affichées « TS n » dans le tableau.
+  const seeded = await prisma.tournamentRegistration.findMany({
+    where: { tournamentId, seed: { not: null } },
+    select: { userId: true, seed: true },
+  });
+  const seeds: Record<string, number> = Object.fromEntries(seeded.map((r) => [r.userId, r.seed as number]));
 
   const totalRounds = Math.max(...matches.map((m) => m.round));
   const rounds = Array.from({ length: totalRounds }, (_, i) => {
@@ -195,7 +232,7 @@ export async function getBracket(tournamentId: string) {
     return { round, label: roundLabel(round, totalRounds), matches: matches.filter((m) => m.round === round) };
   });
   const final = matches.find((m) => m.round === totalRounds);
-  return { generated: true as const, totalRounds, champion: final?.winner ?? null, rounds };
+  return { generated: true as const, totalRounds, champion: final?.winner ?? null, rounds, seeds };
 }
 
 /** Vue publique du tableau — ne renvoie les données que si l'admin l'a publié. */
@@ -203,7 +240,7 @@ export async function getPublishedBracket(tournamentId: string) {
   const tournament = await prisma.tournament.findUnique({ where: { id: tournamentId }, select: { bracketPublished: true } });
   if (!tournament) throw new AppError(404, 'Tournoi introuvable');
   if (!tournament.bracketPublished) {
-    return { published: false as const, generated: false as const, totalRounds: 0, champion: null, rounds: [] };
+    return { published: false as const, generated: false as const, totalRounds: 0, champion: null, rounds: [], seeds: {} as Record<string, number> };
   }
   return { published: true as const, ...(await getBracket(tournamentId)) };
 }

@@ -1,7 +1,8 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { assertValidClub } from '../reference/reference.service.js';
-import { getRankByTournamentPoints } from '../../lib/ranking.js';
+import { getRankByTournamentPoints, getStandings } from '../../lib/ranking.js';
+import { canSelfEditLevel } from '../tournaments/ranking.service.js';
 import type { MembersQueryDto, UpdateMeDto } from './members.schema.js';
 
 const CLUB_SELECT = {
@@ -59,9 +60,12 @@ export async function listMembers(dto: MembersQueryDto) {
 }
 
 export async function getOwnProfile(userId: string) {
-  const member = await prisma.user.findUnique({ where: { id: userId }, select: ME_SELECT });
+  const [member, levelEditable] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: ME_SELECT }),
+    canSelfEditLevel(userId),
+  ]);
   if (!member) throw new AppError(404, 'Membre introuvable');
-  return member;
+  return { ...member, levelEditable };
 }
 
 const PLAYER_SELECT_SMALL = {
@@ -116,20 +120,12 @@ export async function getMemberById(id: string) {
 // Classement fédéral (pivot nov. 2026) : uniquement les points de tournoi
 // (TournamentResult) — les matchs amicaux (ELO/`rating`) n'y figurent plus.
 export async function getRankings() {
-  const grouped = await prisma.tournamentResult.groupBy({
-    by: ['userId'],
-    _sum: { points: true },
-  });
-
-  const totals = grouped
-    .map((g: { userId: string; _sum: { points: number | null } }) => ({ userId: g.userId, points: g._sum.points ?? 0 }))
-    .filter((t: { points: number }) => t.points > 0)
-    .sort((a: { points: number }, b: { points: number }) => b.points - a.points)
-    .slice(0, 100);
+  // 6 meilleurs résultats des 12 derniers mois (getStandings), comptes fantômes exclus.
+  const totals = (await getStandings()).slice(0, 100);
 
   if (totals.length === 0) return [];
 
-  const ids = totals.map((t: { userId: string }) => t.userId);
+  const ids = totals.map((t) => t.userId);
 
   const [users, winCounts, hostCounts, guestCounts] = await Promise.all([
     prisma.user.findMany({
@@ -159,14 +155,14 @@ export async function getRankings() {
   const guestMap = new Map<string, number>(guestCounts.map((r: { guestId: string;  _count: { id: number } }) => [r.guestId, r._count.id]));
 
   return totals
-    .map((t: { userId: string; points: number }, i: number) => {
+    .map((t) => {
       const u = usersMap.get(t.userId);
       if (!u) return null;
       const wins          = winsMap.get(t.userId)  ?? 0;
       const matchesPlayed = (hostMap.get(t.userId) ?? 0) + (guestMap.get(t.userId) ?? 0);
       const winRate       = matchesPlayed > 0 ? Math.round((wins / matchesPlayed) * 100) : 0;
       return {
-        rank: i + 1,
+        rank: t.rank,
         id: u.id, name: u.name, initials: u.initials, avatarUrl: u.avatarUrl,
         level: u.level, points: t.points,
         matchesPlayed, wins, losses: matchesPlayed - wins, winRate,
@@ -192,6 +188,14 @@ export async function updateMe(userId: string, dto: UpdateMeDto) {
   }
 
   if (dto.clubId !== undefined) await assertValidClub(dto.clubId);
+
+  // Niveau verrouillé dès le 1er tournoi : ensuite seuls le système (montée) et l'admin le changent.
+  if (dto.level !== undefined) {
+    const current = await prisma.user.findUnique({ where: { id: userId }, select: { level: true } });
+    if (current && current.level !== dto.level && !(await canSelfEditLevel(userId))) {
+      throw new AppError(403, 'Ton niveau évolue maintenant avec tes résultats en tournoi. Contacte la fédération pour le corriger.');
+    }
+  }
 
   return prisma.user.update({
     where: { id: userId },

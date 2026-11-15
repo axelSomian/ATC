@@ -1,4 +1,4 @@
-export type NotifType = 'match_request' | 'match_confirmed' | 'match_declined' | 'match_spot_reassigned' | 'quick_match_request' | 'score_to_validate' | 'score_confirmed' | 'score_disputed' | 'score_resolved' | 'badge_unlocked';
+export type NotifType = 'match_request' | 'match_confirmed' | 'match_declined' | 'match_spot_reassigned' | 'quick_match_request' | 'score_to_validate' | 'score_confirmed' | 'score_disputed' | 'score_resolved' | 'badge_unlocked' | 'level_up' | 'level_changed';
 
 export interface AppNotification {
   id: string;
@@ -18,6 +18,8 @@ export interface AppNotification {
     scoreGuest?: string;
     code?: string;
     label?: string;
+    fromLevel?: number;
+    toLevel?: number;
     description?: string;
   };
   readAt: string | null;

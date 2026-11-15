@@ -60,6 +60,8 @@ export interface UserMe extends UserProfile {
   role: UserRole;
   emailVerified: boolean;
   termsAccepted: boolean;
+  /** false dès le 1er tournoi : le niveau évolue ensuite avec les résultats (ou par l'admin). */
+  levelEditable?: boolean;
 }
 
 export type UserRole = 'member' | 'admin';

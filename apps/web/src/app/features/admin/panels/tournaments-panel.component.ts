@@ -15,6 +15,7 @@ import type {
   TournamentStatus,
 } from '../../../core/models/admin.model';
 import type { LicenceCategory } from '../../../core/services/licence.service';
+import { TOURNAMENT_CATEGORY_OPTIONS, categoryLabel, pointsPreview } from '../../../core/models/ranking.model';
 
 const LICENCE_CATEGORY_OPTIONS: { value: LicenceCategory; label: string }[] = [
   { value: 'adulte', label: 'Adulte' },
@@ -39,8 +40,8 @@ function emptyDraft(): TournamentPayload {
     endDate: '',
     registrationDeadline: null,
     genderRule: null,
-    minLevel: null,
     maxLevel: null,
+    category: 'club',
     maxPlayers: null,
     allowedLicenceCategories: [],
   };
@@ -194,6 +195,29 @@ const STATUSES: TournamentStatus[] = ['upcoming', 'open', 'closed', 'completed']
             </div>
 
             <div class="admin-section">
+              <strong>Classement</strong>
+              <div class="field-row">
+                <label>Catégorie</label>
+                <select [(ngModel)]="draft.category">
+                  @for (c of categoryOptions; track c.value) {
+                    <option [ngValue]="c.value">{{ c.label }} — {{ c.minPlayers }} inscrits min.</option>
+                  }
+                </select>
+                <label>Niveau du tournoi</label>
+                <select [(ngModel)]="draft.maxLevel">
+                  <option [ngValue]="null">Open — tous niveaux (compté N5)</option>
+                  @for (l of levels; track l) { <option [ngValue]="l">Niveau {{ l }}{{ l > 1 ? ' (ouvert aux N1 à N' + l + ')' : '' }}</option> }
+                </select>
+              </div>
+              <p class="panel-hint">
+                Points en jeu : vainqueur <strong>{{ preview().winner }}</strong> · finaliste {{ preview().finalist }}
+                · demi-finaliste {{ preview().semi }} · puis moitié moins à chaque tour plus tôt.
+                Les joueurs peuvent s'inscrire au-dessus de leur niveau, jamais en dessous. Les points sont
+                calculés automatiquement quand la finale est saisie.
+              </p>
+            </div>
+
+            <div class="admin-section">
               <strong>Règles d'éligibilité (optionnel)</strong>
               <div class="field-row">
                 <label>Genre</label>
@@ -201,16 +225,6 @@ const STATUSES: TournamentStatus[] = ['upcoming', 'open', 'closed', 'completed']
                   <option [ngValue]="null">Mixte</option>
                   <option value="femme">Femmes uniquement</option>
                   <option value="homme">Hommes uniquement</option>
-                </select>
-                <label>Niveau min</label>
-                <select [(ngModel)]="draft.minLevel">
-                  <option [ngValue]="null">—</option>
-                  @for (l of levels; track l) { <option [ngValue]="l">{{ l }}</option> }
-                </select>
-                <label>Niveau max</label>
-                <select [(ngModel)]="draft.maxLevel">
-                  <option [ngValue]="null">—</option>
-                  @for (l of levels; track l) { <option [ngValue]="l">{{ l }}</option> }
                 </select>
               </div>
               <div class="row-actions">
@@ -278,18 +292,30 @@ const STATUSES: TournamentStatus[] = ['upcoming', 'open', 'closed', 'completed']
                           {{ r.user.name }}
                           @if (r.user.isGuest) { <span class="admin-badge" style="margin-left:4px">Sans compte</span> }
                         </label>
-                        <input type="number" min="0" [(ngModel)]="r._points" placeholder="Points" />
-                        <input type="number" min="1" [(ngModel)]="r._position" placeholder="Place" />
+                        @if (bracket()?.generated) {
+                          <span class="text-muted" style="font-size:var(--text-sm)">
+                            @if (r.result) { {{ r.result.position === 1 ? 'Vainqueur' : 'Place ' + r.result.position }} } @else { — }
+                          </span>
+                          <span style="font-size:var(--text-sm);font-weight:600">@if (r.result) { {{ r.result.points }} pts } @else { — }</span>
+                        } @else {
+                          <input type="number" min="0" [(ngModel)]="r._points" placeholder="Points" />
+                          <input type="number" min="1" [(ngModel)]="r._position" placeholder="Place" />
+                        }
                         <button class="btn btn-ghost btn-sm" [disabled]="registrantBusy()" (click)="removeRegistrant(r)">Retirer</button>
                       </div>
                     }
                   </div>
-                  @if (resultsMsg()) { <p class="form-msg" [class.err]="!resultsOk()" [class.ok]="resultsOk()">{{ resultsMsg() }}</p> }
-                  <div class="row-actions">
-                    <button class="btn btn-primary btn-sm" [disabled]="savingResults()" (click)="saveResults()">
-                      {{ savingResults() ? 'Enregistrement…' : 'Enregistrer les résultats (clôture)' }}
-                    </button>
-                  </div>
+                  @if (bracket()?.generated) {
+                    <p class="panel-hint">Points calculés automatiquement à partir du tableau, dès que la finale est saisie.</p>
+                  } @else {
+                    @if (resultsMsg()) { <p class="form-msg" [class.err]="!resultsOk()" [class.ok]="resultsOk()">{{ resultsMsg() }}</p> }
+                    <p class="panel-hint">Tournoi joué hors plateforme, sans tableau : saisis les points à la main.</p>
+                    <div class="row-actions">
+                      <button class="btn btn-primary btn-sm" [disabled]="savingResults()" (click)="saveResults()">
+                        {{ savingResults() ? 'Enregistrement…' : 'Enregistrer les résultats (clôture)' }}
+                      </button>
+                    </div>
+                  }
                 }
               </div>
             }
@@ -316,8 +342,8 @@ const STATUSES: TournamentStatus[] = ['upcoming', 'open', 'closed', 'completed']
                   <p class="panel-loading">Chargement du tableau…</p>
                 } @else if (!bracket()?.generated) {
                   <p class="panel-hint">
-                    Tire au hasard qui affronte qui parmi les inscrits, et fait avancer automatiquement
-                    les vainqueurs au tour suivant.
+                    Les mieux classés (points, puis niveau) sont têtes de série — 1 pour 4 places — et reçoivent
+                    les éventuels byes ; le reste est tiré au hasard. Les vainqueurs avancent automatiquement.
                     @if (registrants().length < 2) { Il faut au moins 2 inscrits pour tirer un tableau. }
                   </p>
                   @if (bracketMsg()) { <p class="form-msg" [class.err]="!bracketOk()" [class.ok]="bracketOk()">{{ bracketMsg() }}</p> }
@@ -349,22 +375,22 @@ const STATUSES: TournamentStatus[] = ['upcoming', 'open', 'closed', 'completed']
                               <div class="tp-slot-pending">À déterminer</div>
                             } @else if (!m.playerA || !m.playerB) {
                               <div class="tp-slot">
-                                <span class="tp-winner">{{ (m.playerA ?? m.playerB)!.name }}</span>
+                                <span class="tp-winner">{{ (m.playerA ?? m.playerB)!.name }}{{ seedLabel((m.playerA ?? m.playerB)!.id) }}</span>
                                 <span class="text-muted" style="font-size:var(--text-xs)">qualifié d'office</span>
                               </div>
                             } @else if (m.winner) {
                               <div class="tp-slot">
-                                <span [class.tp-winner]="m.winner.id === m.playerA.id">{{ m.playerA.name }}</span>
+                                <span [class.tp-winner]="m.winner.id === m.playerA.id">{{ m.playerA.name }}{{ seedLabel(m.playerA.id) }}</span>
                                 <span class="tp-vs">vs</span>
-                                <span [class.tp-winner]="m.winner.id === m.playerB.id">{{ m.playerB.name }}</span>
+                                <span [class.tp-winner]="m.winner.id === m.playerB.id">{{ m.playerB.name }}{{ seedLabel(m.playerB.id) }}</span>
                                 @if (m.scoreText) { <span class="text-muted" style="font-size:var(--text-xs)">{{ m.scoreText }}</span> }
                                 <button class="btn btn-ghost btn-sm" (click)="startEditMatch(m)">Modifier</button>
                               </div>
                             } @else {
                               <div class="tp-slot">
-                                <span>{{ m.playerA.name }}</span>
+                                <span>{{ m.playerA.name }}{{ seedLabel(m.playerA.id) }}</span>
                                 <span class="tp-vs">vs</span>
-                                <span>{{ m.playerB.name }}</span>
+                                <span>{{ m.playerB.name }}{{ seedLabel(m.playerB.id) }}</span>
                                 <button class="btn btn-outline btn-sm" (click)="startEditMatch(m)">Saisir le résultat</button>
                               </div>
                               @if (round.round === 1) {
@@ -407,6 +433,12 @@ export class TournamentsPanelComponent implements OnInit {
   private readonly admin = inject(AdminService);
 
   readonly levels = [1, 2, 3, 4, 5];
+  readonly categoryOptions = TOURNAMENT_CATEGORY_OPTIONS;
+
+  /** Aperçu des points en jeu — méthode (pas un computed) : `draft` est un objet ngModel, pas un signal. */
+  preview() {
+    return pointsPreview(this.draft.maxLevel, this.draft.category);
+  }
   readonly statuses = STATUSES;
   readonly licenceCategoryOptions = LICENCE_CATEGORY_OPTIONS;
 
@@ -494,10 +526,9 @@ export class TournamentsPanelComponent implements OnInit {
 
   rulesLabel(t: AdminTournament): string | null {
     const parts: string[] = [];
+    parts.push(categoryLabel(t.category));
+    parts.push(t.maxLevel != null ? `N${t.maxLevel}` : 'Open');
     if (t.genderRule) parts.push(t.genderRule === 'femme' ? 'Féminin' : 'Masculin');
-    if (t.minLevel != null && t.maxLevel != null) parts.push(`Niveau ${t.minLevel}-${t.maxLevel}`);
-    else if (t.minLevel != null) parts.push(`Niveau ${t.minLevel}+`);
-    else if (t.maxLevel != null) parts.push(`Niveau ${t.maxLevel} max`);
     if (t.allowedLicenceCategories.length) {
       const labels = t.allowedLicenceCategories.map((c) => LICENCE_CATEGORY_OPTIONS.find((o) => o.value === c)?.label ?? c);
       parts.push(`Licence ${labels.join('/')}`);
@@ -507,7 +538,7 @@ export class TournamentsPanelComponent implements OnInit {
 
   applyPreset(preset: 'feminin' | 'debutant'): void {
     if (preset === 'feminin') this.draft.genderRule = 'femme';
-    if (preset === 'debutant') { this.draft.minLevel = null; this.draft.maxLevel = 2; }
+    if (preset === 'debutant') this.draft.maxLevel = 2;
   }
 
   isLicenceCategorySelected(category: LicenceCategory): boolean {
@@ -545,8 +576,8 @@ export class TournamentsPanelComponent implements OnInit {
       registrationDeadline: t.registrationDeadline ? t.registrationDeadline.slice(0, 10) : null,
       status: t.status,
       genderRule: t.genderRule,
-      minLevel: t.minLevel,
       maxLevel: t.maxLevel,
+      category: t.category,
       maxPlayers: t.maxPlayers,
       allowedLicenceCategories: [...t.allowedLicenceCategories],
     };
@@ -779,7 +810,10 @@ export class TournamentsPanelComponent implements OnInit {
         this.matchBusy.set(false);
         this.matchEditing.set(null);
         this.bracketOk.set(true);
-        this.bracketMsg.set('Résultat enregistré ✓');
+        this.bracketMsg.set(b.champion ? 'Finale enregistrée ✓ — points de classement calculés.' : 'Résultat enregistré ✓');
+        // Les points (et le statut « terminé ») sont recalculés côté serveur à chaque score.
+        this.loadRegistrants(id);
+        this.load();
       },
       error: (err: HttpErrorResponse) => {
         this.matchBusy.set(false);
@@ -829,6 +863,12 @@ export class TournamentsPanelComponent implements OnInit {
         this.bracketMsg.set(err.error?.error ?? 'Erreur.');
       },
     });
+  }
+
+  /** « (TS 1) » si le joueur est tête de série dans le tableau courant. */
+  seedLabel(userId: string): string {
+    const n = this.bracket()?.seeds?.[userId];
+    return n ? ` (TS ${n})` : '';
   }
 
   private fail(m: string): void {

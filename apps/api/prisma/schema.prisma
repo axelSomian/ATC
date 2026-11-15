@@ -56,6 +56,7 @@ model User {
   achievements             Achievement[]
   tournamentRegistrations  TournamentRegistration[]
   tournamentResults        TournamentResult[]
+  levelChanges             LevelChange[]
   tournamentMatchesAsPlayerA TournamentMatch[]       @relation("tournamentMatchPlayerA")
   tournamentMatchesAsPlayerB TournamentMatch[]       @relation("tournamentMatchPlayerB")
   tournamentMatchesWon       TournamentMatch[]       @relation("tournamentMatchWinner")
@@ -364,8 +365,13 @@ model Tournament {
   // Règles d'éligibilité à l'inscription — contrôlées côté serveur, jamais
   // juste indicatives (ex. tournoi féminin, tournoi débutants).
   genderRule           String? // null (mixte) | 'homme' | 'femme'
-  minLevel             Int? // null = pas de minimum (1..5)
-  maxLevel             Int? // null = pas de maximum (1..5)
+  // Niveau du tournoi (1..5) : peuvent s'inscrire les joueurs de ce niveau et
+  // en dessous (surclassement autorisé, jamais l'inverse). null = open (compté N5
+  // pour les points). Fixe aussi le coefficient de points — voir lib/ranking-rules.ts.
+  maxLevel             Int?
+  // Importance du tournoi : 'club' | 'challenger' | 'open' | 'grand_chelem'
+  // (multiplie le barème ; nombre minimum d'inscrits vérifié au tirage).
+  category             String    @default("club")
   maxPlayers           Int? // null = pas de plafond ; capacité du tableau
   allowedLicenceCategories String[] @default([]) // [] = pas de restriction ; sinon valeurs LicenceCategory (adulte, jeunes, ...)
   bracketPublished     Boolean   @default(false) // le tableau n'est visible des joueurs qu'une fois publié par l'admin
@@ -409,6 +415,7 @@ model TournamentRegistration {
   tournamentId String
   userId       String
   registeredAt DateTime @default(now())
+  seed         Int? // numéro de tête de série fixé au tirage (null = non tête de série) — voir draw.rules.ts
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -416,20 +423,53 @@ model TournamentRegistration {
   @@unique([tournamentId, userId])
 }
 
-// Points attribués par un admin fédé une fois le tournoi terminé — seule
-// source du classement officiel (`GET /members/rankings`).
+// Résultat d'un joueur dans un tournoi — seule source du classement officiel
+// (`GET /members/rankings`). `source = 'auto'` : calculé depuis le tableau dès
+// que la finale est jouée (lib/ranking-rules.ts) ; `'manual'` : saisi par
+// l'admin (tournois sans tableau). Niveau, catégorie et date sont figés au
+// calcul : les points ne bougent plus si le tournoi est modifié ensuite.
+// Classement = 6 meilleurs résultats dont `earnedAt` a moins de 12 mois.
 model TournamentResult {
   id           String   @id @default(cuid())
   tournamentId String
   userId       String
   points       Int
   position     Int?
+  roundReached Int? // tour où le joueur a été éliminé (ou la finale pour le vainqueur) ; null si manuel
+  level        Int? // niveau du tournoi au moment du calcul (1..5)
+  category     String? // catégorie du tournoi au moment du calcul
+  source       String   @default("manual") // 'auto' | 'manual'
+  earnedAt     DateTime @default(now()) // date de fin du tournoi — point de départ des 12 mois
   createdAt    DateTime @default(now())
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, userId])
+  @@index([userId, earnedAt])
+}
+
+// Historique des changements de niveau d'un joueur. `source = 'auto'` : montée
+// déclenchée par ses victoires en tournoi (annulable par l'admin) ; `'admin'` :
+// changement manuel (seul moyen de descendre). `tournamentIds` = victoires qui
+// ont déclenché la montée (elles ne recomptent pas pour la suivante).
+model LevelChange {
+  id            String    @id @default(cuid())
+  userId        String
+  fromLevel     Int
+  toLevel       Int
+  source        String // 'auto' | 'admin'
+  reason        String?
+  tournamentIds String[]  @default([])
+  createdById   String? // admin auteur (null si auto)
+  revertedAt    DateTime?
+  revertedById  String?
+  createdAt     DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([userId])
 }
 
 // Licence-assurance FIT 2026 — grille officielle (doc fédération, nov. 2026) :

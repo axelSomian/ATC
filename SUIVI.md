@@ -1,11 +1,11 @@
 # ATC — Suivi Produit
 
-> Dernière mise à jour : 2026-11-05 — **rattrapage** : le doc n'avait pas été tenu à jour
-> entre le 2026-09-04 (session 8) et aujourd'hui malgré ~30 commits. Voir § « Sessions
-> 9+ » et § « 🔄 Pivot TenCI » plus bas pour tout ce qui manquait, et § « Pour reprendre
-> le travail » en tout dernier pour l'état exact au moment de la coupure (utile en
-> particulier si tu reprends depuis une autre machine / Remote Control, sans accès à la
-> mémoire locale de cette session).
+> Dernière mise à jour : 2026-11-15 — **classement façon ATP + têtes de série déployés**
+> (branche `feat/classement-atp` mergée sur `master`, migrations appliquées par Render).
+> Voir § « 🏆 Classement façon ATP » et § « 🏛️ Socle fédération (2026-11-08 → 11-12) » et
+> § « Pour reprendre le travail » en tout dernier pour l'état exact au moment de la
+> coupure (utile en particulier si tu reprends depuis une autre machine / Remote
+> Control, sans accès à la mémoire locale de cette session).
 
 ---
 
@@ -168,7 +168,7 @@
 
 | Tâche | Priorité | Statut | Notes |
 |-------|----------|--------|-------|
-| Création et gestion de tournois | 🟢 Basse | 💡 Idée | Nouveau modèle Prisma nécessaire |
+| Création et gestion de tournois | 🔴 Haute | ✅ Terminé | Voir § « 🏛️ Socle fédération » + § « 🏆 Classement façon ATP » |
 | Réservation de courts | 🟢 Basse | 💡 Idée | |
 | Paiement cotisation (CinetPay / Wave) | 🟢 Basse | 💡 Idée | Mobile money CI |
 | Vérification téléphone (+225, Orange CI SMS) | 🟢 Basse | 💡 Idée | Twilio ou Orange CI API |
@@ -410,28 +410,126 @@ d'env Render de l'API).
 
 ---
 
-## Pour reprendre le travail (état au 2026-11-05)
+## 🏛️ Socle fédération (2026-11-08 → 11-12) ✅ — commit `3129bbc` sur `master`
 
-Checklist pour quiconque reprend la main sur ce repo (y compris une session Claude sur
-une autre machine, sans accès à la mémoire locale de la session qui a écrit ce doc) :
+### Livré
 
-1. **Working tree local** (sur la machine où ce doc a été mis à jour) a des changements
-   non commités qui n'ont pas de rapport avec le travail ci-dessus et n'ont **pas** été
-   touchés faute de certitude sur leur origine :
-   - `apps/web/README.md` et `apps/web/src/index.html` : altérations suspectes (typo
-     insérée au milieu d'un mot, espace ajouté dans une balise) — ressemble à une
-     corruption accidentelle plutôt qu'un vrai edit. À inspecter avant de committer ou
-     de jeter (`git diff`).
-   - Fichiers non trackés d'origine incertaine : `NOTE_VERSION_BADGES.md`,
-     `apps/api/prisma/send-badge-notif.ts`, `presentation-atc.html`. Décider avec le PO
-     s'ils doivent être committés, complétés ou supprimés.
-   - `SPEC_E2E_PARCOURS.md` : mien (session du 08/09), à committer — contenu utile, pas
-     de raison de le laisser hors du repo.
-2. **Pivot TenCI** : attendre la liste des demandes fédé + la validation de la
-   direction visuelle avant tout dev de rebrand ou de fonctionnalité fédérale (voir §
-   ci-dessus et tête de `CLAUDE.md`).
-3. **Bug cron RSS/actualité** : à corriger (voir § ci-dessus) — pas bloquant pour les
-   utilisateurs mais silencieux depuis des semaines, autant le fermer.
-4. **E2E Playwright** : `SPEC_E2E_PARCOURS.md` donne la liste des parcours et les points
-   durs (mail-catcher de test à ajouter côté API) — personne n'a encore commencé
-   l'écriture des specs dans `Template-PW-automation`.
+| Domaine | Ce qui existe | Notes |
+|---|---|---|
+| **Licence FIT 2026** | Grille officielle (6 catégories, tarif par âge), catégorie calculée par le système, paiement **simulé**, upload CNI + photo, document avec n° de licence + QR de vérification publique (`/licence/verifier/:code`) | Validité **1 an glissant** depuis le paiement (découverte : 3 mois) ; pas d'âge minimum. ⚠️ URLs Cloudinary CNI/photo non signées — à sécuriser avant usage réel |
+| **Tournois** | CRUD admin, statuts (à venir / ouvert / clos / terminé), date limite, capacité max | Statuts changés **à la main** par l'admin |
+| **Éligibilité** | Genre, niveau min/max, capacité, **types de licence autorisés** (cumulables, licence active requise) | Contrôlée côté serveur ; testée (38/38 cas) |
+| **Inscriptions** | Joueur via l'app ; admin peut inscrire un membre ou un joueur **sans compte** (compte fantôme `isGuest`) | Les ajouts admin ne passent pas par les règles d'éligibilité (sauf capacité) |
+| **Tableau** | Élimination directe : tirage au sort (byes répartis), **échange manuel** de joueurs au 1er tour, saisie score/vainqueur avec avancée auto, correction en cascade | |
+| **Publication** | Le tableau n'est visible des joueurs qu'après « Publier » ; un nouveau tirage repasse en brouillon | |
+| **Côté joueur** | Liste `/tournois` + **fiche dédiée `/tournois/:id`** : places / inscrits / restantes, participants avec photos, classement final, tableau en grille avec traits de liaison | |
+| **Notifications** | Push à tous les abonnés à la création d'un tournoi | |
+| **Admin** | Refonte complète : navigation groupée avec icônes, vue d'ensemble avec graphiques (activité, niveaux, tournois, licences), fiches détail, tournois en page complète | |
+
+### Données de test présentes dans la base Neon de dev
+
+- Tournoi **« Azael »** : 32/32 inscrits fictifs (`@joueur.tenci.local`), tous avec
+  licence Adulte active, tournoi réservé licence Adulte, statut « À venir ».
+- Compte joueur de test : `joueur.test@tenci.local` / `Joueur123!` (niveau 3, sans licence).
+- ⚠️ **À vérifier** : si la base de dev est la même que la prod, ces données sont en prod.
+
+### ✅ Classement façon ATP — voir § « 🏆 Classement façon ATP » ci-dessous
+
+### 📋 Backlog tournois (après le classement)
+
+| Tâche | Notes |
+|---|---|
+| Notifications joueurs | Tableau publié (« tu affrontes X »), résultat, élimination |
+| Statuts automatiques | Ouverture/clôture des inscriptions selon les dates |
+| ~~Têtes de série~~ | ✅ fait le 14/11 (voir § 🏆) |
+| Horaire et terrain par match | Planning du tournoi |
+| Liste d'attente | Quand le tournoi est complet |
+| Design du tableau côté admin | Reprendre la grille avec traits de liaison de la fiche publique |
+
+---
+
+## 🏆 Classement façon ATP (2026-11-14) — branche `feat/classement-atp`
+
+Décisions PO du 14/11 (brainstorm « un N1 qui gagne plein de tournois ne doit pas passer
+devant un N5 ») → **option B « qui a le mieux performé »**, modèle ATP simplifié.
+
+### Règles (source de vérité : `apps/api/src/modules/tournaments/ranking.rules.ts`)
+
+| Règle | Valeur |
+|---|---|
+| Points d'un résultat | barème du tour × base du niveau × coef de catégorie (min 1 pt) |
+| Base par niveau (vainqueur d'un Club) | N1 60 · N2 120 · N3 250 · N4 500 · N5 1000 |
+| Catégories (coef · inscrits min au tirage) | Club ×1 · 4 — Challenger ×1,5 · 8 — Open ×2 · 16 — Grand Chelem ×3 · 32 |
+| Barème du tour | vainqueur 100 % · finaliste 60 % · demi 36 % · puis /2 par tour plus tôt |
+| Classement | **6 meilleurs résultats des 12 derniers mois**, calculé à la lecture (pas de cron) |
+| Niveau du tournoi | un seul champ (`maxLevel`) : ouvert à ce niveau **et en dessous** (surclassement OK, jamais en dessous). null = open, compté N5. `minLevel` supprimé |
+| Montée | **2 tournois gagnés** à son niveau ou au-dessus (12 mois) → +1 ; **1 tournoi gagné à un niveau supérieur** → directement ce niveau. Automatique + notif `level_up`, **annulable par l'admin**. Une victoire déjà utilisée pour une montée (même annulée) ne recompte pas |
+| Descente | uniquement par l'admin (onglet Membres) |
+| Niveau choisi par le joueur | libre **tant qu'il n'est entré dans aucun tournoi** (cas Google arrivé en N1) ; ensuite verrouillé (API 403 + UI) |
+
+### Ce qui a été fait
+
+- **Migration** `20261114114937_tournament_ranking_atp` : `Tournament.category` (défaut
+  `club`), suppression de `minLevel` (vérifié : NULL partout en prod), `TournamentResult`
+  + `roundReached`/`level`/`category`/`source`/`earnedAt` (reprise : `earnedAt` = fin du
+  tournoi), nouvelle table `LevelChange` (historique des niveaux).
+- **API** : `ranking.rules.ts` (pur, 15 tests) + `ranking.service.ts` —
+  `syncTournamentResults` appelé à chaque score saisi / corrigé, au retirage et à la
+  modif niveau/catégorie/date (idempotent ; finale défaite → points auto retirés, statut
+  repasse « clos »). Saisie manuelle des points refusée (409) si le tournoi a un tableau.
+  `lib/ranking.ts` : `getStandings` (ex æquo = même rang), `getUserPointsBreakdown`.
+  Routes : `GET /members/:id/points`, `PATCH /admin/members/:id/level`,
+  `GET /admin/level-changes`, `POST /admin/level-changes/:id/revert`. `GET /members/me`
+  renvoie `levelEditable`. Fiche tournoi : `categoryLabel`, `rankingLevel`, `pointsAtStake`.
+- **Front** : admin tournoi (section « Classement » : catégorie + niveau + aperçu des
+  points ; points en lecture seule quand il y a un tableau) ; nouvel onglet admin
+  « Montées de niveau » (historique + Annuler) ; sélecteur de niveau dans Membres ;
+  fiche tournoi joueur (tag catégorie + tableau « Points en jeu ») ; Classement
+  (« Détail de mes points » : comptés / hors top 6 / expirés) ; profil (niveau verrouillé
+  + explication) ; libellés notifs `level_up` / `level_changed`.
+- **Vérifié** sur une base Postgres locale (Docker `tenci-dev-db`, port 5433) :
+  scénario complet (min inscrits, 1 → 2 victoires, jouer en dessous refusé, correction de
+  finale, changement de catégorie, saut N1→N3, annulation, expiration, top 6). Build front
+  dev + prod OK, `tsc` API OK, 145 tests Jest OK.
+
+### Têtes de série au tirage (ajouté le 14/11)
+
+- `apps/api/src/modules/tournaments/draw.rules.ts` (pur, 7 tests) : 1 tête de série pour
+  4 places (tableau de 8 → 2, 16 → 4, 32 → 8), ordonnées par **points au classement puis
+  niveau** (invités / non classés = 0 pt, départagés par le niveau, puis hasard).
+  Placement standard (TS1 en haut, TS2 en bas — ne se croisent qu'en finale). **Les byes
+  vont aux mieux classés.** Le reste du tableau est tiré au hasard.
+- Migration `20261114122053_tournament_seeds` : `TournamentRegistration.seed`. Le tableau
+  (`GET …/bracket`) renvoie `seeds` ; affichage « TS n » côté joueur et admin.
+
+### ⚠️ Avant de merger
+
+- **La base de `apps/api/.env` (`ep-wild-frost-…`) EST la prod** (vérifié le 14/11 :
+  comptages par club identiques à l'API de prod, 51 vrais comptes). Ne jamais lancer
+  `prisma migrate dev` avec ce `.env`. Pour développer :
+  `DATABASE_URL=postgresql://atc:atc_secret@localhost:5433/tenci_dev DIRECT_URL=<idem>`.
+- La migration partira en prod au merge sur `master` (Render → `prisma migrate deploy`).
+- Points saisis à la main avant le 14/11 : conservés (`source = manual`), comptent dans le
+  top 6 et expirent 12 mois après la fin de leur tournoi.
+- Le meilleur classement atteint (`bestRanking`) n'est recalculé qu'en fin de tournoi
+  (l'expiration fait bouger le classement sans événement — accepté).
+- Noms de catégories provisoires (« Grand Chelem » = marque ATP/ITF) — à remplacer par la
+  terminologie FIT si elle existe (libellés dans `ranking.rules.ts` + `ranking.model.ts`).
+
+## Pour reprendre le travail (état au 2026-11-12)
+
+1. **Branche active : `feat/classement-atp`** — classement ATP codé (voir § 🏆), à
+   commiter, relire puis merger. (Ci-dessous : état au 12/11, encore valable.)
+   `master` est à jour sur GitHub ; le push du 12/11 a déclenché le déploiement
+   automatique (Render + `prisma migrate deploy`) — vérifier qu'il s'est bien passé.
+2. **Avant toute migration sur la branche** : confirmer si la base Neon locale
+   (`ep-wild-frost-…`, voir `apps/api/.env`) est celle de la prod. Si oui, une
+   migration lancée depuis la branche toucherait la prod avant le merge — prévoir une
+   base/branche Neon séparée.
+3. ~~**Classement ATP**~~ ✅ codé le 14/11 (voir § 🏆).
+4. **Toujours ouverts depuis le 2026-11-05** :
+   - Bug cron RSS/actualité (`RSS_SYNC_TOKEN` désaligné GitHub ↔ Render).
+   - E2E Playwright : specs pas encore écrites dans `Template-PW-automation`.
+   - `NOTE_VERSION_BADGES.md`, `presentation-atc.html`, `send-badge-notif.ts` ont été
+     committés avec le reste le 12/11 — à supprimer du repo si ce n'étaient que des
+     brouillons.

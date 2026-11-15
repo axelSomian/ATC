@@ -4,7 +4,7 @@
   <div class="rankings-hero">
     <div>
       <h1>Classement</h1>
-      <p class="text-muted">Classement fédéral · établi sur les résultats de tournoi officiels</p>
+      <p class="text-muted">Classement fédéral · tes 6 meilleurs résultats de tournoi des 12 derniers mois</p>
     </div>
   </div>
 
@@ -21,6 +21,34 @@
         </div>
       </div>
     </div>
+  }
+
+  <!-- Mes points : résultats qui comptent / hors top 6 / expirés -->
+  @if (myPoints(); as mp) {
+    @if (mp.results.length > 0) {
+      <details class="my-points card">
+        <summary>Détail de mes points <span class="text-muted">({{ mp.total }} pts)</span></summary>
+        <ul class="my-points-list">
+          @for (r of mp.results; track r.tournamentId) {
+            <li [class.my-points-off]="!r.counted">
+              <div>
+                <strong>{{ r.tournamentName }}</strong>
+                <span class="text-muted">
+                  @if (r.categoryLabel) { {{ r.categoryLabel }} · }@if (r.level) { N{{ r.level }} · }
+                  {{ r.position === 1 ? 'Vainqueur' : r.position ? 'Place ' + r.position : 'Participation' }}
+                </span>
+              </div>
+              <div class="my-points-side">
+                <strong>{{ r.points }}</strong>
+                <span class="text-muted">
+                  @if (r.expired) { expiré } @else if (!r.counted) { hors top 6 } @else { jusqu'au {{ r.expiresAt | date:'d MMM yyyy' }} }
+                </span>
+              </div>
+            </li>
+          }
+        </ul>
+      </details>
+    }
   }
 
   <!-- Loading -->

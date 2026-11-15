@@ -17,7 +17,9 @@ import {
   swapBracketPlayersSchema,
   setBracketPublishedSchema,
   addTournamentRegistrantSchema,
+  setMemberLevelSchema,
 } from './admin.schema.js';
+import { setMemberLevel, listLevelChanges, revertLevelChange } from '../tournaments/ranking.service.js';
 import {
   getOverview,
   listAllClubs,
@@ -276,6 +278,34 @@ router.patch('/tournaments/:id/bracket/publish', async (req, res, next) => {
 router.get('/members', async (_req, res, next) => {
   try {
     res.json(await listMembersForAdmin());
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Niveau d'un joueur — changement manuel (seul moyen de descendre) + historique des montées.
+router.patch('/members/:id/level', async (req, res, next) => {
+  try {
+    const dto = setMemberLevelSchema.parse(req.body);
+    const adminId = (req.user as { id: string }).id;
+    res.json(await setMemberLevel(req.params.id, adminId, dto.level, dto.reason));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/level-changes', async (_req, res, next) => {
+  try {
+    res.json(await listLevelChanges());
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/level-changes/:id/revert', async (req, res, next) => {
+  try {
+    const adminId = (req.user as { id: string }).id;
+    res.json(await revertLevelChange(req.params.id, adminId));
   } catch (err) {
     next(err);
   }

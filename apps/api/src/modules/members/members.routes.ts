@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { uploadImage } from '../../lib/cloudinary.js';
 import { listMembers, getOwnProfile, getMemberById, updateMe, updateAvatar, getRankings } from './members.service.js';
+import { getUserPointsBreakdown } from '../../lib/ranking.js';
 import { membersQuerySchema, updateMeSchema } from './members.schema.js';
 import { authenticate } from '../../middleware/passport.js';
 
@@ -67,6 +68,15 @@ router.post('/me/avatar', authenticate, uploadAvatar.single('avatar'), async (re
     });
     const updated = await updateAvatar(userId, avatarUrl);
     res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Détail des points de classement d'un joueur (résultats comptés, hors top 6, expirés).
+router.get('/:id/points', authenticate, async (req, res, next) => {
+  try {
+    res.json(await getUserPointsBreakdown(req.params.id));
   } catch (err) {
     next(err);
   }

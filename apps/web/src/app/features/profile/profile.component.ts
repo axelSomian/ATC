@@ -71,6 +71,8 @@ export class ProfileComponent implements OnInit {
   readonly clubsByZone = this.reference.clubsByZone;
   readonly otherClub   = this.reference.otherClub;
 
+  /** Choix libre du niveau tant que le joueur n'est entré dans aucun tournoi (verrou côté API aussi). */
+  readonly levelEditable  = computed(() => this.profile()?.levelEditable !== false);
   readonly levelLabel     = computed(() => this.reference.levelLabel(this.profile()?.level ?? 1));
   readonly editLevelLabel = computed(() => this.reference.levelLabel(this.selectedLevel()));
   readonly editLevelDef   = computed<LevelRef | undefined>(() => this.reference.levelDef(this.selectedLevel()));
@@ -202,14 +204,16 @@ export class ProfileComponent implements OnInit {
       city:    raw.city    || null,
       clubId:  raw.clubId  || null,
       racquet: raw.racquet || null,
-      level:   this.selectedLevel(),
+      ...(this.levelEditable() ? { level: this.selectedLevel() } : {}),
       preferredCourts: this.selectedCourts(),
       preferredTimes:  this.selectedTimes(),
     };
 
     this.membersService.updateMe(dto).subscribe({
       next: (updated) => {
-        this.profile.set(updated);
+        // PATCH renvoie le profil sans `levelEditable` : on conserve celui déjà connu.
+        const prev = this.profile();
+        this.profile.set(prev ? { ...prev, ...updated } : updated);
         this.editing.set(false);
         this.saving.set(false);
       },

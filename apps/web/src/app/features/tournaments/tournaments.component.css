@@ -86,3 +86,16 @@
   .tournament-card { flex-direction: column; align-items: stretch; }
   .tournament-card-action { flex-direction: row; justify-content: space-between; align-items: center; }
 }
+
+/* Catégorie du tournoi (Club / Challenger / Open / Grand Chelem) — navy, distincte des règles */
+.tournament-category {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-deep-forest);
+  color: var(--color-surface);
+  white-space: nowrap;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}

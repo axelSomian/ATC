@@ -7,8 +7,9 @@ import { MembersPanelComponent } from './panels/members-panel.component';
 import { PushPanelComponent } from './panels/push-panel.component';
 import { NewsPanelComponent } from './panels/news-panel.component';
 import { TournamentsPanelComponent } from './panels/tournaments-panel.component';
+import { ProgressionPanelComponent } from './panels/progression-panel.component';
 
-type Tab = 'overview' | 'clubs' | 'levels' | 'members' | 'push' | 'news' | 'tournaments';
+type Tab = 'overview' | 'progression' | 'clubs' | 'levels' | 'members' | 'push' | 'news' | 'tournaments';
 
 interface NavItem {
   tab: Tab;
@@ -48,6 +49,7 @@ const NAV: NavGroup[] = [
     label: 'Compétition',
     items: [
       { tab: 'tournaments', label: 'Tournois', title: 'Tournois', subtitle: 'Créer un tournoi, définir ses règles, suivre les inscrits et saisir les résultats.', icon: ICON.tournaments },
+      { tab: 'progression', label: 'Montées de niveau', title: 'Montées de niveau', subtitle: 'Montées automatiques après victoires en tournoi — annulables.', icon: ICON.levels },
       { tab: 'clubs', label: 'Clubs', title: 'Clubs', subtitle: 'Fiches, tarifs, position sur la carte.', icon: ICON.clubs },
       { tab: 'levels', label: 'Niveaux', title: 'Niveaux', subtitle: 'Libellés et descriptions des 5 paliers.', icon: ICON.levels },
     ],
@@ -80,6 +82,7 @@ const ALL_TABS: Tab[] = NAV.flatMap((g) => g.items.map((i) => i.tab));
     PushPanelComponent,
     NewsPanelComponent,
     TournamentsPanelComponent,
+    ProgressionPanelComponent,
   ],
   template: `
     <div class="admin-shell">
@@ -115,6 +118,7 @@ const ALL_TABS: Tab[] = NAV.flatMap((g) => g.items.map((i) => i.tab));
             @case ('clubs') { <app-clubs-panel /> }
             @case ('tournaments') { <app-tournaments-panel /> }
             @case ('levels') { <app-levels-panel /> }
+            @case ('progression') { <app-progression-panel /> }
             @case ('members') { <app-members-panel /> }
             @case ('push') { <app-push-panel /> }
             @case ('news') { <app-news-panel /> }

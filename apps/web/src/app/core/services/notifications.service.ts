@@ -57,6 +57,8 @@ export class NotificationsService {
         this.router.navigate(['/matchs'], { queryParams: { vue: 'mes-matchs', tab: 'history', focus: p.matchId ?? null } });
         break;
       case 'badge_unlocked':
+      case 'level_up':
+      case 'level_changed':
         this.router.navigate(['/profile']);
         break;
       default:
@@ -107,6 +109,10 @@ export class NotificationsService {
         return `Un administrateur a tranché le litige de votre match`;
       case 'badge_unlocked':
         return `Badge débloqué : « ${payload.label ?? 'nouveau badge'} »`;
+      case 'level_up':
+        return `Tes victoires en tournoi te font passer niveau ${payload.toLevel ?? ''}`;
+      case 'level_changed':
+        return `La fédération a fixé ton niveau à ${payload.toLevel ?? ''}`;
       default:
         return 'Nouvelle notification';
     }

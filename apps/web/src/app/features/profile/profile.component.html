@@ -254,10 +254,10 @@
 
           <div class="form-group">
             <label class="form-label">Niveau</label>
-            <div class="level-picker">
+            <div class="level-picker" [class.level-picker-locked]="!levelEditable()">
               @for (d of dots; track d) {
                 <button type="button" class="level-btn" [class.active]="d <= selectedLevel()"
-                  (click)="setLevel(d)">
+                  [disabled]="!levelEditable()" (click)="setLevel(d)">
                   <span class="level-dot-lg" [class.active]="d <= selectedLevel()"></span>
                 </button>
               }
@@ -265,6 +265,12 @@
             </div>
             @if (editLevelDef(); as def) {
               <p class="level-picker-desc">{{ def.profil }} · {{ def.jeu }}</p>
+            }
+            @if (!levelEditable()) {
+              <p class="level-picker-desc">
+                Ton niveau évolue maintenant avec tes résultats : 2 tournois gagnés à ton niveau (ou 1 au-dessus)
+                te font monter. Pour une correction, contacte la fédération.
+              </p>
             }
           </div>
 

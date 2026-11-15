@@ -187,3 +187,30 @@
 .td-conn-done::before { border-color: var(--color-ink-light); }
 
 .panel-loading { font-size: var(--text-sm); color: var(--color-muted); }
+
+/* ── Catégorie + points en jeu ── */
+.td-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.td-tags .tournament-rules { align-self: auto; }
+.tournament-category {
+  font-size: 11px; font-weight: 700; padding: 4px 10px;
+  border-radius: var(--radius-full); white-space: nowrap;
+  background: var(--color-deep-forest); color: var(--color-surface);
+  font-family: var(--font-display); letter-spacing: 0.02em;
+}
+.td-points-hint { margin: 0; font-size: var(--text-sm); color: var(--color-muted); max-width: 60ch; }
+.td-points { display: flex; flex-direction: column; gap: 2px; }
+.td-points-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 8px 12px; border-radius: var(--radius-md); font-size: var(--text-sm);
+}
+.td-points-row:nth-child(even) { background: var(--color-cream); }
+.td-points-row strong { font-family: var(--font-display); font-size: var(--text-base); color: var(--color-ink); }
+.td-points-top { background: var(--color-deep-forest) !important; color: var(--color-surface); }
+.td-points-top strong { color: var(--color-accent); font-size: var(--text-lg); }
+
+/* Tête de série dans le tableau */
+.td-seed {
+  flex-shrink: 0; font-size: 10px; font-weight: 700; padding: 1px 6px;
+  border-radius: var(--radius-full); background: var(--color-deep-forest); color: var(--color-accent);
+  font-family: var(--font-display);
+}

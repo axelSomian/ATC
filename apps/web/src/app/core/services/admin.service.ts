@@ -4,6 +4,7 @@ import type {
   AddTournamentRegistrantPayload,
   AdminClub,
   AdminLevel,
+  LevelChange,
   AdminMember,
   AdminOverview,
   AdminTournament,
@@ -111,6 +112,15 @@ export class AdminService {
   /* ── Membres ── */
   listMembers() {
     return this.http.get<AdminMember[]>(`${API}/members`);
+  }
+  setMemberLevel(id: string, level: number, reason: string | null) {
+    return this.http.patch<{ id: string; name: string; level: number }>(`${API}/members/${id}/level`, { level, reason });
+  }
+  listLevelChanges() {
+    return this.http.get<LevelChange[]>(`${API}/level-changes`);
+  }
+  revertLevelChange(id: string) {
+    return this.http.post<LevelChange[]>(`${API}/level-changes/${id}/revert`, {});
   }
   setMemberRole(id: string, role: UserRole) {
     return this.http.patch<{ id: string; name: string; role: UserRole }>(

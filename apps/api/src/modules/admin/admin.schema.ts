@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { LICENCE_CATEGORIES, type LicenceCategory } from '../licence/licence.rules.js';
+import { TOURNAMENT_CATEGORIES } from '../tournaments/ranking.rules.js';
 
 /** Slug : minuscules, chiffres, tirets. */
 const slug = z
@@ -95,6 +96,7 @@ const optionalNullable = <T extends z.ZodTypeAny>(schema: T) =>
 
 const genderRule = optionalNullable(z.enum(['homme', 'femme']));
 const levelBound = optionalNullable(z.coerce.number().int().min(1).max(5));
+const tournamentCategory = z.enum(TOURNAMENT_CATEGORIES);
 const maxPlayers = optionalNullable(z.coerce.number().int().min(2).max(256));
 const allowedLicenceCategories = z
   .array(z.enum(LICENCE_CATEGORIES as [LicenceCategory, ...LicenceCategory[]]))
@@ -111,8 +113,8 @@ export const createTournamentSchema = z.object({
     z.coerce.date().nullable(),
   ).default(null),
   genderRule: genderRule.default(null),
-  minLevel: levelBound.default(null),
-  maxLevel: levelBound.default(null),
+  maxLevel: levelBound.default(null), // niveau du tournoi ; null = open
+  category: tournamentCategory.default('club'),
   maxPlayers: maxPlayers.default(null),
   allowedLicenceCategories: allowedLicenceCategories.default([]),
 });
@@ -129,8 +131,8 @@ export const updateTournamentSchema = z.object({
   ).optional(),
   status: z.enum(['upcoming', 'open', 'closed', 'completed']).optional(),
   genderRule: genderRule.optional(),
-  minLevel: levelBound.optional(),
   maxLevel: levelBound.optional(),
+  category: tournamentCategory.optional(),
   maxPlayers: maxPlayers.optional(),
   allowedLicenceCategories: allowedLicenceCategories.optional(),
 });
@@ -155,6 +157,11 @@ export const setTournamentResultsSchema = z.object({
     )
     .min(1)
     .max(500),
+});
+
+export const setMemberLevelSchema = z.object({
+  level: z.coerce.number().int().min(1).max(5),
+  reason: optionalText(200).default(null),
 });
 
 export const generateBracketSchema = z.object({
@@ -184,6 +191,7 @@ export type CreateTournamentDto = z.infer<typeof createTournamentSchema>;
 export type UpdateTournamentDto = z.infer<typeof updateTournamentSchema>;
 export type AddTournamentRegistrantDto = z.infer<typeof addTournamentRegistrantSchema>;
 export type SetTournamentResultsDto = z.infer<typeof setTournamentResultsSchema>;
+export type SetMemberLevelDto = z.infer<typeof setMemberLevelSchema>;
 export type GenerateBracketDto = z.infer<typeof generateBracketSchema>;
 export type SetMatchResultDto = z.infer<typeof setMatchResultSchema>;
 export type SwapBracketPlayersDto = z.infer<typeof swapBracketPlayersSchema>;

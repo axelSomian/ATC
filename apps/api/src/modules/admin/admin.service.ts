@@ -3,7 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../middleware/error.js';
 import { sendBroadcast, pushStats } from '../../lib/webpush.js';
 import { bg } from '../../lib/bg.js';
-import { refreshBestRanking } from '../../lib/ranking.js';
+import { refreshBestRanking, getStandings } from '../../lib/ranking.js';
 import type {
   CreateClubDto,
   UpdateClubDto,
@@ -20,6 +20,9 @@ import type {
 import crypto from 'node:crypto';
 import { categoryLabel, LICENCE_CATEGORIES, type LicenceCategory } from '../licence/licence.rules.js';
 import { getBracket } from '../tournaments/tournaments.service.js';
+import { syncTournamentResults, assertMinPlayers } from '../tournaments/ranking.service.js';
+import { tournamentLevel, categoryOf } from '../tournaments/ranking.rules.js';
+import { buildDraw } from '../tournaments/draw.rules.js';
 export { getBracket };
 
 /* ─────────────────────────── Vue d'ensemble ─────────────────────────── */
@@ -240,9 +243,6 @@ export function listAllTournaments() {
 
 export async function createTournament(dto: CreateTournamentDto) {
   if (dto.endDate < dto.startDate) throw new AppError(400, 'La date de fin précède la date de début');
-  if (dto.minLevel != null && dto.maxLevel != null && dto.minLevel > dto.maxLevel) {
-    throw new AppError(400, 'Le niveau minimum dépasse le niveau maximum');
-  }
   const tournament = await prisma.tournament.create({ data: dto });
   bg(
     sendBroadcast({
@@ -258,11 +258,13 @@ export async function createTournament(dto: CreateTournamentDto) {
 }
 
 export async function updateTournament(id: string, dto: UpdateTournamentDto) {
-  if (dto.minLevel != null && dto.maxLevel != null && dto.minLevel > dto.maxLevel) {
-    throw new AppError(400, 'Le niveau minimum dépasse le niveau maximum');
-  }
   try {
-    return await prisma.tournament.update({ where: { id }, data: dto });
+    const tournament = await prisma.tournament.update({ where: { id }, data: dto });
+    // Niveau, catégorie ou date corrigés après la finale : on recalcule les points.
+    if (dto.maxLevel !== undefined || dto.category !== undefined || dto.endDate !== undefined) {
+      await syncTournamentResults(id);
+    }
+    return tournament;
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
       throw new AppError(404, 'Tournoi introuvable');
@@ -375,17 +377,31 @@ export async function removeTournamentRegistrant(tournamentId: string, userId: s
   return getTournamentRegistrations(tournamentId);
 }
 
-/** Saisie des points par joueur à la clôture d'un tournoi — seule source du classement officiel. */
+/**
+ * Saisie manuelle des points — réservée aux tournois sans tableau (joués hors
+ * plateforme). Avec un tableau, les points sont calculés automatiquement à la
+ * finale (syncTournamentResults).
+ */
 export async function setTournamentResults(id: string, dto: SetTournamentResultsDto) {
   const tournament = await prisma.tournament.findUnique({ where: { id } });
   if (!tournament) throw new AppError(404, 'Tournoi introuvable');
+  const bracketSize = await prisma.tournamentMatch.count({ where: { tournamentId: id } });
+  if (bracketSize > 0) {
+    throw new AppError(409, 'Ce tournoi a un tableau : les points sont calculés automatiquement dès que la finale est saisie.');
+  }
 
+  const snapshot = {
+    level: tournamentLevel(tournament.maxLevel),
+    category: categoryOf(tournament.category),
+    source: 'manual',
+    earnedAt: tournament.endDate,
+  };
   await prisma.$transaction([
     ...dto.results.map((r) =>
       prisma.tournamentResult.upsert({
         where: { tournamentId_userId: { tournamentId: id, userId: r.userId } },
-        create: { tournamentId: id, userId: r.userId, points: r.points, position: r.position ?? null },
-        update: { points: r.points, position: r.position ?? null },
+        create: { tournamentId: id, userId: r.userId, points: r.points, position: r.position ?? null, ...snapshot },
+        update: { points: r.points, position: r.position ?? null, ...snapshot },
       }),
     ),
     prisma.tournament.update({ where: { id }, data: { status: 'completed' } }),
@@ -402,31 +418,17 @@ export async function setTournamentResults(id: string, dto: SetTournamentResults
 /* La lecture (getBracket) vit dans tournaments.service.ts, partagée avec la
  * vue publique gatée par bracketPublished — voir getPublishedBracket là-bas. */
 
-function shuffle<T>(arr: T[]): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
-
-function nextPowerOfTwo(n: number): number {
-  let size = 1;
-  while (size < n) size *= 2;
-  return size;
-}
-
 /**
- * Tirage au sort du tableau à élimination directe. Les inscrits sont mélangés
- * puis répartis sur le prochain tableau de taille puissance de 2 ; les places
- * vacantes sont des « byes » auto-résolus au 1er tour. `force` efface un
- * tableau déjà tiré pour en refaire un (perd les scores déjà saisis).
+ * Tirage du tableau à élimination directe avec têtes de série (draw.rules.ts) :
+ * les mieux classés (points au classement, puis niveau) sont têtes de série,
+ * placés pour ne se croiser que tard, et reçoivent les byes ; le reste est tiré
+ * au hasard. `force` efface un tableau déjà tiré pour en refaire un (perd les
+ * scores déjà saisis).
  */
 export async function generateBracket(tournamentId: string, dto: GenerateBracketDto) {
   const tournament = await prisma.tournament.findUnique({
     where: { id: tournamentId },
-    include: { registrations: true },
+    include: { registrations: { include: { user: { select: { level: true } } } } },
   });
   if (!tournament) throw new AppError(404, 'Tournoi introuvable');
 
@@ -435,28 +437,28 @@ export async function generateBracket(tournamentId: string, dto: GenerateBracket
     throw new AppError(409, 'Un tableau existe déjà pour ce tournoi — relance le tirage pour le refaire.');
   }
 
-  const playerIds = shuffle(tournament.registrations.map((r) => r.userId));
-  if (playerIds.length < 2) throw new AppError(400, 'Il faut au moins 2 inscrits pour tirer un tableau.');
+  const registrations = tournament.registrations;
+  if (registrations.length < 2) throw new AppError(400, 'Il faut au moins 2 inscrits pour tirer un tableau.');
+  assertMinPlayers(tournament.category, registrations.length);
 
-  const size = nextPowerOfTwo(playerIds.length);
+  // Points au classement (invités et non classés = 0, départagés par le niveau).
+  const standings = new Map((await getStandings()).map((st) => [st.userId, st.points]));
+  const draw = buildDraw(registrations.map((r) => ({
+    userId: r.userId,
+    points: standings.get(r.userId) ?? 0,
+    level: r.user.level,
+  })));
+
+  const { size, positions } = draw;
   const totalRounds = Math.log2(size);
-  const matchCount = size / 2;
-  const byeCount = size - playerIds.length; // toujours < matchCount (puisque size < 2 * playerIds.length)
-
-  // Un « plan » par match du 1er tour : les `byeCount` premiers reçoivent un seul
-  // joueur (qualifié d'office), les autres deux — jamais deux byes dans un même
-  // match. L'ordre est mélangé pour ne pas regrouper visuellement les byes.
-  const plan = shuffle([
-    ...Array.from({ length: byeCount }, () => 'bye' as const),
-    ...Array.from({ length: matchCount - byeCount }, () => 'pair' as const),
-  ]);
-
-  const pool = [...playerIds];
-  const round1 = plan.map((kind, slot) => {
-    const a = pool.shift() ?? null;
-    const b = kind === 'pair' ? pool.shift() ?? null : null;
-    const winnerId = a && !b ? a : null; // bye auto-résolu
-    return { tournamentId, round: 1, slot, playerAId: a, playerBId: b, winnerId, playedAt: winnerId ? new Date() : null };
+  const round1 = Array.from({ length: size / 2 }, (_, slot) => {
+    const a = positions[2 * slot];
+    const b = positions[2 * slot + 1];
+    // Un bye est toujours d'un seul côté : on met le joueur qualifié d'office en A.
+    const playerAId = a ?? b;
+    const playerBId = a && b ? b : null;
+    const winnerId = playerAId && !playerBId ? playerAId : null; // bye auto-résolu
+    return { tournamentId, round: 1, slot, playerAId, playerBId, winnerId, playedAt: winnerId ? new Date() : null };
   });
 
   // Byes du 1er tour alimentent directement le tour suivant.
@@ -476,6 +478,10 @@ export async function generateBracket(tournamentId: string, dto: GenerateBracket
       // Un nouveau tirage invalide la publication précédente — l'admin doit valider et republier.
       await tx.tournament.update({ where: { id: tournamentId }, data: { bracketPublished: false } });
     }
+    await tx.tournamentRegistration.updateMany({ where: { tournamentId }, data: { seed: null } });
+    for (const [userId, seed] of draw.seeds) {
+      await tx.tournamentRegistration.update({ where: { tournamentId_userId: { tournamentId, userId } }, data: { seed } });
+    }
     await tx.tournamentMatch.createMany({ data: round1 });
     for (let round = 2; round <= totalRounds; round++) {
       const count = size / 2 ** round;
@@ -491,6 +497,8 @@ export async function generateBracket(tournamentId: string, dto: GenerateBracket
     }
   });
 
+  // Un nouveau tirage annule les points calculés sur l'ancien tableau.
+  if (dto.force) await syncTournamentResults(tournamentId);
   return getBracket(tournamentId);
 }
 
@@ -541,6 +549,8 @@ export async function setMatchResult(tournamentId: string, matchId: string, dto:
     await prisma.tournamentMatch.update({ where: { id: next.id }, data: { [field]: dto.winnerId } });
   }
 
+  // Finale jouée → points calculés ; correction en amont → points retirés jusqu'à la nouvelle finale.
+  await syncTournamentResults(tournamentId);
   return getBracket(tournamentId);
 }
 

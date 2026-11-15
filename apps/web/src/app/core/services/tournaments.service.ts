@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
+import type { TournamentCategory } from '../models/ranking.model';
+
 const API = '/api/v1';
 
 export interface Tournament {
@@ -13,8 +15,10 @@ export interface Tournament {
   registrationDeadline: string | null;
   status: 'upcoming' | 'open' | 'closed' | 'completed';
   genderRule: 'homme' | 'femme' | null;
-  minLevel: number | null;
+  /** Niveau du tournoi (ouvert à ce niveau et en dessous) ; null = open. */
   maxLevel: number | null;
+  category: TournamentCategory;
+  categoryLabel: string;
   maxPlayers: number | null;
   rulesLabel: string | null;
   /** null = le joueur courant est éligible ; sinon le motif à afficher. */
@@ -54,6 +58,8 @@ export interface Bracket {
   totalRounds: number;
   champion: BracketPlayer | null;
   rounds: BracketRound[];
+  /** Têtes de série fixées au tirage : userId → numéro. */
+  seeds: Record<string, number>;
 }
 
 export interface TournamentParticipant {
@@ -73,6 +79,9 @@ export interface TournamentResultEntry {
 
 export interface TournamentDetail extends Omit<Tournament, 'registrationsCount'> {
   registered: boolean;
+  /** Niveau qui compte pour les points (N5 si open). */
+  rankingLevel: number;
+  pointsAtStake: { label: string; points: number }[];
   participants: TournamentParticipant[];
   results: TournamentResultEntry[];
 }
